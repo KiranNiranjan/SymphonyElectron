@@ -6,14 +6,10 @@ const nodeURL = require('url');
 const squirrelStartup = require('electron-squirrel-startup');
 const AutoLaunch = require('auto-launch');
 const urlParser = require('url');
-const { getConfigField } = require('./config.js');
+const { getConfigField, updateUserConfigWin, updateUserConfigMac } = require('./config.js');
 const { isMac, isDevEnv } = require('./utils/misc.js');
 const protocolHandler = require('./protocolHandler');
 const getCmdLineArg = require('./utils/getCmdLineArg.js');
-const childProcess = require('child_process');
-const path = require('path');
-const AppDirectory = require('appdirectory');
-const dirs = new AppDirectory('Symphony');
 
 require('electron-dl')();
 
@@ -108,10 +104,11 @@ function setupThenOpenMainWindow() {
     // allows installer to launch app and set auto startup mode then
     // immediately quit.
     let hasInstallFlag = getCmdLineArg(process.argv, '--install', true);
+    let perUserInstall = getCmdLineArg(process.argv, '--peruser', true);
     if (!isMac && hasInstallFlag) {
         getConfigField('launchOnStartup')
             .then(setStartup)
-            .then(updateUserConfigWin)
+            .then(updateUserConfigWin(perUserInstall))
             .then(app.quit)
             .catch(app.quit);
         return;
@@ -123,8 +120,8 @@ function setupThenOpenMainWindow() {
         // as the app is launched as a root user we don't get
         // access to the config file
         let launchOnStartup = process.argv[3];
-        updateUserConfigMac()
-            .then(setStartup(launchOnStartup))
+        setStartup(launchOnStartup)
+            .then(updateUserConfigMac(process.argv[2]))
             .then(app.quit)
             .catch(app.quit);
         return;
@@ -149,37 +146,6 @@ function setStartup(lStartup){
         }
 
         return true;
-    });
-}
-
-// Method to overwrite user config on mac installer
-function updateUserConfigMac() {
-    return new Promise((resolve, reject) => {
-        let userConfigPath = dirs.userConfig() + '/';
-        let globalConfigPath = process.argv[2];
-        let userName = process.env.USER;
-
-        childProcess.exec(`rsync -r "${globalConfigPath}" "${userConfigPath}" && chown -R "${userName}" "${userConfigPath}"`, {timeout: 60000}, (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve();
-        });
-    });
-}
-
-// Method to overwrite user config on windows installer
-function updateUserConfigWin() {
-    return new Promise((resolve, reject) => {
-        let userConfigPath = app.getPath('userData');
-        let globalConfigPath = path.join(__dirname, '..', '..', '..', 'config/Symphony.config');
-
-        childProcess.exec(`echo D|xcopy /y /e /s /c "${globalConfigPath}" "${userConfigPath}"`, {timeout: 60000}, (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve();
-        });
     });
 }
 
