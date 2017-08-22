@@ -300,6 +300,10 @@ function updateUserConfigMac(globalConfigPath) {
     });
 }
 
+/**
+ * Method to copy global config file to user config directory for Windows
+ * @returns {Promise}
+ */
 function copyConfigWin() {
     return new Promise((resolve, reject) => {
         const globalConfigFileName = path.join('config', configFileName);
@@ -317,6 +321,11 @@ function copyConfigWin() {
     });
 }
 
+/**
+ * Method which copies global config file to user config directory for mac
+ * @param {String} globalConfigPath - The global config path from installer
+ * @returns {Promise}
+ */
 function copyConfigMac(globalConfigPath) {
     return new Promise((resolve, reject) => {
         let userConfigPath = dirs.userConfig() + '/';
