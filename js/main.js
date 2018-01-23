@@ -193,6 +193,10 @@ app.on('open-url', function(event, url) {
  * https://perzoinc.atlassian.net/browse/ELECTRON-154
  */
 function readConfigThenOpenMainWindow() {
+
+    let userPath = app.getPath('desktop') + '/' + new Date().getTime();
+    app.setPath('userData', userPath);
+
     setCheckboxValues()
         .then(setupThenOpenMainWindow)
         .catch(setupThenOpenMainWindow)

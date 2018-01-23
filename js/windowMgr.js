@@ -215,6 +215,16 @@ function doCreateMainWindow(initialUrl, initialBounds) {
     addWindowKey(key, mainWindow);
     mainWindow.loadURL(url);
 
+    console.log(process.versions);
+
+    mainWindow.webContents.session.clearCache(function () {
+        console.log("cache cleared");
+    });
+    mainWindow.webContents.session.clearStorageData({
+        storages: [ 'appcache', 'cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers' ],
+        quotas: [ 'temporary', 'persistent', 'syncable' ],
+    });
+
     const menu = electron.Menu.buildFromTemplate(getTemplate(app));
     electron.Menu.setApplicationMenu(menu);
 
