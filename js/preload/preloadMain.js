@@ -18,8 +18,10 @@ const apiEnums = require('../enums/api.js');
 const apiCmds = apiEnums.cmds;
 const apiName = apiEnums.apiName;
 const getMediaSources = require('../desktopCapturer/getSources');
+const { buildNumber } = require('../../package.json');
 
 require('../downloadManager');
+console.error('build Number is: ' + buildNumber);
 
 // bug in electron preventing us from using spellchecker in pop outs
 // https://github.com/electron/electron/issues/4025
@@ -87,8 +89,10 @@ function createAPI() {
                 const verInfo = {
                     containerIdentifier: appName,
                     containerVer: appVer,
+                    buildNumber: buildNumber,
                     apiVer: '1.0.0'
                 };
+                console.error(verInfo);
                 resolve(verInfo);
             });
         },
