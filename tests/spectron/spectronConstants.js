@@ -2,9 +2,8 @@ module.exports = {
 
     SYMPHONY_CONFIG_FILE_NAME: "/Symphony.config",
 
-    ELECTRON_GLOBAL_CONFIG_PATH_MAC: "node_modules/electron/dist/Electron.app/Contents/config",
-    ELECTRON_GLOBAL_CONFIG_PATH_WIN: "node_modules/electron/dist/config",
+    SEARCH_LIBRARY_PATH_WIN: "dist/win-unpacked/library",
 
-    SEARCH_LIBRARY_PATH_MAC: "node_modules/electron/dist/Electron.app/Contents/library",
-    SEARCH_LIBRARY_PATH_WIN: "node_modules/electron/dist/library",
+    SYMPHONY_APP_PATH_MAC: 'dist/mac/Symphony.app/Contents/MacOS/Symphony',
+    SYMPHONY_APP_PATH_WIN: 'dist/win-unpacked/Symphony.exe'
 };

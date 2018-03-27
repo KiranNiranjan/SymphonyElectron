@@ -108,7 +108,7 @@ describe('Tests for Notification position', () => {
             .click('#notf')
             .windowByIndex(1).then(() => {
                 return app.browserWindow.getTitle().then((title) => {
-                    expect(title === 'Electron').toBeTruthy();
+                    expect(title).toBe(Application.getName());
                     done();
                 }).catch((err) => {
                     done.fail(new Error(`notificationPosition failed in getTitle with error: ${err}`));
@@ -131,7 +131,7 @@ describe('Tests for Notification position', () => {
     it('should change the window', (done) => {
         return app.client.windowByIndex(0).then(() => {
             return app.browserWindow.getTitle().then((title) => {
-                expect(title === 'Symphony | Secure Seamless Communication').toBeTruthy();
+                expect(title).toBe('Symphony | Secure Seamless Communication');
                 done();
             }).catch((err) => {
                 done.fail(new Error(`notificationPosition failed in getTitle with error: ${err}`));
@@ -151,7 +151,7 @@ describe('Tests for Notification position', () => {
             .click('#notf')
             .windowByIndex(1).then(() => {
                 return app.browserWindow.getTitle().then((title) => {
-                    expect(title === 'Electron').toBeTruthy();
+                    expect(title).toBe(Application.getName());
                     done();
                 }).catch((err) => {
                     done.fail(new Error(`notificationPosition failed in getTitle with error: ${err}`));
@@ -179,7 +179,7 @@ describe('Tests for Notification position', () => {
     it('should change the window to main', (done) => {
         return app.client.windowByIndex(0).then(() => {
             return app.browserWindow.getTitle().then((title) => {
-                expect(title === 'Symphony | Secure Seamless Communication').toBeTruthy();
+                expect(title).toBe('Symphony | Secure Seamless Communication');
                 done();
             }).catch((err) => {
                 done.fail(new Error(`notificationPosition failed in getTitle with error: ${err}`));
@@ -201,7 +201,7 @@ describe('Tests for Notification position', () => {
             })
             .windowByIndex(1).then(() => {
                 return app.browserWindow.getTitle().then((title) => {
-                    expect(title === 'Electron').toBeTruthy();
+                    expect(title).toBeTruthy(Application.getName());
                     done();
                 }).catch((err) => {
                     done.fail(new Error(`notificationPosition failed in getTitle with error: ${err}`));

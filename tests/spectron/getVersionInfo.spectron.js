@@ -1,7 +1,6 @@
 const Application = require('./spectronSetup');
 const path = require('path');
-const { buildNumber } = require('../../package');
-const electronVersion = require('../../package').devDependencies.electron;
+const { productName, buildNumber, version } = require('../../package');
 const bluebird = require('bluebird');
 
 let app = new Application({});
@@ -61,8 +60,8 @@ describe('Tests for getVersionInfo API', () => {
             return app.client.getText(string)
         }).then((values) => {
             expect(values[ 0 ]).toBe('1.0.0');
-            expect(values[ 1 ]).toBe('Electron');
-            expect(values[ 2 ]).toBe(electronVersion);
+            expect(values[ 1 ]).toBe(productName);
+            expect(values[ 2 ]).toBe(version);
             expect(values[ 3 ]).toBe(buildNumber);
             done();
         });

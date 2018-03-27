@@ -13,19 +13,11 @@ class App {
 
         if (!this.options.path) {
             this.options.path = App.getAppPath();
-            this.options.args = [path.join(__dirname, '..', '..', 'js/main.js')];
-        }
-
-        if (isMac) {
-            App.copyConfigPath(constants.ELECTRON_GLOBAL_CONFIG_PATH_MAC);
-            App.copyLibraries(constants.SEARCH_LIBRARY_PATH_MAC);
         }
 
         if (isWindowsOS) {
-            App.copyConfigPath(constants.ELECTRON_GLOBAL_CONFIG_PATH_WIN);
             App.copyLibraries(constants.SEARCH_LIBRARY_PATH_WIN);
         }
-
 
         this.app = new Application(this.options);
     }
@@ -38,12 +30,20 @@ class App {
         });
     }
 
+    /**
+     * Returns the application name
+     * @return {string}
+     */
+    static getName() {
+        return 'Symphony';
+    }
+
     static getAppPath() {
-        let electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron');
-        if (process.platform === 'win32') {
-            electronPath += '.cmd';
+        if (isMac) {
+            return constants.SYMPHONY_APP_PATH_MAC
+        } else {
+            return constants.SYMPHONY_APP_PATH_WIN
         }
-        return electronPath
     }
 
     static getTimeOut() {
@@ -56,19 +56,17 @@ class App {
 
         if (!fs.existsSync(configFilePath)) {
             return new Promise(function (resolve, reject) {
-                App.copyConfigPath(configPath).then(() => {
-                    fs.readFile(configFilePath, 'utf-8', function (err, data) {
-                        if (err) {
-                            throw new Error(`Unable to read user config file at ${configFilePath}  ${err}`);
-                        }
-                        let parsedData;
-                        try {
-                            parsedData = JSON.parse(data);
-                        } catch (err) {
-                            return reject(err);
-                        }
-                        return resolve(parsedData);
-                    });
+                fs.readFile(configFilePath, 'utf-8', function (err, data) {
+                    if (err) {
+                        throw new Error(`Unable to read user config file at ${configFilePath}  ${err}`);
+                    }
+                    let parsedData;
+                    try {
+                        parsedData = JSON.parse(data);
+                    } catch (err) {
+                        return reject(err);
+                    }
+                    return resolve(parsedData);
                 });
             });
         }
@@ -87,17 +85,6 @@ class App {
                 resolve(parsedData);
             });
         });
-    }
-
-    static copyConfigPath(configPath) {
-        return new Promise((resolve) => {
-            ncp('config', configPath, function (err) {
-                if (err) {
-                    throw new Error("Unable to copy config file to Electron dir " + err);
-                }
-                return resolve();
-            });
-        })
     }
 
     static copyLibraries(libraryPath) {
