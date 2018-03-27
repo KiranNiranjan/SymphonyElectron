@@ -4,6 +4,8 @@ const fs = require('fs');
 const { isMac, isWindowsOS } = require('../../js/utils/misc');
 const ncp = require('ncp').ncp;
 const constants = require('./spectronConstants.js');
+const macAppPath = 'dist/mac/Symphony.app/Contents/MacOS/Symphony';
+const winAppPath = 'dist/win-unpacked/Symphony.exe';
 
 class App {
 
@@ -40,9 +42,9 @@ class App {
 
     static getAppPath() {
         if (isMac) {
-            return path.join(__dirname, '..', '..', 'dist', 'mac', 'Symphony-dev.app', 'Contents', 'MacOS', 'Symphony-dev');
+            return path.join(__dirname, '..', '..', macAppPath);
         } else if (isWindowsOS) {
-            return path.join(__dirname, '..', '..', 'dist', 'win-unpacked', 'Symphony.exe');
+            return path.join(__dirname, '..', '..', winAppPath);
         }
     }
 

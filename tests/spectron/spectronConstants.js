@@ -5,6 +5,6 @@ module.exports = {
     ELECTRON_GLOBAL_CONFIG_PATH_MAC: "node_modules/electron/dist/Electron.app/Contents/config",
     ELECTRON_GLOBAL_CONFIG_PATH_WIN: "node_modules/electron/dist/config",
 
-    SEARCH_LIBRARY_PATH_MAC: "node_modules/electron/dist/Electron.app/Contents/library",
-    SEARCH_LIBRARY_PATH_WIN: "node_modules/electron/dist/library",
+    SEARCH_LIBRARY_PATH_MAC: "dist/mac/Symphony.app/Contents/library",
+    SEARCH_LIBRARY_PATH_WIN: "dist/win-unpacked/library",
 };
