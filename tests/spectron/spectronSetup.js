@@ -39,11 +39,11 @@ class App {
     }
 
     static getAppPath() {
-        let electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron');
-        if (process.platform === 'win32') {
-            electronPath += '.cmd';
+        if (isMac) {
+            return path.join(__dirname, '..', '..', 'dist', 'mac', 'Symphony-dev.app', 'Contents', 'MacOS', 'Symphony-dev');
+        } else if (isWindowsOS) {
+            return path.join(__dirname, '..', '..', 'dist', 'win-unpacked', 'Symphony.exe');
         }
-        return electronPath
     }
 
     static getTimeOut() {
