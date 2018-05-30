@@ -1,4 +1,4 @@
 {
-  "testMatch": ["**/*.spectron.js"],
+  "testMatch": ["**/desktopCapturer.spectron.js"],
   "verbose": true
 }
