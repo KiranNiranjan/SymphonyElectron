@@ -1,9 +1,11 @@
 'use strict';
 
 const electron = require('electron');
+const fs = require('fs');
 const { updateConfigField, getMultipleConfigField } = require('../config.js');
 const AutoLaunch = require('auto-launch');
 const { isMac, isWindowsOS } = require('../utils/misc.js');
+const archiveHandler = require('../utils/archiveHandler');
 const log = require('../log.js');
 const logLevels = require('../enums/logLevels.js');
 const eventEmitter = require('../eventEmitter');
@@ -14,7 +16,8 @@ const configFields = [
     'launchOnStartup',
     'alwaysOnTop',
     'notificationSettings',
-    'bringToFront'
+    'bringToFront',
+    'memoryRefresh'
 ];
 
 let minimizeOnClose = false;
@@ -80,38 +83,6 @@ const template = [{
             }
         }
     },
-    {
-        label: 'Toggle Developer Tools',
-        accelerator: isMac ? 'Alt+Command+I' : 'Ctrl+Shift+I',
-        click(item, focusedWindow) {
-            if (focusedWindow) {
-                focusedWindow.webContents.toggleDevTools();
-            }
-        }
-    },
-    {
-        label: 'Set Downloads Directory',
-        click() {
-            electron.dialog.showOpenDialog({
-                title: 'Select Downloads Directory',
-                buttonLabel: 'Select',
-                properties: ['openDirectory', 'createDirectory']
-            }, (filePaths) => {
-                if (!filePaths || !Array.isArray(filePaths) || filePaths.length < 1) {
-                    return;
-                }
-                updateConfigField('downloadsDirectory', filePaths[0]);
-                eventEmitter.emit('setDownloadsDirectory', filePaths[0]);
-            });
-        }
-    },
-    {
-        label: 'Open Crashes Directory',
-        click() {
-            const crashesDirectory = electron.crashReporter.getCrashesDirectory() + '/completed';
-            electron.shell.showItemInFolder(crashesDirectory);
-        }
-    },
         { type: 'separator' },
         buildMenuItem('resetzoom'),
         buildMenuItem('zoomin'),
@@ -129,11 +100,83 @@ const template = [{
 },
 {
     role: 'help',
-    submenu: [
+    submenu: 
+    [
+        {
+            label: 'Symphony Help',
+            click() { electron.shell.openExternal('https://support.symphony.com'); }
+        },
         {
             label: 'Learn More',
             click() { electron.shell.openExternal('https://www.symphony.com'); }
-        }]
+        },
+        {
+            label: 'Troubleshooting',
+            submenu: [
+                {
+                    label: isMac ? 'Show Logs in Finder' : 'Show Logs in Explorer',
+                    click(item, focusedWindow) {
+
+                        const FILE_EXTENSIONS = [ '.log' ];
+                        const MAC_LOGS_PATH = '/Library/Logs/Symphony/';
+                        const WINDOWS_LOGS_PATH = '\\AppData\\Roaming\\Symphony\\logs';
+            
+                        let logsPath = isMac ? MAC_LOGS_PATH : WINDOWS_LOGS_PATH;
+                        let source = electron.app.getPath('home') + logsPath;
+            
+                        if (!fs.existsSync(source) && focusedWindow && !focusedWindow.isDestroyed()) {
+                            electron.dialog.showMessageBox(focusedWindow, {type: 'error', title: 'Failed!', message: 'No logs are available to share'});
+                            return;
+                        }
+            
+                        let destPath = isMac ? '/logs_symphony_' : '\\logs_symphony_';
+                        let timestamp = new Date().getTime();
+                        
+                        let destination = electron.app.getPath('downloads') + destPath + timestamp + '.zip';
+            
+                        archiveHandler.generateArchiveForDirectory(source, destination, FILE_EXTENSIONS)
+                            .then(() => {
+                                electron.shell.showItemInFolder(destination);
+                            })
+                            .catch((err) => {
+                                if (focusedWindow && !focusedWindow.isDestroyed()) {
+                                    electron.dialog.showMessageBox(focusedWindow, {type: 'error', title: 'Failed!', message: `Unable to generate logs due to -> ${err}`});
+                                }
+                            })
+            
+                    }
+                },
+                {
+                    label: isMac ? 'Show crash dump in Finder' : 'Show crash dump in Explorer',
+                    click(item, focusedWindow) {
+                        const FILE_EXTENSIONS = isMac ? [ '.dmp' ] : [ '.dmp', '.txt' ];
+                        const crashesDirectory = electron.crashReporter.getCrashesDirectory();
+                        let source = isMac ? crashesDirectory + '/completed' : crashesDirectory;
+
+                        if (!fs.existsSync(source) || fs.readdirSync(source).length === 0 && focusedWindow && !focusedWindow.isDestroyed()) {
+                            electron.dialog.showMessageBox(focusedWindow, {type: 'error', title: 'Failed!', message: 'No crashes available to share'});
+                            return;
+                        }
+
+                        let destPath = isMac ? '/crashes_symphony_' : '\\crashes_symphony_';
+                        let timestamp = new Date().getTime();
+
+                        let destination = electron.app.getPath('downloads') + destPath + timestamp + '.zip';
+
+                        archiveHandler.generateArchiveForDirectory(source, destination, FILE_EXTENSIONS)
+                            .then(() => {
+                                electron.shell.showItemInFolder(destination);
+                            })
+                            .catch((err) => {
+                                if (focusedWindow && !focusedWindow.isDestroyed()) {
+                                    electron.dialog.showMessageBox(focusedWindow, {type: 'error', title: 'Failed!', message: `Unable to generate crash reports due to -> ${err}`});
+                                }
+                            });
+                    }
+                }
+            ]
+        }
+    ]
 }
 ];
 
@@ -219,20 +262,24 @@ function getTemplate(app) {
         label: 'Auto Launch On Startup',
         type: 'checkbox',
         checked: launchOnStartup,
-        click: function(item) {
+        click: function(item, focusedWindow) {
             if (item.checked) {
                 symphonyAutoLauncher.enable()
                     .catch(function(err) {
                         let title = 'Error setting AutoLaunch configuration';
                         log.send(logLevels.ERROR, 'MenuTemplate: ' + title + ': auto launch error ' + err);
-                        electron.dialog.showErrorBox(title, title + ': ' + err);
+                        if (focusedWindow && !focusedWindow.isDestroyed()) {
+                            electron.dialog.showMessageBox(focusedWindow, {type: 'error', title, message: title + ': ' + err});
+                        }
                     });
             } else {
                 symphonyAutoLauncher.disable()
                     .catch(function(err) {
                         let title = 'Error setting AutoLaunch configuration';
                         log.send(logLevels.ERROR, 'MenuTemplate: ' + title + ': auto launch error ' + err);
-                        electron.dialog.showErrorBox(title, title + ': ' + err);
+                        if (focusedWindow && !focusedWindow.isDestroyed()) {
+                            electron.dialog.showMessageBox(focusedWindow, {type: 'error', title, message: title + ': ' + err});
+                        }
                     });
             }
             launchOnStartup = item.checked;
@@ -247,7 +294,10 @@ function getTemplate(app) {
         checked: isAlwaysOnTop,
         click: (item) => {
             isAlwaysOnTop = item.checked;
-            eventEmitter.emit('isAlwaysOnTop', isAlwaysOnTop);
+            eventEmitter.emit('isAlwaysOnTop', {
+                isAlwaysOnTop,
+                shouldActivateMainWindow: true
+            });
             updateConfigField('alwaysOnTop', isAlwaysOnTop);
         }
     });
@@ -318,7 +368,10 @@ function setCheckboxValues() {
                                 break;
                             case 'alwaysOnTop':
                                 isAlwaysOnTop = configData[key];
-                                eventEmitter.emit('isAlwaysOnTop', configData[key]);
+                                eventEmitter.emit('isAlwaysOnTop', {
+                                    isAlwaysOnTop: configData[key],
+                                    shouldActivateMainWindow: true
+                                });
                                 break;
                             case 'notificationSettings':
                                 eventEmitter.emit('notificationSettings', configData[key]);
@@ -336,7 +389,9 @@ function setCheckboxValues() {
             .catch((err) => {
                 let title = 'Error loading configuration';
                 log.send(logLevels.ERROR, 'MenuTemplate: error reading configuration fields, error: ' + err);
-                electron.dialog.showErrorBox(title, title + ': ' + err);
+                if (electron.BrowserWindow.getFocusedWindow() && !electron.BrowserWindow.getFocusedWindow().isDestroyed()) {
+                    electron.dialog.showMessageBox(electron.BrowserWindow.getFocusedWindow(), {type: 'error', title, message: title + ': ' + err});
+                }
                 return resolve();
             });
     });

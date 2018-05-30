@@ -3,7 +3,8 @@
 const fs = require('fs');
 const electron = require('electron');
 const app = electron.app;
-const crashReporter = electron.crashReporter;
+const electronSession = electron.session;
+const globalShortcut = electron.globalShortcut;
 const BrowserWindow = electron.BrowserWindow;
 const path = require('path');
 const nodeURL = require('url');
@@ -19,10 +20,11 @@ const logLevels = require('./enums/logLevels.js');
 const notify = require('./notify/electron-notify.js');
 const eventEmitter = require('./eventEmitter');
 const throttle = require('./utils/throttle.js');
-const { getConfigField, updateConfigField, getGlobalConfigField } = require('./config.js');
+const { getConfigField, updateConfigField, readConfigFileSync } = require('./config.js');
 const { isMac, isNodeEnv, isWindows10, isWindowsOS } = require('./utils/misc');
 const { deleteIndexFolder } = require('./search/search.js');
-const { isWhitelisted } = require('./utils/whitelistHandler');
+const { isWhitelisted, parseDomain } = require('./utils/whitelistHandler');
+const { initCrashReporterMain, initCrashReporterRenderer } = require('./crashReporter.js');
 
 // show dialog when certificate errors occur
 require('./dialogs/showCertError.js');
@@ -39,10 +41,7 @@ let alwaysOnTop = false;
 let position = 'lower-right';
 let display;
 let sandboxed = false;
-
-// By default, we set the user's default download directory
-let defaultDownloadsDirectory = app.getPath("downloads");
-let downloadsDirectory = defaultDownloadsDirectory;
+let isAutoReload = false;
 
 // Application menu
 let menu;
@@ -56,6 +55,9 @@ const MIN_HEIGHT = 300;
 // Default window size for pop-out windows
 const DEFAULT_WIDTH = 300;
 const DEFAULT_HEIGHT = 600;
+
+// Certificate transparency whitelist
+let ctWhitelist = [];
 
 /**
  * Adds a window key
@@ -76,10 +78,16 @@ function removeWindowKey(key) {
 
 /**
  * Gets the parsed url
- * @param url
  * @returns {Url}
+ * @param appUrl
  */
-function getParsedUrl(url) {
+function getParsedUrl(appUrl) {
+    let parsedUrl = nodeURL.parse(appUrl);
+    if (!parsedUrl.protocol || parsedUrl.protocol !== 'https:') {
+        parsedUrl.protocol = 'https:';
+        parsedUrl.slashes = true
+    }
+    let url = nodeURL.format(parsedUrl);
     return nodeURL.parse(url);
 }
 
@@ -88,31 +96,50 @@ function getParsedUrl(url) {
  * @param initialUrl
  */
 function createMainWindow(initialUrl) {
-    Promise.all([
-        getConfigField('mainWinPos'),
-        getGlobalConfigField('isCustomTitleBar')
-    ]).then((values) => {
-        doCreateMainWindow(initialUrl, values[ 0 ], values[ 1 ]);
-    }).catch(() => {
-        // failed use default bounds and frame
-        doCreateMainWindow(initialUrl, null, false);
-    });
+    getConfigField('mainWinPos')
+        .then(winPos => {
+            doCreateMainWindow(initialUrl, winPos);
+        })
+        .catch(() => {
+            // failed use default bounds and frame
+            doCreateMainWindow(initialUrl, null);
+        });
 }
 
 /**
  * Creates the main window with bounds
  * @param initialUrl
  * @param initialBounds
- * @param isCustomTitleBar {Boolean} - Global config value weather to enable custom title bar
  */
-function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
+function doCreateMainWindow(initialUrl, initialBounds) {
     let url = initialUrl;
     let key = getGuid();
+
+    const config = readConfigFileSync();
+
     // condition whether to enable custom Windows 10 title bar
-    const isCustomTitleBarEnabled = typeof isCustomTitleBar === 'boolean' && isCustomTitleBar && isWindows10();
-
-    log.send(logLevels.INFO, 'creating main window url: ' + url);
-
+    const isCustomTitleBarEnabled = config
+        && typeof config.isCustomTitleBar === 'boolean'
+        && config.isCustomTitleBar
+        && isWindows10();
+    log.send(logLevels.INFO, `we are configuring a custom title bar for windows -> ${isCustomTitleBarEnabled}`);
+    
+    ctWhitelist = config && config.ctWhitelist;
+    log.send(logLevels.INFO, `we are configuring certificate transparency whitelist for the domains -> ${ctWhitelist}`);
+    
+    log.send(logLevels.INFO, `creating main window for ${url}`);
+    
+    if (config && config !== null && config.customFlags) {
+        
+        log.send(logLevels.INFO, 'Chrome flags config found!');
+        
+        if (config.customFlags.authServerWhitelist && config.customFlags.authServerWhitelist !== "") {
+            log.send(logLevels.INFO, 'setting ntlm domains');
+            electronSession.defaultSession.allowNTLMCredentialsForDomains(config.customFlags.authServerWhitelist);
+        }
+        
+    }
+    
     let newWinOpts = {
         title: 'Symphony',
         show: true,
@@ -133,7 +160,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
 
     // if bounds if not fully contained in some display then use default size
     // and position.
-    if (!isInDisplayBounds(bounds)) {
+    if (!isInDisplayBounds(bounds) || initialBounds.isMaximized || initialBounds.isFullScreen) {
         bounds = null;
     }
 
@@ -162,9 +189,21 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
     mainWindow = new BrowserWindow(newWinOpts);
     mainWindow.winName = 'main';
 
-    let throttledMainWinBoundsChange = throttle(5000, saveMainWinBounds);
+    let throttledMainWinBoundsChange = throttle(1000, saveMainWinBounds);
     mainWindow.on('move', throttledMainWinBoundsChange);
     mainWindow.on('resize', throttledMainWinBoundsChange);
+
+    if (initialBounds && !isNodeEnv) {
+        // maximizes the application if previously maximized
+        if (initialBounds.isMaximized) {
+            mainWindow.maximize();
+        }
+
+        // Sets the application to full-screen if previously set to full-screen
+        if (isMac && initialBounds.isFullScreen) {
+            mainWindow.setFullScreen(true);
+        }
+    }
 
     function retry() {
         if (!isOnline) {
@@ -180,6 +219,10 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
     // content can be cached and will still finish load but
     // we might not have network connectivity, so warn the user.
     mainWindow.webContents.on('did-finish-load', function () {
+        // Initialize crash reporter
+        initCrashReporterMain({ process: 'main window' });
+        initCrashReporterRenderer(mainWindow, { process: 'render | main window' });
+
         url = mainWindow.webContents.getURL();
         if (isCustomTitleBarEnabled) {
             mainWindow.webContents.insertCSS(fs.readFileSync(path.join(__dirname, '/windowsTitleBar/style.css'), 'utf8').toString());
@@ -224,6 +267,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         });
     });
     
+    registerShortcuts();
     handlePermissionRequests(mainWindow.webContents);
 
     addWindowKey(key, mainWindow);
@@ -261,76 +305,32 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
     }
 
     mainWindow.on('closed', destroyAllWindows);
-
-    // if an user has set a custom downloads directory,
-    // we get that data from the user config file
-    getConfigField('downloadsDirectory')
-        .then((value) => {
-            downloadsDirectory = value;
-        })
-        .catch((error) => {
-            log.send(logLevels.ERROR, 'Could not find the downloads directory config -> ' + error);
-        });
-
+    
     // Manage File Downloads
     mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
-
         // When download is in progress, send necessary data to indicate the same
         webContents.send('downloadProgress');
-
-        // An extra check to see if the user created downloads directory has been deleted
-        // This scenario can occur when user doesn't quit electron and continues using it
-        // across days and then deletes the folder.
-        if (downloadsDirectory !== defaultDownloadsDirectory && !fs.existsSync(downloadsDirectory)) {
-            downloadsDirectory = defaultDownloadsDirectory;
-            updateConfigField("downloadsDirectory", downloadsDirectory);
-        }
-
-        // We check the downloads directory to see if a file with the similar name
-        // already exists and get a unique filename if that's the case
-        let newFileName = getUniqueFileName(item.getFilename());
-        if (isMac) {
-            item.setSavePath(downloadsDirectory + "/" + newFileName);
-        } else {
-            item.setSavePath(downloadsDirectory + "\\" + newFileName);
-        }
-
-        // Send file path to construct the DOM in the UI when the download is complete
+        
+        // Send file path when download is complete
         item.once('done', (e, state) => {
             if (state === 'completed') {
                 let data = {
                     _id: getGuid(),
                     savedPath: item.getSavePath() ? item.getSavePath() : '',
                     total: filesize(item.getTotalBytes() ? item.getTotalBytes() : 0),
-                    fileName: newFileName
+                    fileName: item.getFilename() ? item.getFilename() : 'No name'
                 };
                 webContents.send('downloadCompleted', data);
             }
         });
     });
 
-    getConfigField('url')
-        .then(initializeCrashReporter)
-        .catch(app.quit);
-
-    function initializeCrashReporter(podUrl) {
-        getConfigField('crashReporter')
-            .then((crashReporterConfig) => {
-                log.send(logLevels.INFO, 'Initializing crash reporter on the main window!');
-                crashReporter.start({ companyName: crashReporterConfig.companyName, submitURL: crashReporterConfig.submitURL, uploadToServer: crashReporterConfig.uploadToServer, extra: { 'process': 'renderer / main window', podUrl: podUrl } });
-                log.send(logLevels.INFO, 'initialized crash reporter on the main window!');
-                mainWindow.webContents.send('register-crash-reporter', { companyName: crashReporterConfig.companyName, submitURL: crashReporterConfig.submitURL, uploadToServer: crashReporterConfig.uploadToServer, process: 'preload script / main window renderer' });
-            })
-            .catch((err) => {
-                log.send(logLevels.ERROR, 'Unable to initialize crash reporter in the main window. Error is -> ' + err);
-            });
-    }
-
     // open external links in default browser - a tag with href='_blank' or window.open
     mainWindow.webContents.on('new-window', handleNewWindow);
+    mainWindow.webContents.session.setCertificateVerifyProc(handleCertificateTransparencyChecks);
 
     function handleNewWindow(event, newWinUrl, frameName, disposition, newWinOptions) {
-
+        
         let newWinParsedUrl = getParsedUrl(newWinUrl);
         let mainWinParsedUrl = getParsedUrl(url);
 
@@ -411,39 +411,13 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
                         browserWin.setMenu(null);
                     }
 
-                    getConfigField('url')
-                        .then((podUrl) => {
-                            getConfigField('crashReporter')
-                                .then((crashReporterConfig) => {
-                                    crashReporter.start({ companyName: crashReporterConfig.companyName, submitURL: crashReporterConfig.submitURL, uploadToServer: crashReporterConfig.uploadToServer, extra: { 'process': 'renderer / child window', podUrl: podUrl } });
-                                    log.send(logLevels.INFO, 'initialized crash reporter on a child window!');
-                                    browserWin.webContents.send('register-crash-reporter', { companyName: crashReporterConfig.companyName, submitURL: crashReporterConfig.submitURL, uploadToServer: crashReporterConfig.uploadToServer, process: 'preload script / child window renderer' });
-                                })
-                                .catch((err) => {
-                                    log.send(logLevels.ERROR, 'Unable to initialize crash reporter in the child window. Error is -> ' + err);
-                                });
-                        })
-                        .catch(app.quit);
+                    initCrashReporterMain({ process: 'pop-out window' });
+                    initCrashReporterRenderer(browserWin, { process: 'render | pop-out window' });
 
                     browserWin.winName = frameName;
                     browserWin.setAlwaysOnTop(alwaysOnTop);
 
-                    let handleChildWindowClosed = () => {
-                        removeWindowKey(newWinKey);
-                        browserWin.removeListener('move', throttledBoundsChange);
-                        browserWin.removeListener('resize', throttledBoundsChange);
-                    };
-
-                    browserWin.once('closed', () => {
-                        handleChildWindowClosed();
-                    });
-
-                    browserWin.on('close', () => {
-                        browserWin.webContents.removeListener('new-window', handleNewWindow);
-                        browserWin.webContents.removeListener('crashed', handleChildWindowCrashEvent);
-                    });
-
-                    let handleChildWindowCrashEvent = () => {
+                    let handleChildWindowCrashEvent = (e) => {
                         const options = {
                             type: 'error',
                             title: 'Renderer Process Crashed',
@@ -451,14 +425,16 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
                             buttons: ['Reload', 'Close']
                         };
 
-                        electron.dialog.showMessageBox(options, function (index) {
-                            if (index === 0) {
-                                browserWin.reload();
-                            }
-                            else {
-                                browserWin.close();
-                            }
-                        });
+                        let childBrowserWindow = BrowserWindow.fromWebContents(e.sender);
+                        if (childBrowserWindow && !childBrowserWindow.isDestroyed()) {
+                            electron.dialog.showMessageBox(childBrowserWindow, options, function (index) {
+                                if (index === 0) {
+                                    childBrowserWindow.reload();
+                                } else {
+                                    childBrowserWindow.close();
+                                }
+                            });
+                        }
                     };
 
                     browserWin.webContents.on('crashed', handleChildWindowCrashEvent);
@@ -481,7 +457,24 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
                     browserWin.on('move', throttledBoundsChange);
                     browserWin.on('resize', throttledBoundsChange);
     
+                    let handleChildWindowClosed = () => {
+                        removeWindowKey(newWinKey);
+                        browserWin.removeListener('move', throttledBoundsChange);
+                        browserWin.removeListener('resize', throttledBoundsChange);
+                    };
+    
+                    browserWin.on('close', () => {
+                        browserWin.webContents.removeListener('new-window', handleNewWindow);
+                        browserWin.webContents.removeListener('crashed', handleChildWindowCrashEvent);
+                    });
+    
+                    browserWin.once('closed', () => {
+                        handleChildWindowClosed();
+                    });
+                    
                     handlePermissionRequests(browserWin.webContents);
+    
+                    browserWin.webContents.session.setCertificateVerifyProc(handleCertificateTransparencyChecks);
                 }
             });
         } else {
@@ -505,34 +498,55 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
             });
     });
     
-    // ELECTRON-323: Handle session permission requests
+    /**
+     * Register shortcuts for the app
+     */
+    function registerShortcuts() {
+        
+        // Register dev tools shortcut
+        globalShortcut.register(isMac ? 'Alt+Command+I' : 'Ctrl+Shift+I', () => {
+            let focusedWindow = BrowserWindow.getFocusedWindow();
+            if (focusedWindow && !focusedWindow.isDestroyed()) {
+                focusedWindow.webContents.toggleDevTools();
+            }
+        });
+        
+    }
+    
+    /**
+     * Sets permission requests for the window
+     * @param webContents Web contents of the window
+     */
     function handlePermissionRequests(webContents) {
-        
+
         let session = webContents.session;
-        
+
         getConfigField('permissions')
             .then((permissions) => {
-                
+
                 if (!permissions) {
                     log.send(logLevels.ERROR, 'permissions configuration is invalid, so, everything will be true by default!');
                     return;
                 }
-                
+
                 session.setPermissionRequestHandler((sessionWebContents, permission, callback) => {
-                    
+
                     function handleSessionPermissions(userPermission, message, cb) {
-                        
+
                         log.send(logLevels.INFO, 'permission is -> ' + userPermission);
-                        
+
                         if (!userPermission) {
                             let fullMessage = `Your administrator has disabled ${message}. Please contact your admin for help.`;
-                            electron.dialog.showErrorBox('Permission Denied!', fullMessage);
+                            const browserWindow = BrowserWindow.getFocusedWindow();
+                            if (browserWindow && !browserWindow.isDestroyed()) {
+                                electron.dialog.showMessageBox(browserWindow, {type: 'error', title: 'Permission Denied!', message: fullMessage});
+                            }
                         }
-                        
+
                         return cb(userPermission);
-                        
+
                     }
-                    
+
                     let PERMISSION_MEDIA = 'media';
                     let PERMISSION_LOCATION = 'geolocation';
                     let PERMISSION_NOTIFICATIONS = 'notifications';
@@ -540,40 +554,58 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
                     let PERMISSION_POINTER_LOCK = 'pointerLock';
                     let PERMISSION_FULL_SCREEN = 'fullscreen';
                     let PERMISSION_OPEN_EXTERNAL = 'openExternal';
-                    
+
                     switch (permission) {
-                        
+
                         case PERMISSION_MEDIA:
                             return handleSessionPermissions(permissions.media, 'sharing your camera, microphone, and speakers', callback);
-                        
+
                         case PERMISSION_LOCATION:
                             return handleSessionPermissions(permissions.geolocation, 'sharing your location', callback);
-                        
+
                         case PERMISSION_NOTIFICATIONS:
                             return handleSessionPermissions(permissions.notifications, 'notifications', callback);
-                        
+
                         case PERMISSION_MIDI_SYSEX:
                             return handleSessionPermissions(permissions.midiSysex, 'MIDI Sysex', callback);
-                        
+
                         case PERMISSION_POINTER_LOCK:
                             return handleSessionPermissions(permissions.pointerLock, 'Pointer Lock', callback);
-                        
+
                         case PERMISSION_FULL_SCREEN:
                             return handleSessionPermissions(permissions.fullscreen, 'Full Screen', callback);
-                        
+
                         case PERMISSION_OPEN_EXTERNAL:
                             return handleSessionPermissions(permissions.openExternal, 'Opening External App', callback);
-                        
+
                         default:
                             return callback(false);
                     }
-                    
+
                 });
-                
+
             }).catch((error) => {
                 log.send(logLevels.ERROR, 'unable to get permissions configuration, so, everything will be true by default! ' + error);
             })
+
+    }
+    
+    function handleCertificateTransparencyChecks(request, callback) {
         
+        const { hostname: hostUrl, errorCode } = request;
+        
+        if (errorCode === 0) {
+            return callback(0);
+        }
+        
+        let { tld, domain } = parseDomain(hostUrl);
+        let host = domain + tld;
+        
+        if (ctWhitelist && Array.isArray(ctWhitelist) && ctWhitelist.length > 0 && ctWhitelist.indexOf(host) > -1) {
+            return callback(0);
+        }
+        
+        return callback(-2);
     }
 
 }
@@ -590,6 +622,12 @@ app.on('before-quit', function () {
  */
 function saveMainWinBounds() {
     let newBounds = getWindowSizeAndPosition(mainWindow);
+
+    // set application full-screen and maximized state
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        newBounds.isMaximized = mainWindow.isMaximized();
+        newBounds.isFullScreen = mainWindow.isFullScreen();
+    }
 
     if (newBounds) {
         updateConfigField('mainWinPos', newBounds);
@@ -684,6 +722,13 @@ function setIsOnline(status) {
  * without giving focus
  */
 function activate(windowName, shouldFocus = true) {
+
+    // don't activate when the app is reloaded programmatically
+    // Electron-136
+    if (isAutoReload) {
+        return null;
+    }
+
     let keys = Object.keys(windows);
     for (let i = 0, len = keys.length; i < len; i++) {
         let window = windows[keys[i]];
@@ -707,6 +752,16 @@ function activate(windowName, shouldFocus = true) {
         }
     }
     return null;
+}
+
+/**
+ * Sets if is auto reloading the app
+ * @param reload
+ */
+function setIsAutoReload(reload) {
+    if (typeof reload === 'boolean') {
+        isAutoReload = reload
+    }
 }
 
 /**
@@ -743,33 +798,31 @@ function openUrlInDefaultBrowser(urlToOpen) {
 
 /**
  * Called when an event is received from menu
- * @param boolean weather to enable or disable alwaysOnTop.
+ * @param {boolean} boolean whether to enable or disable alwaysOnTop.
+ * @param {boolean} shouldActivateMainWindow whether to activate main window
  */
-function isAlwaysOnTop(boolean) {
+function isAlwaysOnTop(boolean, shouldActivateMainWindow = true) {
     alwaysOnTop = boolean;
     let browserWins = BrowserWindow.getAllWindows();
     if (browserWins.length > 0) {
-        browserWins.forEach(function (browser) {
-            browser.setAlwaysOnTop(boolean);
-        });
+        browserWins
+            .filter((browser) => typeof browser.notfyObj !== 'object')
+            .forEach(function (browser) {
+                browser.setAlwaysOnTop(boolean);
+            });
 
         // An issue where changing the alwaysOnTop property
         // focus the pop-out window
-        // Issue - Electron-209
-        if (mainWindow && mainWindow.winName) {
+        // Issue - Electron-209/470
+        if (mainWindow && mainWindow.winName && shouldActivateMainWindow) {
             activate(mainWindow.winName);
         }
     }
 }
 
 // node event emitter to update always on top
-eventEmitter.on('isAlwaysOnTop', (boolean) => {
-    isAlwaysOnTop(boolean);
-});
-
-// set downloads directory
-eventEmitter.on('setDownloadsDirectory', (newDirectory) => {
-    downloadsDirectory = newDirectory;
+eventEmitter.on('isAlwaysOnTop', (params) => {
+    isAlwaysOnTop(params.isAlwaysOnTop, params.shouldActivateMainWindow);
 });
 
 // node event emitter for notification settings
@@ -889,53 +942,6 @@ function repositionMainWindow() {
     }
 }
 
-/**
- * Creates a unique filename like Chrome
- * from a user's download directory
- * @param filename filename passed by the remote server
- * @returns {String} the new filename
- */
-function getUniqueFileName(filename) {
-
-    // By default, we assume that the file exists
-    const fileExists = true;
-
-    // We break the file from it's extension to get the name
-    const actualFilename = filename.substr(0, filename.lastIndexOf('.')) || filename;
-    const fileType = filename.split('.').pop();
-
-    // We use this to set the new file name with an increment on the previous existing file
-    let fileNumber = 0;
-    let newPath;
-
-    while (fileExists) {
-
-        let fileNameString = fileNumber.toString();
-
-        // By default, we know if the file doesn't exist,
-        // we can use the filename sent by the remote server
-        let current = filename;
-
-        // If the file already exists, we know that the
-        // file number variable is increased, so,
-        // we construct a new file name with the file number
-        if (fileNumber > 0) {
-            current = actualFilename + " (" + fileNameString + ")." + fileType;
-        }
-
-        // If the file exists, increment the file number and repeat the loop
-        if (fs.existsSync(downloadsDirectory + "/" + current)) {
-            fileNumber++;
-        } else {
-            newPath = current;
-            break;
-        }
-
-    }
-
-    return newPath;
-}
-
 module.exports = {
     createMainWindow: createMainWindow,
     getMainWindow: getMainWindow,
@@ -946,5 +952,6 @@ module.exports = {
     activate: activate,
     setBoundsChangeWindow: setBoundsChangeWindow,
     verifyDisplays: verifyDisplays,
-    getMenu: getMenu
+    getMenu: getMenu,
+    setIsAutoReload: setIsAutoReload
 };

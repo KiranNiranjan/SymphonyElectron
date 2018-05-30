@@ -1,7 +1,8 @@
 'use strict';
 
+const {app} = require('electron');
+const path = require('path');
 const getCmdLineArg = require('./utils/getCmdLineArg.js');
-const { isDevEnv } = require('./utils/misc');
 const logLevels = require('./enums/logLevels.js');
 
 const MAX_LOG_QUEUE_LENGTH = 100;
@@ -18,7 +19,7 @@ class Logger {
         this.logQueue = [];
 
         // Initializes the local logger
-        if (isDevEnv) {
+        if (!process.env.ELECTRON_QA) {
             initializeLocalLogger();
         }
     }
@@ -35,7 +36,7 @@ class Logger {
             return;
         }
 
-        if (isDevEnv) {
+        if (!process.env.ELECTRON_QA) {
             logLocally(level, details);
         }
 
@@ -103,6 +104,7 @@ let loggerInstance = new Logger();
 function initializeLocalLogger() {
 // eslint-disable-next-line global-require
     electronLog = require('electron-log');
+    electronLog.transports.file.file = path.join(app.getPath('logs'), 'app.log');
     electronLog.transports.file.level = 'debug';
     electronLog.transports.file.format = '{h}:{i}:{s}:{ms} {text}';
     electronLog.transports.file.maxSize = 10 * 1024 * 1024;
