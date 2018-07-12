@@ -49,6 +49,11 @@ function loadSpellChecker() {
     }
 }
 
+// eslint-disable-next-line
+window.eval = global.eval = function () {
+    throw new Error(`Sorry, this app does not support window.eval().`)
+};
+
 // hold ref so doesn't get GC'ed
 const local = {
     ipcRenderer: ipcRenderer
