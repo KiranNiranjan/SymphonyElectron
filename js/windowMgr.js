@@ -239,6 +239,9 @@ function doCreateMainWindow(initialUrl, initialBounds) {
         // Initialize crash reporter
         initCrashReporterMain({ process: 'main window' });
         initCrashReporterRenderer(mainWindow, { process: 'render | main window' });
+        if (isWindowsOS && mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.setMenuBarVisibility(false);
+        }
 
         url = mainWindow.webContents.getURL();
         mainWindow.webContents.send('on-page-load');
@@ -332,6 +335,7 @@ function doCreateMainWindow(initialUrl, initialBounds) {
     }
 
     mainWindow.on('closed', destroyAllWindows);
+    mainWindow.openDevTools();
 
     // Manage File Downloads
     mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
@@ -444,6 +448,9 @@ function doCreateMainWindow(initialUrl, initialBounds) {
                         // Removes the menu bar from the pop-out window
                         // setMenu is currently only supported on Windows and Linux
                         browserWin.setMenu(null);
+                    }
+                    if (isWindowsOS && browserWin && !browserWin.isDestroyed()) {
+                        browserWin.setMenuBarVisibility(false);
                     }
                     browserWin.webContents.send('on-page-load');
                     // applies styles required for snack bar
