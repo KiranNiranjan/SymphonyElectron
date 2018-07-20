@@ -561,6 +561,9 @@ function doCreateMainWindow(initialUrl, initialBounds) {
             }
         }
 
+        // This will initially register the global shortcut
+        globalShortcut.register(isMac ? 'Cmd+Alt+I' : 'Ctrl+Shift+I', devTools);
+
         app.on('browser-window-focus', function () {
             globalShortcut.register(isMac ? 'Cmd+Alt+I' : 'Ctrl+Shift+I', devTools);
         });
