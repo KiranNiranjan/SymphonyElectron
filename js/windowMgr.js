@@ -1069,7 +1069,7 @@ function handleKeyPress(keyCode) {
 function popupMenu() {
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (mainWindow && !mainWindow.isDestroyed() && focusedWindow === mainWindow) {
-        const popupOpts = { browserWin: mainWindow, x: 10, y: -40 };
+        const popupOpts = { browserWin: mainWindow, x: 10, y: -20 };
         getMenu().popup(popupOpts);
     }
 }
