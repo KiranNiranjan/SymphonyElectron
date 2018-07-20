@@ -19,13 +19,12 @@ const apiCmds = apiEnums.cmds;
 const apiName = apiEnums.apiName;
 const getMediaSources = require('../desktopCapturer/getSources');
 const getMediaSource = require('../desktopCapturer/getSource');
-const { TitleBar, updateContentHeight } = require('../windowsTitlebar');
-const titleBar = new TitleBar();
 const { buildNumber } = require('../../package.json');
 const memoryMonitorInterval = 1000 * 60 * 60;
 const SnackBar = require('../snackBar').SnackBar;
 const KeyCodes = {
     Esc: 27,
+    Alt: 18,
 };
 
 let Search;
@@ -457,20 +456,11 @@ function createAPI() {
         }
     });
 
-    // Adds custom title bar style for Windows 10 OS
-    local.ipcRenderer.on('initiate-windows-title-bar', (event, arg) => {
-        if (arg && typeof arg === 'string') {
-            titleBar.initiateWindowsTitleBar(arg);
-            updateContentHeight();
-        }
-    });
-
     /**
      * an event triggered by the main process when
      * the window enters full screen
      */
     local.ipcRenderer.on('window-enter-full-screen', (event, arg) => {
-        window.addEventListener('keydown', throttledKeyDown, true);
         if (snackBar && typeof arg === 'object' && arg.snackBar) {
             setTimeout(() => snackBar.showSnackBar(arg.snackBar), 500);
         }
@@ -481,7 +471,6 @@ function createAPI() {
      * the window leave full screen
      */
     local.ipcRenderer.on('window-leave-full-screen', () => {
-        window.removeEventListener('keydown', throttledKeyDown, true);
         if (snackBar) {
             snackBar.removeSnackBar();
         }
@@ -503,10 +492,10 @@ function createAPI() {
     }
 
     const throttledKeyDown = throttle(1000, (event) => {
-        if (event.keyCode === KeyCodes.Esc) {
+        if (event.keyCode === KeyCodes.Esc || event.keyCode === KeyCodes.Alt) {
             local.ipcRenderer.send(apiName, {
                 cmd: apiCmds.keyPress,
-                keyCode: KeyCodes.Esc
+                keyCode: event.keyCode
             });
         }
     });
@@ -514,6 +503,7 @@ function createAPI() {
     window.addEventListener('offline', updateOnlineStatus, false);
     window.addEventListener('online', updateOnlineStatus, false);
     window.addEventListener('beforeunload', sanitize, false);
+    window.addEventListener('keydown', throttledKeyDown, true);
 
     updateOnlineStatus();
 }

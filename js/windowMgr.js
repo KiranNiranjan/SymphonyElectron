@@ -11,7 +11,7 @@ const nodeURL = require('url');
 const querystring = require('querystring');
 const filesize = require('filesize');
 
-const { getTemplate, getMinimizeOnClose, getTitleBarStyle } = require('./menus/menuTemplate.js');
+const { getTemplate, getMinimizeOnClose } = require('./menus/menuTemplate.js');
 const loadErrors = require('./dialogs/showLoadError.js');
 const isInDisplayBounds = require('./utils/isInDisplayBounds.js');
 const getGuid = require('./utils/getGuid.js');
@@ -21,7 +21,7 @@ const notify = require('./notify/electron-notify.js');
 const eventEmitter = require('./eventEmitter');
 const throttle = require('./utils/throttle.js');
 const { getConfigField, updateConfigField, readConfigFileSync, getMultipleConfigField } = require('./config.js');
-const { isMac, isNodeEnv, isWindows10, isWindowsOS } = require('./utils/misc');
+const { isMac, isNodeEnv, isWindowsOS } = require('./utils/misc');
 const { isWhitelisted, parseDomain } = require('./utils/whitelistHandler');
 const { initCrashReporterMain, initCrashReporterRenderer } = require('./crashReporter.js');
 const i18n = require('./translation/i18n');
@@ -46,6 +46,7 @@ let isAutoReload = false;
 
 const KeyCodes = {
     Esc: 27,
+    Alt: 18,
 };
 
 // Application menu
@@ -102,15 +103,15 @@ function getParsedUrl(appUrl) {
  * @param initialUrl
  */
 function createMainWindow(initialUrl) {
-    getMultipleConfigField([ 'mainWinPos', 'isCustomTitleBar', 'locale' ])
+    getMultipleConfigField([ 'mainWinPos', 'locale' ])
         .then(configData => {
             lang = configData.locale || app.getLocale();
-            doCreateMainWindow(initialUrl, configData.mainWinPos, configData.isCustomTitleBar);
+            doCreateMainWindow(initialUrl, configData.mainWinPos);
         })
         .catch(() => {
             // failed use default bounds and frame
             lang = app.getLocale();
-            doCreateMainWindow(initialUrl, null, false);
+            doCreateMainWindow(initialUrl, null);
         });
 }
 
@@ -118,19 +119,12 @@ function createMainWindow(initialUrl) {
  * Creates the main window with bounds
  * @param initialUrl
  * @param initialBounds
- * @param isCustomTitleBar
  */
-function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
+function doCreateMainWindow(initialUrl, initialBounds) {
     let url = initialUrl;
     let key = getGuid();
 
     const config = readConfigFileSync();
-
-    // condition whether to enable custom Windows 10 title bar
-    const isCustomTitleBarEnabled = typeof isCustomTitleBar === 'boolean'
-        && isCustomTitleBar
-        && isWindows10();
-    log.send(logLevels.INFO, `we are configuring a custom title bar for windows -> ${isCustomTitleBarEnabled}`);
 
     ctWhitelist = config && config.ctWhitelist;
     log.send(logLevels.INFO, `we are configuring certificate transparency whitelist for the domains -> ${ctWhitelist}`);
@@ -153,7 +147,6 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         show: true,
         minWidth: MIN_WIDTH,
         minHeight: MIN_HEIGHT,
-        frame: !isCustomTitleBarEnabled,
         alwaysOnTop: false,
         webPreferences: {
             sandbox: sandboxed,
@@ -235,7 +228,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
 
     // Event needed to hide native menu bar on Windows 10 as we use custom menu bar
     mainWindow.webContents.once('did-start-loading', () => {
-        if (isWindows10() && mainWindow && !mainWindow.isDestroyed()) {
+        if (isWindowsOS && mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.setMenuBarVisibility(false);
         }
     });
@@ -251,12 +244,6 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         mainWindow.webContents.send('on-page-load');
         // initializes and applies styles required for snack bar
         mainWindow.webContents.insertCSS(fs.readFileSync(path.join(__dirname, '/snackBar/style.css'), 'utf8').toString());
-        if (isCustomTitleBarEnabled || isWindows10()) {
-            mainWindow.webContents.insertCSS(fs.readFileSync(path.join(__dirname, '/windowsTitleBar/style.css'), 'utf8').toString());
-            // This is required to initiate Windows title bar only after insertCSS
-            const titleBarStyle = getTitleBarStyle();
-            mainWindow.webContents.send('initiate-windows-title-bar', titleBarStyle);
-        }
 
         if (!isOnline) {
             loadErrors.showNetworkConnectivityError(mainWindow, url, retry);
@@ -1061,11 +1048,21 @@ function handleKeyPress(keyCode) {
             }
             break;
         }
+        case KeyCodes.Alt:
+            popupMenu();
+            break;
         default:
             break;
     }
 }
 
+function popupMenu() {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (mainWindow && !mainWindow.isDestroyed() && focusedWindow === mainWindow) {
+        const popupOpts = { browserWin: mainWindow, x: 10, y: -40 };
+        getMenu().popup(popupOpts);
+    }
+}
 
 module.exports = {
     createMainWindow: createMainWindow,
@@ -1079,5 +1076,6 @@ module.exports = {
     verifyDisplays: verifyDisplays,
     getMenu: getMenu,
     setIsAutoReload: setIsAutoReload,
-    handleKeyPress: handleKeyPress
+    handleKeyPress: handleKeyPress,
+    popupMenu: popupMenu
 };
