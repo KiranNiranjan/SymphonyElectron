@@ -22,8 +22,9 @@ let windowConfig = {
     resizable: false,
     webPreferences: {
         preload: path.join(__dirname, 'renderer.js'),
-        sandbox: true,
+        sandbox: false,
         nodeIntegration: false,
+        contextIsolation: true,
         devTools: false
     }
 };
