@@ -488,7 +488,7 @@ function buildCloseNotification(notificationWindow, notificationObj, getTimeoutI
 
         // safety check to prevent from using an
         // already destroyed notification window
-        if (notificationWindow.isDestroyed()) {
+        if (notificationWindow && notificationWindow.isDestroyed()) {
             return new Promise(function(exitEarly) { exitEarly() })
         }
 
@@ -700,6 +700,7 @@ function getWindow() {
             windowProperties.width = config.width;
             windowProperties.height = config.height;
             notificationWindow = new BrowserWindow(windowProperties);
+            notificationWindow.winName = 'notification-window';
             notificationWindow.setVisibleOnAllWorkspaces(true);
             notificationWindow.loadURL(getTemplatePath());
             notificationWindow.webContents.on('did-finish-load', function() {
@@ -738,11 +739,37 @@ function cleanUpActiveNotification(event) {
  */
 function cleanUpInactiveWindow() {
     inactiveWindows.forEach(function(window) {
-        if (!window.isDestroyed()) {
+        if (window && !window.isDestroyed()) {
             window.close();
         }
     });
     inactiveWindows = [];
+}
+
+/**
+ * Closes all the notification windows
+ * and cleans up the reference variables
+ */
+function closeAll() {
+    resetAnimationQueue();
+    const notificationWin = Object.assign([], activeNotifications);
+    for (let activeNotification of notificationWin) {
+        if (activeNotification && !activeNotification.isDestroyed()) {
+            activeNotification.close();
+        }
+    }
+
+    nextInsertPos = {};
+    activeNotifications = [];
+    notificationQueue = [];
+    cleanUpInactiveWindow();
+}
+
+/**
+ * Resets the animation queue instance
+ */
+function resetAnimationQueue() {
+    animationQueue = new AnimationQueue();
 }
 
 /**
@@ -785,3 +812,5 @@ ipc.on('electron-notify-mouseover', onMouseOver);
 module.exports.notify = notify;
 module.exports.updateConfig = updateConfig;
 module.exports.reset = setupConfig;
+module.exports.closeAll = closeAll;
+module.exports.resetAnimationQueue = resetAnimationQueue;
