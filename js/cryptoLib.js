@@ -106,7 +106,6 @@ const AESGCMEncrypt = function(Base64IV, Base64AAD, Base64Key, Base64In) {
 
     if (resultCode < 0) {
         log.send(logLevels.ERROR, `AESEncryptGCM, Failed to encrypt with exit code ${resultCode}`);
-        throw new Error(`AESEncryptGCM, Failed to encrypt with exit code ${resultCode}`);
     }
     log.send(logLevels.INFO, `Output from AESEncryptGCM ${resultCode}`);
     const bufferArray = [OutPtr, Tag];
@@ -133,7 +132,6 @@ const AESGCMDecrypt = function(Base64IV, Base64AAD, Base64Key, Base64In) {
 
     if (resultCode < 0) {
         log.send(logLevels.ERROR, `AESDecryptGCM, Failed to decrypt with exit code ${resultCode}`);
-        throw new Error(`AESDecryptGCM, Failed to decrypt with exit code ${resultCode}`);
     }
     log.send(logLevels.INFO, `Output from AESDecryptGCM ${resultCode}`);
     return OutPtr.toString('base64')
@@ -155,8 +153,7 @@ const RSAEncryptDecrypt = function (action, pemKey, inputStr) {
     let rsaKey = getRSAKeyFromPEM(pemKey);
 
     if (!rsaKey) {
-        log.send(logLevels.ERROR, `Failed to parse formatted RSA PEM key`);
-        throw new Error(`Failed to parse formatted RSA PEM key -> ${pemKey}`);
+        log.send(logLevels.ERROR, `Failed to parse formatted RSA PEM key -> ${pemKey}`);
     }
 
     let input = Buffer.from(inputStr, 'base64');
@@ -178,7 +175,6 @@ const RSAEncryptDecrypt = function (action, pemKey, inputStr) {
 
     if (ret !== 0) {
         log.send(logLevels.ERROR, `${action} failed due to -> ${ret}`);
-        throw new Error(`${action} failed due to -> ${ret}`);
     }
     return Buffer.from(outPtr.toString('hex'), 'hex').toString('base64');
 };
@@ -197,7 +193,6 @@ const getRSAKeyFromPEM = function (pemKey) {
 
     if (rsaKey === 0) {
         log.send(logLevels.ERROR, 'RSAKey is 0!!');
-        throw new Error('RSAKey is 0!!');
     }
     return rsaKey;
 };
