@@ -31,7 +31,9 @@ const KeyCodes = {
 
 let Search;
 let SearchUtils;
+let CryptoLib;
 let isAltKey = false;
+let isMenuOpen = false;
 
 try {
     Search = remote.require('swift-search').Search;
@@ -45,6 +47,14 @@ try {
 } catch (e) {
     // eslint-disable-next-line no-console
     console.warn("Failed to initialize swift search (Utils). You'll need to include the search dependency. Contact the developers for more details");
+}
+
+try {
+    CryptoLib = remote.require('./cryptoLib.js');
+} catch (e) {
+    CryptoLib = null;
+    // eslint-disable-next-line no-console
+    console.warn("Failed to initialize Crypto Lib. You'll need to include the Crypto library. Contact the developers for more details");
 }
 
 require('../downloadManager');
@@ -200,6 +210,11 @@ function createAPI() {
          * details in ./search/searchUtils.js & ./search/searchConfig.js
          */
         SearchUtils: SearchUtils || null,
+
+        /**
+         * Native encryption and decryption.
+         */
+        CryptoLib: CryptoLib,
 
         /**
          * Brings window forward and gives focus.
@@ -503,7 +518,7 @@ function createAPI() {
     }
 
     // Handle key down events
-    const throttledKeyDown = throttle(1000, (event) => {
+    const throttledKeyDown = throttle(500, (event) => {
         isAltKey = event.keyCode === KeyCodes.Alt;
         if (event.keyCode === KeyCodes.Esc) {
             local.ipcRenderer.send(apiName, {
@@ -514,12 +529,21 @@ function createAPI() {
     });
 
     // Handle key up events
-    const throttledKeyUp = throttle(1000, (event) => {
-        if (isAltKey && event.keyCode === KeyCodes.Alt) {
+    const throttledKeyUp = throttle(500, (event) => {
+        if (isAltKey && (event.keyCode === KeyCodes.Alt || KeyCodes.Esc)) {
+            isMenuOpen = !isMenuOpen;
+        }
+        if (isAltKey && isMenuOpen && event.keyCode === KeyCodes.Alt) {
             local.ipcRenderer.send(apiName, {
                 cmd: apiCmds.keyPress,
                 keyCode: event.keyCode
             });
+        }
+    });
+
+    const throttleMouseDown = throttle(500, () => {
+        if (isAltKey && isMenuOpen) {
+            isMenuOpen = !isMenuOpen;
         }
     });
 
@@ -528,6 +552,7 @@ function createAPI() {
     window.addEventListener('beforeunload', sanitize, false);
     window.addEventListener('keyup', throttledKeyUp, true);
     window.addEventListener('keydown', throttledKeyDown, true);
+    window.addEventListener('mousedown', throttleMouseDown, { capture: true });
 
     updateOnlineStatus();
 }

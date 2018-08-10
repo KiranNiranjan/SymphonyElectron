@@ -322,7 +322,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
     addWindowKey(key, mainWindow);
     mainWindow.loadURL(url);
 
-    setLocale(mainWindow, lang);
+    setLocale(mainWindow, { language: lang });
 
     mainWindow.on('close', function (e) {
         if (willQuitApp) {
@@ -465,11 +465,6 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
                         if (browserWin) {
                             log.send(logLevels.INFO, 'loaded pop-out window url: ' + newWinParsedUrl);
 
-                            if (!isMac) {
-                                // Removes the menu bar from the pop-out window
-                                // setMenu is currently only supported on Windows and Linux
-                                browserWin.setMenu(null);
-                            }
                             browserWin.webContents.send('on-page-load');
                             // applies styles required for snack bar
                             browserWin.webContents.insertCSS(fs.readFileSync(path.join(__dirname, '/snackBar/style.css'), 'utf8').toString());
