@@ -5,6 +5,7 @@
   "rules": {
     "curly": false,
     "eofline": false,
+    "interface-name": [true, "never-prefix"],
     "align": [
       true,
       "parameters"

@@ -3,7 +3,6 @@
     "module": "commonjs",
     "pretty": true,
     "target": "ES2016",
-    "outDir": "lib",
     "lib": [
       "es2016",
       "dom"
