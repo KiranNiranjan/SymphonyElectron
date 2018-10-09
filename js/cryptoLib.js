@@ -136,13 +136,16 @@ const EncryptDecrypt = function (name, Base64IV, Base64AAD, Base64Key, Base64In)
     const In = Buffer.from(base64In, 'base64');
 
     if (name === 'AESGCMEncrypt') {
-        const OutPtr = Buffer.alloc(In.length);
-        const Tag = Buffer.alloc(TAG_LENGTH);
+        let OutPtr = Buffer.alloc(In.length);
+        let Tag = Buffer.alloc(TAG_LENGTH);
 
         const resultCode = library.AESEncryptGCM(In, In.length, AAD, AAD.length, Key, IV, IV.length, OutPtr, Tag, TAG_LENGTH);
 
         if (resultCode < 0) {
             log.send(logLevels.ERROR, `AESEncryptGCM, Failed to encrypt with exit code ${resultCode}`);
+            OutPtr = null;
+            Tag = null;
+            return null;
         }
         log.send(logLevels.INFO, `Output from AESEncryptGCM ${resultCode}`);
         const bufferArray = [OutPtr, Tag];
@@ -151,13 +154,17 @@ const EncryptDecrypt = function (name, Base64IV, Base64AAD, Base64Key, Base64In)
 
     if (name === 'AESGCMDecrypt') {
         const CipherTextLen = In.length - TAG_LENGTH;
-        const Tag = Buffer.from(In.slice(In.length - 16, In.length));
-        const OutPtr = Buffer.alloc(In.length - TAG_LENGTH);
+        let Tag = Buffer.from(In.slice(In.length - 16, In.length));
+        let OutPtr = Buffer.alloc(In.length - TAG_LENGTH);
 
         const resultCode = library.AESDecryptGCM(In, CipherTextLen, AAD, AAD.length, Tag, TAG_LENGTH, Key, IV, IV.length, OutPtr);
 
         if (resultCode < 0) {
+            OutPtr = null;
+            Tag = null;
+            log.send(logLevels.ERROR, `AES Description -8 ${name}, ${Base64IV}, ${Base64AAD}, ${Base64Key}, ${Base64In}`);
             log.send(logLevels.ERROR, `AESDecryptGCM, Failed to decrypt with exit code ${resultCode}`);
+            return null;
         }
         log.send(logLevels.INFO, `Output from AESDecryptGCM ${resultCode}`);
         return OutPtr.toString('base64');
@@ -191,6 +198,7 @@ const RSAEncryptDecrypt = function (action, pemKey, inputStr) {
 
     if (!rsaKey) {
         log.send(logLevels.ERROR, `Failed to parse formatted RSA PEM key`);
+        return null;
     }
 
     let input = Buffer.from(inputStr, 'base64');
@@ -212,8 +220,11 @@ const RSAEncryptDecrypt = function (action, pemKey, inputStr) {
 
     if (ret !== 0) {
         log.send(logLevels.ERROR, `${action} failed due to -> ${ret}`);
+    } else {
+        return Buffer.from(outPtr.toString('hex'), 'hex').toString('base64');
     }
-    return Buffer.from(outPtr.toString('hex'), 'hex').toString('base64');
+
+    return null;
 };
 
 /**
@@ -235,8 +246,11 @@ const getRSAKeyFromPEM = function (pemKey) {
 
     if (rsaKey === 0) {
         log.send(logLevels.ERROR, 'RSAKey is 0!!');
+    } else {
+        return rsaKey;
     }
-    return rsaKey;
+
+    return null;
 };
 
 
