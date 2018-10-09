@@ -50,7 +50,7 @@ try {
 }
 
 try {
-    CryptoLib = remote.require('./cryptoLib.js');
+    CryptoLib = null;
 } catch (e) {
     CryptoLib = null;
     // eslint-disable-next-line no-console
