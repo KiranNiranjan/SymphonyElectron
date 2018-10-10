@@ -65,20 +65,20 @@ let snackBar;
  */
 function loadSpellChecker() {
     try {
-        /* eslint-disable global-require */
+        /*/!* eslint-disable global-require *!/
         const SpellCheckerHelper = require('../spellChecker').SpellCheckHelper;
-        /* eslint-enable global-require */
+        /!* eslint-enable global-require *!/
         // Method to initialize spell checker
         spellChecker = new SpellCheckerHelper();
-        spellChecker.initializeSpellChecker();
-        /*local.webFrame.setSpellCheckProvider('en-US', true, {
+        spellChecker.initializeSpellChecker();*/
+        local.webFrame.setSpellCheckProvider('en-US', true, {
             spellCheck (text) {
                 return !local.ipcRenderer.sendSync(apiName, {
                     cmd: apiCmds.isMisspelled,
                     text
                 });
             }
-        });*/
+        });
     } catch (err) {
         /* eslint-disable no-console */
         console.error('unable to load the spell checker module, hence, skipping the spell check feature ' + err);
