@@ -180,6 +180,7 @@ electron.ipcMain.on(apiName, (event, arg) => {
             break;
         case apiCmds.isMisspelled:
             if (typeof arg.text === 'string') {
+                /* eslint-disable */
                 event.returnValue = spellChecker.isMisspelled(arg.text);
             }
             break;
