@@ -10,7 +10,7 @@ const logLevels = require('./enums/logLevels.js');
 const { isMac, isDevEnv } = require('../js/utils/misc');
 
 const TAG_LENGTH = 16;
-const KEY_LENGTH = 32;
+// const KEY_LENGTH = 32;
 const arch = process.arch === 'ia32';
 const winLibraryPath = isDevEnv ? path.join(__dirname, '..', 'library') : path.join(execPath, 'library');
 const macLibraryPath = isDevEnv ? path.join(__dirname, '..', 'library') : path.join(execPath, '..', 'library');
@@ -180,18 +180,18 @@ const EncryptDecrypt = function (name, Base64IV, Base64AAD, Base64Key, Base64In)
  * @return {*}
  * @constructor
  */
-const RSADecrypt = function (pemKey, input) {
+/*const RSADecrypt = function (pemKey, input) {
     return RSAEncryptDecrypt("RSADecrypt", pemKey, input);
 };
 
-/**
+/!**
  * Encrypt / Decrypt RSA
  * @param action
  * @param pemKey
  * @param inputStr
  * @return {String}
  * @constructor
- */
+ *!/
 const RSAEncryptDecrypt = function (action, pemKey, inputStr) {
 
     let rsaKey = getRSAKeyFromPEM(pemKey);
@@ -227,11 +227,11 @@ const RSAEncryptDecrypt = function (action, pemKey, inputStr) {
     return null;
 };
 
-/**
+/!**
  * Get RSA key from PEM key
  * @param pemKey
  * @return {*}
- */
+ *!/
 const getRSAKeyFromPEM = function (pemKey) {
 
     let pemKeyBytes = Buffer.from(pemKey, 'utf-8');
@@ -251,7 +251,7 @@ const getRSAKeyFromPEM = function (pemKey) {
     }
 
     return null;
-};
+};*/
 
 
 module.exports = {
