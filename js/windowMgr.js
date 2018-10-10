@@ -26,6 +26,8 @@ const { isWhitelisted, parseDomain } = require('./utils/whitelistHandler');
 const { initCrashReporterMain, initCrashReporterRenderer } = require('./crashReporter.js');
 const i18n = require('./translation/i18n');
 const getCmdLineArg = require('./utils/getCmdLineArg');
+const ContextMenuBuilder = require('./spellChecker/contextMenuBuilder').default;
+const { SpellCheckHandler } = require('./spellChecker/spellchecker');
 
 // show dialog when certificate errors occur
 require('./dialogs/showCertError.js');
@@ -163,8 +165,8 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         frame: !isCustomTitleBarEnabled,
         alwaysOnTop: false,
         webPreferences: {
-            sandbox: sandboxed,
-            nodeIntegration: isNodeEnv,
+            sandbox: true,
+            nodeIntegration: false,
             preload: preloadMainScript,
             nativeWindowOpen: true
         }
@@ -259,6 +261,11 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         // Initialize crash reporter
         initCrashReporterMain({ process: 'main window' });
         initCrashReporterRenderer(mainWindow, { process: 'render | main window' });
+
+        const contextMenuBuilder = new ContextMenuBuilder(SpellCheckHandler);
+        mainWindow.webContents.on('context-menu', (e, info) => {
+            contextMenuBuilder.showPopupMenu(info);
+        });
 
         url = mainWindow.webContents.getURL();
         mainWindow.webContents.send('on-page-load');
@@ -469,6 +476,10 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
                         let browserWin = BrowserWindow.fromWebContents(childWebContents);
 
                         if (browserWin) {
+                            const contextMenuBuilder = new ContextMenuBuilder(SpellCheckHandler);
+                            browserWin.webContents.on('context-menu', (e, info) => {
+                                contextMenuBuilder.showPopupMenu(info);
+                            });
                             log.send(logLevels.INFO, 'loaded pop-out window url: ' + newWinParsedUrl);
 
                             browserWin.webContents.send('on-page-load');

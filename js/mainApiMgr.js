@@ -18,6 +18,7 @@ const eventEmitter = require('./eventEmitter');
 const { isMac } = require('./utils/misc');
 const { openScreenPickerWindow } = require('./desktopCapturer');
 const { setPreloadMemoryInfo, setIsInMeeting, setPreloadWindow } = require('./memoryMonitor');
+const spellChecker = require('./spellChecker/spellchecker');
 
 const apiEnums = require('./enums/api.js');
 const apiCmds = apiEnums.cmds;
@@ -175,6 +176,11 @@ electron.ipcMain.on(apiName, (event, arg) => {
         case apiCmds.keyPress:
             if (typeof arg.keyCode === 'number') {
                 windowMgr.handleKeyPress(arg.keyCode);
+            }
+            break;
+        case apiCmds.isMisspelled:
+            if (typeof arg.text === 'string') {
+                event.returnValue = spellChecker.isMisspelled(arg.text);
             }
             break;
         default:
