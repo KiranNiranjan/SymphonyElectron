@@ -257,5 +257,5 @@ const getRSAKeyFromPEM = function (pemKey) {
 module.exports = {
     AESGCMEncrypt: AESGCMEncrypt,
     AESGCMDecrypt: AESGCMDecrypt,
-    RSADecrypt: RSADecrypt,
+    // RSADecrypt: RSADecrypt,
 };
