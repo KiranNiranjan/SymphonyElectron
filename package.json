@@ -22,7 +22,7 @@
     "unpacked-win-x86": "npm run prebuild && npm run test && build --win --ia32 --dir"
   },
   "build": {
-    "electronDist": "",
+    "electronDist": "/Users/chromiumbuild/Desktop/electron-gn/src/out/Release",
     "asarUnpack": [
       "node_modules/@paulcbetts/cld/build/Release/cld.node"
     ],
