@@ -26,9 +26,6 @@ const { isWhitelisted, parseDomain } = require('./utils/whitelistHandler');
 const { initCrashReporterMain, initCrashReporterRenderer } = require('./crashReporter.js');
 const i18n = require('./translation/i18n');
 const getCmdLineArg = require('./utils/getCmdLineArg');
-const SpellChecker = require('./spellChecker').SpellCheckHelper;
-const spellchecker = new SpellChecker();
-const { ContextMenuBuilder } = require('electron-spellchecker');
 
 // show dialog when certificate errors occur
 require('./dialogs/showCertError.js');
@@ -260,13 +257,6 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         // Initialize crash reporter
         initCrashReporterMain({ process: 'main window' });
         initCrashReporterRenderer(mainWindow, { process: 'render | main window' });
-        spellchecker.initializeSpellChecker();
-        const contextMenuBuilder = new ContextMenuBuilder(spellchecker.spellCheckHandler, null, false, spellchecker.processMenu.bind(this));
-        contextMenuBuilder.setAlternateStringFormatter(spellchecker.getStringTable(i18n.getMessageFor('ContextMenu')));
-
-        mainWindow.webContents.on('context-menu', (e, info) => {
-            contextMenuBuilder.showPopupMenu(info);
-        });
 
         url = mainWindow.webContents.getURL();
         mainWindow.webContents.send('on-page-load');
@@ -478,12 +468,6 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
 
                         if (browserWin) {
                             log.send(logLevels.INFO, 'loaded pop-out window url: ' + newWinParsedUrl);
-                            const contextMenuBuilder = new ContextMenuBuilder(spellchecker.spellCheckHandler, null, false, spellchecker.processMenu.bind(this));
-                            contextMenuBuilder.setAlternateStringFormatter(spellchecker.getStringTable(i18n.getMessageFor('ContextMenu')));
-
-                            browserWin.webContents.on('context-menu', (e, info) => {
-                                contextMenuBuilder.showPopupMenu(info);
-                            });
 
                             browserWin.webContents.send('on-page-load');
                             // applies styles required for snack bar
@@ -1030,8 +1014,6 @@ function setLocale(browserWindow, opts) {
         if (isMac) {
             localeContent.downloadManager['Show in Folder'] = localeContent.downloadManager['Reveal in Finder'];
         }
-
-        spellchecker.updateContextMenuLocale(localeContent.contextMenu);
         browserWindow.webContents.send('locale-changed', localeContent);
     }
 
