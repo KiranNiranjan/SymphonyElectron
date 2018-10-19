@@ -1214,11 +1214,6 @@ function popupMenu() {
     }
 }
 
-function isMisspelled(text) {
-    return spellchecker.isMisspelled(text);
-}
-
-
 module.exports = {
     createMainWindow: createMainWindow,
     getMainWindow: getMainWindow,
@@ -1235,5 +1230,4 @@ module.exports = {
     cleanUpChildWindows: cleanUpChildWindows,
     setLocale: setLocale,
     getIsOnline: getIsOnline,
-    isMisspelled: isMisspelled,
 };
