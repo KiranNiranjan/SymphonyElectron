@@ -51,8 +51,6 @@ require('./mainApiMgr.js');
 require('./memoryMonitor.js');
 
 const windowMgr = require('./windowMgr.js');
-const SpellChecker = require('./spellChecker').SpellCheckHelper;
-const spellchecker = new SpellChecker();
 const { ContextMenuBuilder } = require('electron-spellchecker');
 const i18n = require('./translation/i18n');
 
@@ -256,6 +254,7 @@ app.on('web-contents-created', function (event, webContents) {
 });
 
 function onWebContent(webContents) {
+    const spellchecker = windowMgr.getSpellchecker();
     spellchecker.initializeSpellChecker();
     spellchecker.updateContextMenuLocale(i18n.getMessageFor('ContextMenu'));
     const contextMenuBuilder = new ContextMenuBuilder(spellchecker.spellCheckHandler, webContents, false, spellchecker.processMenu.bind(spellchecker));

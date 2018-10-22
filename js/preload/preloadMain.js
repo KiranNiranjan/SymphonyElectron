@@ -12,6 +12,7 @@
 // https://github.com/electron/electron/issues/2984
 //
 const { ipcRenderer, remote, crashReporter } = require('electron');
+const webFrame = require('electron').webFrame;
 
 const throttle = require('../utils/throttle.js');
 const apiEnums = require('../enums/api.js');
@@ -59,6 +60,27 @@ try {
 require('../downloadManager');
 let snackBar;
 
+/**
+ * Loads up the spell checker module
+ */
+function loadSpellChecker() {
+    try {
+        webFrame.setSpellCheckProvider('en-US', true, {
+            spellCheck (text) {
+                return !local.ipcRenderer.sendSync(apiName, {
+                    cmd: apiCmds.isMisspelled,
+                    text
+                });
+            }
+        });
+    } catch (err) {
+        /* eslint-disable no-console */
+        console.error('unable to load the spell checker module, hence, skipping the spell check feature ' + err);
+        /* eslint-enable no-console */
+    }
+}
+
+
 // hold ref so doesn't get GC'ed
 const local = {
     ipcRenderer: ipcRenderer
@@ -83,6 +105,7 @@ const throttledSetIsInMeetingStatus = throttle(1000, function (isInMeeting) {
  * an event triggered by the main process onload event
  */
 local.ipcRenderer.on('on-page-load', () => {
+    loadSpellChecker();
     snackBar = new SnackBar();
 
     // only registers main window's preload

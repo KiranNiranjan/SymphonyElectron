@@ -26,6 +26,8 @@ const { isWhitelisted, parseDomain } = require('./utils/whitelistHandler');
 const { initCrashReporterMain, initCrashReporterRenderer } = require('./crashReporter.js');
 const i18n = require('./translation/i18n');
 const getCmdLineArg = require('./utils/getCmdLineArg');
+const SpellChecker = require('./spellChecker').SpellCheckHelper;
+const spellchecker = new SpellChecker();
 
 // show dialog when certificate errors occur
 require('./dialogs/showCertError.js');
@@ -1196,6 +1198,18 @@ function popupMenu() {
     }
 }
 
+function getSpellchecker() {
+    return spellchecker;
+}
+
+function isMisspelled(text) {
+    if (!spellchecker) {
+        return false;
+    }
+    return spellchecker.isMisspelled(text);
+}
+
+
 module.exports = {
     createMainWindow: createMainWindow,
     getMainWindow: getMainWindow,
@@ -1212,4 +1226,6 @@ module.exports = {
     cleanUpChildWindows: cleanUpChildWindows,
     setLocale: setLocale,
     getIsOnline: getIsOnline,
+    getSpellchecker: getSpellchecker,
+    isMisspelled: isMisspelled,
 };
