@@ -26,7 +26,7 @@ const { isWhitelisted, parseDomain } = require('./utils/whitelistHandler');
 const { initCrashReporterMain, initCrashReporterRenderer } = require('./crashReporter.js');
 const i18n = require('./translation/i18n');
 const getCmdLineArg = require('./utils/getCmdLineArg');
-const customCertificate = require('./../config/certificate');
+let customCertificates;
 
 // show dialog when certificate errors occur
 require('./dialogs/showCertError.js');
@@ -716,16 +716,36 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         let { tld, domain } = parseDomain(hostUrl);
         let host = domain + tld;
 
+        if (!customCertificates) {
+            let certificatesFileName = path.join('config', 'certificate.json');
+            let certPath;
+            if (isDevEnv) {
+                certPath = path.join(app.getAppPath(), certificatesFileName);
+            } else {
+                let execPath = path.dirname(app.getPath('exe'));
+                certPath = path.join(execPath, isMac ? '..' : '', certificatesFileName);
+            }
+
+            if (fs.existsSync(certPath)) {
+                try {
+                    customCertificates = JSON.parse(fs.readFileSync(certPath, 'utf8'));
+                } catch (e) {
+                    log.send(logLevels.INFO, `Error reading certificate file error: ${e}`);
+                    return callback(-2);
+                }
+            }
+        }
+
         if ((ctWhitelist
             && Array.isArray(ctWhitelist)
             && ctWhitelist.length > 0
             && ctWhitelist.indexOf(host) > -1)
-            || customCertificate[certificate.issuer.commonName] === certificate.data) {
+            || customCertificates[certificate.issuer.commonName] === certificate.data) {
             log.send(logLevels.INFO, `certificate verification successful for ${certificate.issuer.commonName}`);
             return callback(0);
         }
 
-        if (!config.customCertificateVerification && errorCode === 0) {
+        if (!config.verifyRootCA && errorCode === 0) {
             return callback(0);
         }
 
