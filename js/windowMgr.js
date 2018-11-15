@@ -740,7 +740,9 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
             && Array.isArray(ctWhitelist)
             && ctWhitelist.length > 0
             && ctWhitelist.indexOf(host) > -1)
-            || customCertificates[certificate.issuer.commonName] === certificate.data) {
+            || (customCertificates
+                && typeof customCertificates[certificate.issuer.commonName] === 'string'
+                && customCertificates[certificate.issuer.commonName] === certificate.data)) {
             log.send(logLevels.INFO, `certificate verification successful for ${certificate.issuer.commonName}`);
             return callback(0);
         }
