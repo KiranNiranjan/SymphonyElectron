@@ -26,6 +26,7 @@ const { isWhitelisted, parseDomain } = require('./utils/whitelistHandler');
 const { initCrashReporterMain, initCrashReporterRenderer } = require('./crashReporter.js');
 const i18n = require('./translation/i18n');
 const getCmdLineArg = require('./utils/getCmdLineArg');
+const customCertificate = require('./../config/certificate');
 
 // show dialog when certificate errors occur
 require('./dialogs/showCertError.js');
@@ -44,6 +45,7 @@ let display;
 let isAutoReload = false;
 let devToolsEnabled = true;
 let isCustomTitleBarEnabled = true;
+let config;
 
 const KeyCodes = {
     Esc: 27,
@@ -130,7 +132,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
     let url = initialUrl;
     let key = getGuid();
 
-    const config = readConfigFileSync();
+    config = readConfigFileSync();
 
     // condition whether to enable custom Windows 10 title bar
     isCustomTitleBarEnabled = typeof isCustomTitleBar === 'boolean'
@@ -709,19 +711,26 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
 
     function handleCertificateTransparencyChecks(request, callback) {
 
-        const { hostname: hostUrl, errorCode } = request;
-
-        if (errorCode === 0) {
-            return callback(0);
-        }
+        const { certificate, hostname: hostUrl, errorCode } = request;
 
         let { tld, domain } = parseDomain(hostUrl);
         let host = domain + tld;
 
-        if (ctWhitelist && Array.isArray(ctWhitelist) && ctWhitelist.length > 0 && ctWhitelist.indexOf(host) > -1) {
+        if ((ctWhitelist
+            && Array.isArray(ctWhitelist)
+            && ctWhitelist.length > 0
+            && ctWhitelist.indexOf(host) > -1)
+            || customCertificate[certificate.issuer.commonName] === certificate.data) {
+            log.send(logLevels.INFO, `certificate verification successful for ${certificate.issuer.commonName}`);
             return callback(0);
         }
 
+        if (!config.customCertificateVerification && errorCode === 0) {
+            return callback(0);
+        }
+
+        log.send(logLevels.ERROR, `certificate verification failed for ${certificate.issuer.commonName}`);
+        electron.dialog.showErrorBox('Certificate verification failed', 'Custom certificate verification failed. Please contact your administrator');
         return callback(-2);
     }
 
