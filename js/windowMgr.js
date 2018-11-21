@@ -602,7 +602,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         function devTools() {
             const focusedWindow = BrowserWindow.getFocusedWindow();
 
-            
+
             if (focusedWindow && !focusedWindow.isDestroyed()) {
                 if (devToolsEnabled) {
                     focusedWindow.webContents.toggleDevTools();
@@ -716,23 +716,19 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         let { tld, domain } = parseDomain(hostUrl);
         let host = domain + tld;
 
-        if (!customCertificates) {
-            let certificatesFileName = path.join('config', 'certificate.json');
-            let certPath;
-            if (isDevEnv) {
-                certPath = path.join(app.getAppPath(), certificatesFileName);
-            } else {
-                let execPath = path.dirname(app.getPath('exe'));
-                certPath = path.join(execPath, isMac ? '..' : '', certificatesFileName);
-            }
+        if (config.verifyRootCA && !fs.existsSync(config.customRootCAPath)) {
+            electron.dialog.showErrorBox('Invalid customRootCAPath', `file does not exists ${config.customRootCAPath}`);
+            log.send(logLevels.ERROR, `Invalid customRootCAPath, file does not exists ${config.customRootCAPath}`);
+            return callback(-2);
+        }
 
-            if (fs.existsSync(certPath)) {
-                try {
-                    customCertificates = JSON.parse(fs.readFileSync(certPath, 'utf8'));
-                } catch (e) {
-                    log.send(logLevels.INFO, `Error reading certificate file error: ${e}`);
-                    return callback(-2);
-                }
+        if (!customCertificates && config.verifyRootCA) {
+            try {
+                customCertificates = JSON.parse(fs.readFileSync(config.customRootCAPath, 'utf8'));
+            } catch (e) {
+                log.send(logLevels.INFO, `Error reading custom root CA file error: ${e}`);
+                electron.dialog.showErrorBox('Failed to read/parse custom root CA file', `Error reading custom root CA file error: ${e}`);
+                return callback(-2);
             }
         }
 
@@ -740,9 +736,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
             && Array.isArray(ctWhitelist)
             && ctWhitelist.length > 0
             && ctWhitelist.indexOf(host) > -1)
-            || (customCertificates
-                && typeof customCertificates[certificate.issuer.commonName] === 'string'
-                && customCertificates[certificate.issuer.commonName] === certificate.data)) {
+            || (isValidCert(customCertificates, certificate))) {
             log.send(logLevels.INFO, `certificate verification successful for ${certificate.issuer.commonName}`);
             return callback(0);
         }
@@ -764,6 +758,18 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
 app.on('before-quit', function () {
     willQuitApp = true;
 });
+
+/**
+ * Matches Root CA with the custom CA to validate
+ * @param customCert
+ * @param certificate
+ * @return {*|boolean}
+ */
+function isValidCert(customCert, certificate) {
+    return customCert
+        && typeof customCert[ certificate.issuerCert.issuerName ] === 'string'
+        && customCert[ certificate.issuerCert.issuerName ] === certificate.issuerCert.data;
+}
 
 /**
  * Saves the main window bounds
@@ -1193,6 +1199,8 @@ function handleKeyPress(keyCode) {
  * Finds all the child window and closes it
  */
 function cleanUpChildWindows() {
+    // reset custom certificates on browser window reload
+    customCertificates = undefined;
     const browserWindows = BrowserWindow.getAllWindows();
     notify.resetAnimationQueue();
     if (browserWindows && browserWindows.length) {
