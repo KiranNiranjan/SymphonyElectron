@@ -94,6 +94,13 @@ if (!allowMultiInstance && shouldQuit) {
     app.quit();
 }
 
+// Sets proxy-pac-url command line switch
+const proxyPac = getCmdLineArg(process.argv, '--proxy-pac-url', false);
+if (proxyPac) {
+    log.send(logLevels.INFO, 'Setting proxy pac url flag via cmd line');
+    app.commandLine.appendSwitch('proxy-pac-url', proxyPac.substr(16));
+}
+
 /**
  * Sets chrome authentication flags in electron
  */
@@ -122,6 +129,11 @@ function setChromeFlags() {
             app.commandLine.appendSwitch("disable-gpu", true);
             app.commandLine.appendSwitch("disable-gpu-compositing", true);
             app.commandLine.appendSwitch("disable-d3d11", true);
+        }
+
+        if (config.customFlags.proxyPacUrl) {
+            log.send(logLevels.INFO, 'Setting proxy pac url flag via config file');
+            app.commandLine.appendSwitch('proxy-pac-url', config.customFlags.proxyPacUrl);
         }
 
     }
