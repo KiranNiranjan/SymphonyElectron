@@ -26,6 +26,7 @@ const { isWhitelisted, parseDomain } = require('./utils/whitelistHandler');
 const { initCrashReporterMain, initCrashReporterRenderer } = require('./crashReporter.js');
 const i18n = require('./translation/i18n');
 const getCmdLineArg = require('./utils/getCmdLineArg');
+let customCertificates;
 
 // show dialog when certificate errors occur
 require('./dialogs/showCertError.js');
@@ -44,6 +45,7 @@ let display;
 let isAutoReload = false;
 let devToolsEnabled = true;
 let isCustomTitleBarEnabled = true;
+let config;
 
 const KeyCodes = {
     Esc: 27,
@@ -130,7 +132,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
     let url = initialUrl;
     let key = getGuid();
 
-    const config = readConfigFileSync();
+    config = readConfigFileSync();
 
     // condition whether to enable custom Windows 10 title bar
     isCustomTitleBarEnabled = typeof isCustomTitleBar === 'boolean'
@@ -599,7 +601,6 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         function devTools() {
             const focusedWindow = BrowserWindow.getFocusedWindow();
 
-            
             if (focusedWindow && !focusedWindow.isDestroyed()) {
                 if (devToolsEnabled) {
                     focusedWindow.webContents.toggleDevTools();
@@ -708,19 +709,42 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
 
     function handleCertificateTransparencyChecks(request, callback) {
 
-        const { hostname: hostUrl, errorCode } = request;
-
-        if (errorCode === 0) {
-            return callback(0);
-        }
+        const { certificate, hostname: hostUrl, errorCode } = request;
 
         let { tld, domain } = parseDomain(hostUrl);
         let host = domain + tld;
 
-        if (ctWhitelist && Array.isArray(ctWhitelist) && ctWhitelist.length > 0 && ctWhitelist.indexOf(host) > -1) {
+        if (config.verifyRootCA && !fs.existsSync(config.customRootCAPath)) {
+            electron.dialog.showErrorBox('Invalid customRootCAPath', `file does not exists ${config.customRootCAPath}`);
+            log.send(logLevels.ERROR, `Invalid customRootCAPath, file does not exists ${config.customRootCAPath}`);
+            return callback(-2);
+        }
+
+        if (!customCertificates && config.verifyRootCA) {
+            try {
+                customCertificates = JSON.parse(fs.readFileSync(config.customRootCAPath, 'utf8'));
+            } catch (e) {
+                log.send(logLevels.INFO, `Error reading custom root CA file error: ${e}`);
+                electron.dialog.showErrorBox('Failed to read/parse custom root CA file', `Error reading custom root CA file error: ${e}`);
+                return callback(-2);
+            }
+        }
+
+        if ((ctWhitelist
+            && Array.isArray(ctWhitelist)
+            && ctWhitelist.length > 0
+            && ctWhitelist.indexOf(host) > -1)
+            || (isValidCert(customCertificates, certificate))) {
+            log.send(logLevels.INFO, `certificate verification successful for ${certificate.issuer.commonName}`);
             return callback(0);
         }
 
+        if (!config.verifyRootCA && errorCode === 0) {
+            return callback(0);
+        }
+
+        log.send(logLevels.ERROR, `certificate verification failed for ${certificate.issuer.commonName}`);
+        electron.dialog.showErrorBox('Certificate verification failed', 'Custom certificate verification failed. Please contact your administrator');
         return callback(-2);
     }
 
@@ -732,6 +756,18 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
 app.on('before-quit', function () {
     willQuitApp = true;
 });
+
+/**
+ * Matches Root CA with the custom CA to validate
+ * @param customCert
+ * @param certificate
+ * @return {*|boolean}
+ */
+function isValidCert(customCert, certificate) {
+    return customCert
+        && typeof customCert[ certificate.issuerCert.issuerName ] === 'string'
+        && customCert[ certificate.issuerCert.issuerName ] === certificate.issuerCert.data;
+}
 
 /**
  * Saves the main window bounds
@@ -1163,6 +1199,8 @@ function handleKeyPress(keyCode) {
  * Finds all the child window and closes it
  */
 function cleanUpChildWindows() {
+    // reset custom certificates on browser window reload
+    customCertificates = undefined;
     const browserWindows = BrowserWindow.getAllWindows();
     notify.resetAnimationQueue();
     if (browserWindows && browserWindows.length) {
