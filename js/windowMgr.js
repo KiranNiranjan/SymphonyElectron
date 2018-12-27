@@ -323,7 +323,7 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
 
     mainWindow.webContents.on('did-fail-load', function (event, errorCode,
         errorDesc, validatedURL) {
-        loadErrors.showLoadFailure(mainWindow, validatedURL, errorDesc, errorCode, retry, false);
+        loadErrors.showLoadFailure(mainWindow, validatedURL, errorDesc, errorCode, retry, true);
     });
 
     // In case a renderer process crashes, provide an
