@@ -177,7 +177,8 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         frame: !isCustomTitleBarEnabled,
         alwaysOnTop: false,
         webPreferences: {
-            sandbox: true,
+            sandbox: false,
+            nativeWindowOpen: true,
             nodeIntegration: false,
             preload: preloadMainScript,
         }
