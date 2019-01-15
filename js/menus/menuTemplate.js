@@ -278,11 +278,6 @@ function getTemplate(app) {
         });
         // Window menu.
         template[3].submenu = [{
-            accelerator: 'CmdOrCtrl+W',
-            role: 'close',
-            label: i18n.getMessageFor('Close')
-        },
-        {
             accelerator: 'CmdOrCtrl+M',
             role: 'minimize',
             label: i18n.getMessageFor('Minimize')

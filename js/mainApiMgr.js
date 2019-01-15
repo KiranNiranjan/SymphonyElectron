@@ -68,8 +68,6 @@ function sanitize(windowName) {
         if (!isMac) {
             eventEmitter.emit('killScreenSnippet');
         }
-        // Closes all the child windows
-        windowMgr.cleanUpChildWindows();
     }
 }
 

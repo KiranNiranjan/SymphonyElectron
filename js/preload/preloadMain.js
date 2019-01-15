@@ -541,6 +541,11 @@ function createAPI() {
         }
     });
 
+    // closes the window
+    local.ipcRenderer.on('close-window', () => {
+        window.close();
+    });
+
     function updateOnlineStatus() {
         local.ipcRenderer.send(apiName, {
             cmd: apiCmds.isOnline,

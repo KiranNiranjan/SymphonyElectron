@@ -608,8 +608,10 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
                                 browserWin.removeListener('leave-full-screen', throttledLeaveFullScreen);
                             };
 
-                            browserWin.on('close', () => {
+                            browserWin.on('close', (e) => {
+                                e.preventDefault();
                                 browserWin.webContents.removeListener('crashed', handleChildWindowCrashEvent);
+                                browserWin.webContents.send('close-window');
                             });
 
                             browserWin.once('closed', () => {
@@ -685,15 +687,31 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
             }
         }
 
+        function closeWindow() {
+            const focusedWindow = BrowserWindow.getFocusedWindow();
+            if (focusedWindow && !focusedWindow.isDestroyed()) {
+                if (focusedWindow.winName === 'main') {
+                    focusedWindow.close();
+                } else {
+                    if (focusedWindow.webContents) {
+                        focusedWindow.webContents.send('close-window');
+                    }
+                }
+            }
+        }
+
         // This will initially register the global shortcut
         globalShortcut.register(isMac ? 'Cmd+Alt+I' : 'Ctrl+Shift+I', devTools);
+        if (isMac) globalShortcut.register('CmdOrCtrl+W', closeWindow);
 
         app.on('browser-window-focus', function () {
             globalShortcut.register(isMac ? 'Cmd+Alt+I' : 'Ctrl+Shift+I', devTools);
+            if (isMac) globalShortcut.register('CmdOrCtrl+W', closeWindow);
         });
 
         app.on('browser-window-blur', function () {
             globalShortcut.unregister(isMac ? 'Cmd+Alt+I' : 'Ctrl+Shift+I');
+            if (isMac) globalShortcut.unregister('CmdOrCtrl+W');
         });
 
     }
@@ -1242,7 +1260,9 @@ function cleanUpChildWindows() {
                 if (browserWindow.winName === 'notification-window') {
                     notify.closeAll();
                 } else {
-                    browserWindow.close();
+                    if (browserWindow.webContents) {
+                        browserWindow.webContents.send('close-window');
+                    }
                 }
             }
         });
