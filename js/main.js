@@ -104,7 +104,6 @@ function setChromeFlags() {
 
     // Read the config parameters synchronously
     let config = readConfigFileSync();
-    app.commandLine.appendSwitch('ignore-certificate-errors');
 
     // If we cannot find any config, just skip setting any flags
     if (config && config.customFlags) {

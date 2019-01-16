@@ -6,7 +6,7 @@ const log = require('../log.js');
 const logLevels = require('../enums/logLevels.js');
 const i18n = require('../translation/i18n');
 
-let ignoreAllCertErrors = false;
+let ignoreAllCertErrors = true;
 
 /**
  * If certificate error occurs allow user to deny or allow particular certificate
