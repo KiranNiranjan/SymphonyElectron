@@ -31,7 +31,7 @@ const SpellChecker = require('./spellChecker').SpellCheckHelper;
 const spellchecker = new SpellChecker();
 
 // show dialog when certificate errors occur
-require('./dialogs/showCertError.js');
+// require('./dialogs/showCertError.js');
 require('./dialogs/showBasicAuth.js');
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -660,6 +660,12 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
                     message: i18n.getMessageFor('Sorry, you are not allowed to access this website') + ' (' + navigatedURL + '), ' + i18n.getMessageFor('please contact your administrator for more details'),
                 });
             });
+    });
+
+    mainWindow.webContents.on("certificate-error", (event, u, error, certificate, callback) => {
+        log.send(logLevels.INFO, 'Certificate error: ' + error + ' for url: ' + url);
+        event.preventDefault();
+        callback(true);
     });
 
     /**
