@@ -131,22 +131,21 @@ function isMisspelled(text) {
 function createMainWindow(initialUrl) {
 
     let configParams = ['mainWinPos', 'isCustomTitleBar', 'locale', 'devToolsEnabled'];
+    let configValues;
 
     getMultipleConfigField(configParams)
-        .then(configData => {
-            lang = configData && configData.locale || app.getLocale();
-            devToolsEnabled = configData && configData.devToolsEnabled;
-
-            setSessionProxy(() => {
-                doCreateMainWindow(initialUrl, configData.mainWinPos, configData.isCustomTitleBar);
-            });
+        .then((configData) => {
+            configValues = configData;
+            setSessionProxy()
+                .then(() => {
+                    lang = configValues && configValues.locale || app.getLocale();
+                    devToolsEnabled = configValues && configValues.devToolsEnabled;
+                    doCreateMainWindow(initialUrl, configValues.mainWinPos, configValues.isCustomTitleBar);
+                });
         })
         .catch(() => {
-            // failed use default bounds and frame
             lang = app.getLocale();
-            setSessionProxy(() => {
-                doCreateMainWindow(initialUrl, null, false);
-            });
+            doCreateMainWindow(initialUrl, null, false);
         });
 }
 
@@ -167,7 +166,6 @@ function bringToFrontNotification() {
         }
     }
 }
-
 
 /**
  * Creates the main window with bounds
@@ -1271,33 +1269,29 @@ function cleanUpChildWindows() {
     }
 }
 
-function setSessionProxy(callback) {
+function setSessionProxy() {
 
-    const proxySettings = readConfigFromFile('proxy');
+    return new Promise((resolve) => {
 
-    if (!proxySettings) {
-        log.send(logLevels.INFO, `Proxy settings not available, not setting proxy`);
-        return callback();
-    }
+        const proxySettings = readConfigFromFile('proxy');
 
-    if (proxySettings && !proxySettings.enabled) {
-        log.send(logLevels.INFO, `Proxy not enabled, not setting proxy`);
-        return callback();
-    }
+        if (!proxySettings || !proxySettings.enabled || (!proxySettings.pacScript && !proxySettings.proxyRules)) {
+            log.send(logLevels.INFO, `Proxy disabled or insufficient data to set proxy, skipping..`);
+            resolve();
+            return;
+        }
 
-    if (!proxySettings.pacScript && !proxySettings.proxyRules) {
-        log.send(logLevels.INFO, `Both the pacScript and proxyRules are missing, not setting proxy`);
-        return callback();
-    }
-
-    electronSession.defaultSession.setProxy({
-        pacScript: proxySettings.pacScript,
-        proxyRules: proxySettings.proxyRules,
-        proxyBypassRules: proxySettings.proxyBypassRules
-    }, () => {
-        log.send(logLevels.INFO, `We have set the proxy with values\nPAC Script -> ${proxySettings.pacScript}
+        log.send(logLevels.INFO, `Trying to set proxy with values\nPAC Script -> ${proxySettings.pacScript}
         \nProxy Rules -> ${proxySettings.proxyRules}\nProxy Bypass Rules -> ${proxySettings.proxyBypassRules}`);
-        return callback();
+
+        electronSession.defaultSession.setProxy({
+            pacScript: proxySettings.pacScript,
+            proxyRules: proxySettings.proxyRules,
+            proxyBypassRules: proxySettings.proxyBypassRules
+        }, () => {
+            resolve();
+        });
+
     });
 
 }
