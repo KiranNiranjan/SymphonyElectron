@@ -398,7 +398,7 @@ function readConfigFileSync() {
 const readConfigFromFile = (key) => {
     let data = readConfigFileSync();
     return data[key];
-}
+};
 
 module.exports = {
 

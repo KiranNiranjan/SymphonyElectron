@@ -136,12 +136,17 @@ function createMainWindow(initialUrl) {
         .then(configData => {
             lang = configData && configData.locale || app.getLocale();
             devToolsEnabled = configData && configData.devToolsEnabled;
-            doCreateMainWindow(initialUrl, configData.mainWinPos, configData.isCustomTitleBar);
+
+            setSessionProxy(() => {
+                doCreateMainWindow(initialUrl, configData.mainWinPos, configData.isCustomTitleBar);
+            });
         })
         .catch(() => {
             // failed use default bounds and frame
             lang = app.getLocale();
-            doCreateMainWindow(initialUrl, null, false);
+            setSessionProxy(() => {
+                doCreateMainWindow(initialUrl, null, false);
+            });
         });
 }
 
@@ -171,6 +176,7 @@ function bringToFrontNotification() {
  * @param isCustomTitleBar
  */
 function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
+
     let url = initialUrl;
     let key = getGuid();
 
@@ -1263,6 +1269,37 @@ function cleanUpChildWindows() {
             }
         });
     }
+}
+
+function setSessionProxy(callback) {
+
+    const proxySettings = readConfigFromFile('proxy');
+
+    if (!proxySettings) {
+        log.send(logLevels.INFO, `Proxy settings not available, not setting proxy`);
+        return callback();
+    }
+
+    if (proxySettings && !proxySettings.enabled) {
+        log.send(logLevels.INFO, `Proxy not enabled, not setting proxy`);
+        return callback();
+    }
+
+    if (!proxySettings.pacScript && !proxySettings.proxyRules) {
+        log.send(logLevels.INFO, `Both the pacScript and proxyRules are missing, not setting proxy`);
+        return callback();
+    }
+
+    electronSession.defaultSession.setProxy({
+        pacScript: proxySettings.pacScript,
+        proxyRules: proxySettings.proxyRules,
+        proxyBypassRules: proxySettings.proxyBypassRules
+    }, () => {
+        log.send(logLevels.INFO, `We have set the proxy with values\nPAC Script -> ${proxySettings.pacScript}
+        \nProxy Rules -> ${proxySettings.proxyRules}\nProxy Bypass Rules -> ${proxySettings.proxyBypassRules}`);
+        return callback();
+    });
+
 }
 
 /**
