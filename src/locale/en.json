@@ -13,12 +13,9 @@
     "Please provide your login credentials for:": "Please provide your login credentials for:",
     "User name:": "User name:"
   },
-  "MoreInfo": {
-    "More Information": "More Information",
-    "Version Information": "Version Information"
-  },
   "Bring All to Front": "Bring All to Front",
   "Bring to Front on Notifications": "Bring to Front on Notifications",
+  "Build expired": "Build expired",
   "Certificate Error": "Certificate Error",
   "Close": "Close",
   "Cancel": "Cancel",
@@ -70,6 +67,10 @@
   "Loading Error": "Loading Error",
   "Minimize": "Minimize",
   "Minimize on Close": "Minimize on Close",
+  "MoreInfo": {
+    "More Information": "More Information",
+    "Version Information": "Version Information"
+  },
   "Native": "Native",
   "Network connectivity has been lost. Check your internet connection.": "Network connectivity has been lost. Check your internet connection.",
   "NetworkError": {
@@ -154,6 +155,7 @@
     "Press ": "Press "
   },
   "Sorry, you are not allowed to access this website": "Sorry, you are not allowed to access this website",
+  "Sorry, this is a test build and it has expired. Please contact your administrator to get a production build.": "Sorry, this is a test build and it has expired. Please contact your administrator to get a production build.",
   "Speech": "Speech",
   "Start Speaking": "Start Speaking",
   "Stop Speaking": "Stop Speaking",

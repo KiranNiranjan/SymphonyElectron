@@ -15,6 +15,7 @@ import { AppMenu } from './app-menu';
 import { handleChildWindow } from './child-window-handler';
 import { config, IConfig } from './config-handler';
 import { SpellChecker } from './spell-check-handler';
+import { checkIfBuildExpired } from './ttl-handler';
 import { monitorWindowActions } from './window-actions';
 import {
     createComponentWindow,
@@ -385,6 +386,7 @@ export class WindowHandler {
             if (!this.isAutoReload) {
                 this.mainWindow.show();
             }
+            checkIfBuildExpired(this.mainWindow);
         }
     }
 

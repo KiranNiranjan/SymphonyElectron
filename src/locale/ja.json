@@ -13,12 +13,9 @@
     "Please provide your login credentials for:": "あなたのログイン認証情報を入力してください。",
     "User name:": "ユーザー名："
   },
-  "MoreInfo": {
-    "More Information": "詳しくは",
-    "Version Information": "バージョン情報"
-  },
   "Bring All to Front": "すべて前面に表示",
   "Bring to Front on Notifications": "通知時に前面に表示",
+  "Build expired": "期限切れのビルド",
   "Certificate Error": "証明書のエラー",
   "Close": "閉じる",
   "Cancel": "キャンセル",
@@ -70,6 +67,10 @@
   "Loading Error": "読み込みエラー",
   "Minimize": "最小化",
   "Minimize on Close": "閉じるで最小化",
+  "MoreInfo": {
+    "More Information": "詳しくは",
+    "Version Information": "バージョン情報"
+  },
   "Native": "Native",
   "Network connectivity has been lost. Check your internet connection.": "ネットワーク接続が失われました。インターネット接続を確認してください。",
   "NetworkError": {
@@ -154,6 +155,7 @@
     "Press ": "全画面表示を終了するには "
   },
   "Sorry, you are not allowed to access this website": "申し訳ありませんが、このウェブサイトへのアクセスは許可されていません",
+  "Sorry, this is a test build and it has expired. Please contact your administrator to get a production build.": "申し訳ありませんが、これはテストビルドであり、期限切れです。プロダクションビルドを入手するには、管理者に連絡してください。",
   "Speech": "スピーチ",
   "Start Speaking": "スピーチを開始",
   "Stop Speaking": "スピーチを終了",
