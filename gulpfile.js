@@ -1,3 +1,4 @@
+const fs = require('fs');
 const gulp = require('gulp');
 const less = require('gulp-less');
 const sourcemaps = require('gulp-sourcemaps');
@@ -33,6 +34,23 @@ gulp.task('copy', function () {
     ], {
         "base": "./src"
     }).pipe(gulp.dest('lib/src'))
+});
+
+gulp.task('setExpiry', function (done) {
+    const expiryDays = 15;
+    const milliseconds = 24*60*60*1000;
+    const expiryTime = new Date().getTime() + (expiryDays * milliseconds);
+
+    try {
+        const path = './src/app/constants.json';
+        let jsonData = JSON.parse(fs.readFileSync(path));
+        jsonData.ttlExpiryTime = expiryTime;
+        let data = JSON.stringify(jsonData, null, 2);
+        fs.writeFileSync(path, data, 'utf-8');
+        done();
+    } catch (e) {
+        done(e);
+    }
 });
 
 gulp.task('build', gulp.series('clean', 'compile', 'less', 'copy'));

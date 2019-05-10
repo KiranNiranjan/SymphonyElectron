@@ -386,7 +386,8 @@ export class WindowHandler {
             if (!this.isAutoReload) {
                 this.mainWindow.show();
             }
-            checkIfBuildExpired(this.mainWindow);
+
+            this.checkExpiry(this.mainWindow);
         }
     }
 
@@ -861,6 +862,32 @@ export class WindowHandler {
             },
             winKey: getGuid(),
         };
+    }
+
+    /**
+     * Check if build is expired and show an error message
+     * @param browserWindow Focused window instance
+     */
+    private checkExpiry(browserWindow: BrowserWindow) {
+        const buildExpired = checkIfBuildExpired();
+        if (!buildExpired) {
+            return;
+        }
+        const response = (resp: number) => {
+            if (resp === 0) {
+                electron.app.exit();
+            }
+        };
+
+        const options = {
+            type: 'error',
+            title: i18n.t('Build expired')(),
+            message: i18n.t('Sorry, this is a test build and it has expired. Please contact your administrator to get a production build.')(),
+            buttons: [ i18n.t('Quit')()],
+            cancelId: 0,
+        };
+
+        electron.dialog.showMessageBox(browserWindow, options, response);
     }
 }
 
