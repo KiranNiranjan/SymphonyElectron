@@ -61,7 +61,7 @@ export class WindowHandler {
                 sandbox: true,
                 nodeIntegration: false,
                 devTools: false,
-                contextIsolation: false,
+                contextIsolation: true,
             },
             winKey: getGuid(),
         };
@@ -83,7 +83,7 @@ export class WindowHandler {
             webPreferences: {
                 nodeIntegration: false,
                 sandbox: true,
-                contextIsolation: false,
+                contextIsolation: true,
             },
             winKey: getGuid(),
         };
@@ -106,7 +106,7 @@ export class WindowHandler {
                 sandbox: true,
                 nodeIntegration: false,
                 devTools: false,
-                contextIsolation: false,
+                contextIsolation: true,
             },
             winKey: getGuid(),
         };
@@ -131,7 +131,7 @@ export class WindowHandler {
                 sandbox: true,
                 nodeIntegration: false,
                 devTools: false,
-                contextIsolation: false,
+                contextIsolation: true,
             },
             winKey: getGuid(),
         };
@@ -152,7 +152,7 @@ export class WindowHandler {
                 sandbox: true,
                 nodeIntegration: false,
                 devTools: false,
-                contextIsolation: false,
+                contextIsolation: true,
             },
             winKey: getGuid(),
         };
@@ -855,7 +855,7 @@ export class WindowHandler {
                 nodeIntegration: false,
                 preload: path.join(__dirname, '../renderer/_preload-main.js'),
                 sandbox: true,
-                contextIsolation: false,
+                contextIsolation: true,
             },
             winKey: getGuid(),
         };
