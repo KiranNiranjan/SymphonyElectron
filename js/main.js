@@ -4,6 +4,7 @@
 const electron = require('electron');
 const app = electron.app;
 const crashReporter = electron.crashReporter;
+const session = electron.session;
 const nodeURL = require('url');
 const shellPath = require('shell-path');
 const urlParser = require('url');
@@ -197,6 +198,15 @@ app.on('ready', () => {
             log.send(logLevels.INFO, `Couldn't clear cache and refresh -> ${err}`);
             initiateApp();
         });
+
+    // Sets NTLM credentials for domains
+    const domains = getCmdLineArg(process.argv, '--ntlmDomains=', false);
+    const domainsFromCmd = domains && domains.substr(14);
+    log.send(logLevels.INFO, `main: ntml domains from command line ${domains}`);
+    if (domainsFromCmd) {
+        log.send(logLevels.INFO, `main: setting NTLM Credentials For ${domainsFromCmd} - Default session`);
+        session.defaultSession.allowNTLMCredentialsForDomains(domainsFromCmd);
+    }
 
     function initiateApp() {
         checkFirstTimeLaunch()

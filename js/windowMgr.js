@@ -444,6 +444,14 @@ function doCreateMainWindow(initialUrl, initialBounds, isCustomTitleBar) {
         });
     });
 
+    const domains = getCmdLineArg(process.argv, '--ntlmDomains=', false);
+    const domainsFromCmd = domains && domains.substr(14);
+    log.send(logLevels.INFO, `windowMgr: ntml domains from command line ${domains}`);
+    if (domainsFromCmd) {
+        log.send(logLevels.INFO, `windowMgr: setting NTLM Credentials For ${domainsFromCmd}`);
+        mainWindow.webContents.session.allowNTLMCredentialsForDomains(domainsFromCmd);
+    }
+
     // open external links in default browser - a tag with href='_blank' or window.open
     const enforceInheritance = (topWebContents) => {
         const handleNewWindow = (webContents) => {
