@@ -1,4 +1,4 @@
-import { app } from 'electron';
+import { app, session } from 'electron';
 
 import { buildNumber, clientVersion, version } from '../../package.json';
 import { isDevEnv, isMac } from '../common/env';
@@ -12,6 +12,7 @@ import './dialog-handler';
 import './main-api-handler';
 import { protocolHandler } from './protocol-handler';
 import { ICustomBrowserWindow, windowHandler } from './window-handler';
+import { setNTLMCredentialsForDomains } from './window-utils';
 
 const allowMultiInstance: string | boolean = getCommandLineArgs(process.argv, '--multiInstance', true) || isDevEnv;
 
@@ -42,6 +43,11 @@ const startApplication = async () => {
          */
         await autoLaunchInstance.handleAutoLaunch();
     }
+
+    /**
+     * Sets NTLM credentials for domains
+     */
+    setNTLMCredentialsForDomains(session.defaultSession);
 
     /**
      * Sets chrome flags from global config

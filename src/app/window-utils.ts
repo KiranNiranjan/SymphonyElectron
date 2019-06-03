@@ -9,7 +9,7 @@ import { format, parse } from 'url';
 import { isDevEnv, isMac } from '../common/env';
 import { i18n, LocaleType } from '../common/i18n';
 import { logger } from '../common/logger';
-import { getGuid } from '../common/utils';
+import { getCommandLineArgs, getGuid } from '../common/utils';
 import { whitelistHandler } from '../common/whitelist-handler';
 import { config, ICustomRectangle } from './config-handler';
 import { screenSnippet } from './screen-snippet-handler';
@@ -468,4 +468,23 @@ export const isSymphonyReachable = (window: ICustomBrowserWindow | null) => {
             logger.error(`Network status check: No active network connection ${error}`);
         });
     }, networkStatusCheckInterval);
+};
+
+/**
+ * Sets the NTLM credentials for domains to a specific session
+ *
+ * @param session - {Electron.session}
+ */
+export const setNTLMCredentialsForDomains = (session: Electron.session | undefined) => {
+    if (!session) {
+        logger.error(`window-utils: session object cannot be empty`);
+        return;
+    }
+    const domains: string | null = getCommandLineArgs(process.argv, '--ntlmDomains=', false);
+    const domainsFromCmd: string | null = domains && domains.substr(14);
+    logger.info(`window-utils: ntml domains from command line`, domains);
+    if (domainsFromCmd) {
+        logger.info(`window-utils: setting NTLM Credentials For`, domainsFromCmd);
+        session.allowNTLMCredentialsForDomains(domainsFromCmd);
+    }
 };

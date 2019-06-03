@@ -25,6 +25,7 @@ import {
     injectStyles,
     isSymphonyReachable,
     preventWindowNavigation,
+    setNTLMCredentialsForDomains,
     windowExists,
 } from './window-utils';
 
@@ -335,6 +336,9 @@ export class WindowHandler {
 
         // Download manager
         this.mainWindow.webContents.session.on('will-download', handleDownloadManager);
+
+        // NTLM for domains
+        setNTLMCredentialsForDomains(this.mainWindow.webContents.session);
 
         // store window ref
         this.addWindow(this.windowOpts.winKey, this.mainWindow);
