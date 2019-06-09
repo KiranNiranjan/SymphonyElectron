@@ -50,6 +50,7 @@ export default class NotificationComp extends React.Component<{}, IState> {
      */
     public render(): JSX.Element {
         const { title, company, body, image, id, color } = this.state;
+        console.log(title, company, body, image, id, color);
         const isLightTheme = color ? color.match(whiteColorRegExp) : true;
 
         const theme = classNames({ light: isLightTheme, dark: !isLightTheme });

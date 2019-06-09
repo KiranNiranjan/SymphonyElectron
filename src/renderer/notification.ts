@@ -80,6 +80,7 @@ class Notification extends NotificationHandler {
      * @param callback
      */
     public showNotification(data: INotificationData, callback): void {
+        logger.info(`notification data`, data);
         clearInterval(this.cleanUpTimer);
         animationQueue.push({
             func: this.funcHandlers.onCreateNotificationWindow,
