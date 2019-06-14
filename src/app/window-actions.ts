@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron';
 
 import { apiName, IBoundsChange, KeyCodes } from '../common/api-interface';
 import { isMac, isWindowsOS } from '../common/env';
+import { logger } from '../common/logger';
 import { throttle } from '../common/utils';
 import { config } from './config-handler';
 import { ICustomBrowserWindow, windowHandler } from './window-handler';
@@ -127,6 +128,7 @@ export const handleKeyPress = (key: number): void => {
             const focusedWindow = BrowserWindow.getFocusedWindow();
 
             if (focusedWindow && !focusedWindow.isDestroyed() && focusedWindow.isFullScreen()) {
+                logger.info(`window-actions: exiting fullscreen by esc key action`);
                 focusedWindow.setFullScreen(false);
             }
             break;
@@ -137,6 +139,7 @@ export const handleKeyPress = (key: number): void => {
             }
             const browserWin = BrowserWindow.getFocusedWindow();
             if (browserWin && !browserWin.isDestroyed()) {
+                logger.info(`window-actions: popping up menu by alt key action`);
                 showPopupMenu({ window: browserWin });
             }
             break;

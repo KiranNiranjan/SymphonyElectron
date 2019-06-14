@@ -87,7 +87,18 @@ export class AppMenu {
             .map((key) => this.menuList[ key ]);
 
         this.menu = Menu.buildFromTemplate(template);
+        logger.info(`app-menu: built menu from the provided template`);
         Menu.setApplicationMenu(this.menu);
+        logger.info(`app-menu: set application menu`);
+
+        // Remove the default menu for window
+        // as we use custom popup menu
+        if (isWindowsOS) {
+            const mainWindow = windowHandler.getMainWindow();
+            if (mainWindow && windowExists(mainWindow)) {
+                mainWindow.setMenuBarVisibility(false);
+            }
+        }
     }
 
     /**
@@ -97,6 +108,7 @@ export class AppMenu {
      */
     public update(locale: LocaleType): void {
         if (this.locale !== locale) {
+            logger.info(`app-menu: updating the menu for locale ${locale}`);
             this.buildMenu();
             this.locale = locale;
         }
@@ -109,7 +121,7 @@ export class AppMenu {
      */
     public popupMenu(opts: Electron.PopupOptions): void {
         if (!this.menu) {
-            logger.error(`app-menu: tried popup menu, but failed menu not defined`);
+            logger.error(`app-menu: tried popup menu, but failed, menu not defined`);
             return;
         }
         this.menu.popup(opts);
@@ -141,6 +153,7 @@ export class AppMenu {
      * Builds menu items for about symphony section
      */
     private buildAboutMenu(): Electron.MenuItemConstructorOptions {
+        logger.info(`app-menu: building about menu`);
         return {
             id: menuSections.about,
             label: app.getName(),
@@ -162,6 +175,7 @@ export class AppMenu {
      * Builds menu items for edit section
      */
     private buildEditMenu(): Electron.MenuItemConstructorOptions {
+        logger.info(`app-menu: building edit menu`);
         const menu = {
             label: i18n.t('Edit')(),
             submenu:
@@ -194,6 +208,7 @@ export class AppMenu {
      * Builds menu items for view section
      */
     private buildViewMenu(): Electron.MenuItemConstructorOptions {
+        logger.info(`app-menu: building view menu`);
         return {
             label: i18n.t('View')(),
             submenu: [ {
@@ -324,6 +339,7 @@ export class AppMenu {
      * Builds menu items for help section
      */
     private buildHelpMenu(): Electron.MenuItemConstructorOptions {
+        logger.info(`app-menu: building help menu`);
         return {
             label: i18n.t('Help')(),
             role: 'help',
@@ -393,6 +409,7 @@ export class AppMenu {
      * @return {Object}.accelerator keyboard shortcuts and modifiers
      */
     private assignRoleOrLabel({ role, label }: MenuItemConstructorOptions): MenuItemConstructorOptions {
+        logger.info(`app-menu: assigning role & label respectively for ${role} & ${label}`);
         if (isMac) {
             return label ? { role, label } : { role };
         }
