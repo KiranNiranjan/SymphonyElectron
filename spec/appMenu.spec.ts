@@ -63,6 +63,7 @@ jest.mock('../src/app/window-handler', () => {
     return {
         windowHandler: {
             createMoreInfoWindow: jest.fn(),
+            getMainWindow: jest.fn(),
         },
     };
 });
@@ -121,7 +122,7 @@ describe('app menu', () => {
     describe('`popupMenu`', () => {
         it('should fail when `appMenu.menu` is null', () => {
             const spy = jest.spyOn(logger, 'error');
-            const expectedValue = 'app-menu: tried popup menu, but failed menu not defined';
+            const expectedValue = 'app-menu: tried popup menu, but failed, menu not defined';
             appMenu.menu = null;
             appMenu.popupMenu();
             expect(spy).toBeCalledWith(expectedValue);
