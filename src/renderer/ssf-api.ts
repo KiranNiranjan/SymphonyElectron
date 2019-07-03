@@ -1,6 +1,6 @@
 import { ipcRenderer, remote } from 'electron';
 
-import { buildNumber } from '../../package.json';
+import { buildNumber, searchAPIVersion } from '../../package.json';
 import { ICustomBrowserWindow } from '../app/window-handler';
 import {
     apiCmds,
@@ -176,7 +176,7 @@ export class SSFApi {
             containerVer: appVer,
             buildNumber,
             apiVer: '2.0.0',
-            searchApiVer: '3.0.0',
+            searchApiVer: searchAPIVersion,
         });
     }
 
