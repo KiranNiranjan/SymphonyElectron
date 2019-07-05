@@ -3,6 +3,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { apiCmds, apiName } from '../common/api-interface';
 
+import { productName, version } from '../../package.json';
 import { i18n } from '../common/i18n-preload';
 import './app-bridge';
 import DownloadManager from './components/download-manager';
@@ -17,6 +18,17 @@ interface ISSFWindow extends Window {
 
 const ssfWindow: ISSFWindow = window;
 const memoryInfoFetchInterval = 60 * 60 * 1000;
+const userAgent = navigator.userAgent;
+
+// TODO: Remove this once we upgrade the electron version
+// issue: https://github.com/electron/electron/issues/19113
+if (!userAgent.includes('Symphony')) {
+    Object.defineProperty(navigator, 'userAgent', {
+        get: () => {
+            return userAgent.replace('Electron', `${productName}/${version} Electron`);
+        },
+    });
+}
 
 /**
  * creates API exposed from electron.
