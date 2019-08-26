@@ -234,6 +234,7 @@ export class WindowHandler {
 
         // Handle main window close
         this.mainWindow.on('close', (event) => {
+            logger.info(`window-handler: main window close event occurred`);
             if (!this.mainWindow || !windowExists(this.mainWindow)) {
                 return;
             }

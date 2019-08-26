@@ -130,7 +130,14 @@ app.on('quit',  () => {
 /**
  * Cleans up reference before quiting
  */
-app.on('before-quit', () => windowHandler.willQuitApp = true);
+app.on('before-quit', () => {
+    logger.info(`main: before-quit event occurred`);
+    const mainWindow: ICustomBrowserWindow | null = windowHandler.getMainWindow();
+    if (mainWindow && typeof mainWindow.removeAllListeners === 'function') {
+        mainWindow.removeAllListeners('close');
+    }
+    windowHandler.willQuitApp = true;
+});
 
 /**
  * Is triggered when the application is launched
