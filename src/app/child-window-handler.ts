@@ -48,156 +48,158 @@ const getParsedUrl = (configURL: string): Url => {
 };
 
 export const handleChildWindow = (webContents: WebContents): void => {
-    const childWindow = (event, newWinUrl, frameName, disposition, newWinOptions): void => {
-        logger.info(`child-window-handler: trying to create new child window for url: ${newWinUrl},
-         frame name: ${frameName || undefined}, disposition: ${disposition}`);
-        const mainWindow = windowHandler.getMainWindow();
-        if (!mainWindow || mainWindow.isDestroyed()) {
-            logger.info(`child-window-handler: main window is not available / destroyed, not creating child window!`);
-            return;
-        }
-        if (!windowHandler.url) {
-            logger.info(`child-window-handler: we don't have a valid url, not creating child window!`);
-            return;
-        }
-
-        if (!newWinOptions.webPreferences) {
-            newWinOptions.webPreferences = {};
-        }
-
-        Object.assign(newWinOptions.webPreferences, webContents);
-
-        // need this to extract other parameters
-        const newWinParsedUrl = getParsedUrl(newWinUrl);
-
-        const newWinUrlData = whitelistHandler.parseDomain(newWinUrl);
-        const mainWinUrlData = whitelistHandler.parseDomain(windowHandler.url);
-
-        const newWinDomainName = `${newWinUrlData.domain}${newWinUrlData.tld}`;
-        const mainWinDomainName = `${mainWinUrlData.domain}${mainWinUrlData.tld}`;
-
-        logger.info(`child-window-handler: main window url: ${mainWinUrlData.subdomain}.${mainWinUrlData.domain}.${mainWinUrlData.tld}`);
-
-        const emptyUrlString = [ 'about:blank', 'about:blank#blocked' ];
-        const dispositionWhitelist = ['new-window', 'foreground-tab'];
-
-        // only allow window.open to succeed is if coming from same host,
-        // otherwise open in default browser.
-        if ((newWinDomainName === mainWinDomainName || emptyUrlString.includes(newWinUrl))
-            && frameName !== ''
-            && dispositionWhitelist.includes(disposition)) {
-
-            logger.info(`child-window-handler: opening pop-out window for ${newWinUrl}`);
-
-            const newWinKey = getGuid();
-            if (!frameName) {
-                logger.info(`child-window-handler: frame name missing! not opening the url ${newWinUrl}`);
+    const handleNewWindow = (topWebContents) => {
+        topWebContents.on('new-window', (event, newWinUrl, frameName, disposition, newWinOptions): void => {
+            logger.info(`child-window-handler: trying to create new child window for url: ${newWinUrl},
+            frame name: ${frameName || undefined}, disposition: ${disposition}`);
+            const mainWindow = windowHandler.getMainWindow();
+            if (!mainWindow || mainWindow.isDestroyed()) {
+                logger.info(`child-window-handler: main window is not available / destroyed, not creating child window!`);
+                return;
+            }
+            if (!windowHandler.url) {
+                logger.info(`child-window-handler: we don't have a valid url, not creating child window!`);
                 return;
             }
 
-            const width = newWinOptions.width || DEFAULT_POP_OUT_WIDTH;
-            const height = newWinOptions.height || DEFAULT_POP_OUT_HEIGHT;
-
-            // try getting x and y position from query parameters
-            const query = newWinParsedUrl && parseQuerystring(newWinParsedUrl.query as string);
-            if (query && query.x && query.y) {
-                const newX = Number.parseInt(query.x as string, 10);
-                const newY = Number.parseInt(query.y as string, 10);
-                // only accept if both are successfully parsed.
-                if (Number.isInteger(newX) && Number.isInteger(newY)) {
-                    const newWinRect = { x: newX, y: newY, width, height };
-                    const { x, y } = getBounds(newWinRect, DEFAULT_POP_OUT_WIDTH, DEFAULT_POP_OUT_HEIGHT);
-                    newWinOptions.x = x;
-                    newWinOptions.y = y;
-                } else {
-                    newWinOptions.x = 0;
-                    newWinOptions.y = 0;
-                }
-            } else {
-                // create new window at slight offset from main window.
-                const { x, y } = mainWindow.getBounds();
-                newWinOptions.x = x + 50;
-                newWinOptions.y = y + 50;
+            if (!newWinOptions.webPreferences) {
+                newWinOptions.webPreferences = {};
             }
 
-            newWinOptions.width = Math.max(width, DEFAULT_POP_OUT_WIDTH);
-            newWinOptions.height = Math.max(height, DEFAULT_POP_OUT_HEIGHT);
-            newWinOptions.minWidth = MIN_WIDTH;
-            newWinOptions.minHeight = MIN_HEIGHT;
-            newWinOptions.alwaysOnTop = mainWindow.isAlwaysOnTop();
-            newWinOptions.frame = true;
-            newWinOptions.winKey = newWinKey;
+            Object.assign(newWinOptions.webPreferences, webContents);
 
-            const childWebContents: WebContents = newWinOptions.webContents;
-            // Event needed to hide native menu bar
-            childWebContents.once('did-start-loading', () => {
-                const browserWin = BrowserWindow.fromWebContents(childWebContents) as ICustomBrowserWindow;
-                browserWin.origin = config.getGlobalConfigFields([ 'url' ]).url;
-                if (isWindowsOS && browserWin && !browserWin.isDestroyed()) {
-                    browserWin.setMenuBarVisibility(false);
-                }
-            });
+            // need this to extract other parameters
+            const newWinParsedUrl = getParsedUrl(newWinUrl);
 
-            childWebContents.once('did-finish-load', async () => {
-                logger.info(`child-window-handler: child window content loaded for url ${newWinUrl}!`);
-                const browserWin: ICustomBrowserWindow = BrowserWindow.fromWebContents(childWebContents) as ICustomBrowserWindow;
-                if (!browserWin) {
+            const newWinUrlData = whitelistHandler.parseDomain(newWinUrl);
+            const mainWinUrlData = whitelistHandler.parseDomain(windowHandler.url);
+
+            const newWinDomainName = `${newWinUrlData.domain}${newWinUrlData.tld}`;
+            const mainWinDomainName = `${mainWinUrlData.domain}${mainWinUrlData.tld}`;
+
+            logger.info(`child-window-handler: main window url: ${mainWinUrlData.subdomain}.${mainWinUrlData.domain}.${mainWinUrlData.tld}`);
+
+            const emptyUrlString = [ 'about:blank', 'about:blank#blocked' ];
+            const dispositionWhitelist = [ 'new-window', 'foreground-tab' ];
+
+            // only allow window.open to succeed is if coming from same host,
+            // otherwise open in default browser.
+            if ((newWinDomainName === mainWinDomainName || emptyUrlString.includes(newWinUrl))
+                && frameName !== ''
+                && dispositionWhitelist.includes(disposition)) {
+
+                logger.info(`child-window-handler: opening pop-out window for ${newWinUrl}`);
+
+                const newWinKey = getGuid();
+                if (!frameName) {
+                    logger.info(`child-window-handler: frame name missing! not opening the url ${newWinUrl}`);
                     return;
                 }
-                windowHandler.addWindow(newWinKey, browserWin);
-                const { url } = config.getGlobalConfigFields([ 'url' ]);
-                browserWin.webContents.send('page-load', {
-                    isWindowsOS,
-                    locale: i18n.getLocale(),
-                    resources: i18n.loadedResources,
-                    origin: url,
-                    enableCustomTitleBar: false,
-                    isMainWindow: false,
-                });
-                // Inserts css on to the window
-                await injectStyles(browserWin, false);
-                browserWin.winName = frameName;
-                browserWin.setAlwaysOnTop(mainWindow.isAlwaysOnTop());
-                logger.info(`child-window-handler: setting always on top for child window? ${mainWindow.isAlwaysOnTop()}!`);
 
-                // prevents window from navigating
-                preventWindowNavigation(browserWin, true);
+                const width = newWinOptions.width || DEFAULT_POP_OUT_WIDTH;
+                const height = newWinOptions.height || DEFAULT_POP_OUT_HEIGHT;
 
-                // Handle media/other permissions
-                handlePermissionRequests(browserWin.webContents);
-
-                // Monitor window actions
-                monitorWindowActions(browserWin);
-
-                // Update initial bound changes
-                sendInitialBoundChanges(browserWin);
-
-                // Remove all attached event listeners
-                browserWin.on('close', () => {
-                    logger.info(`child-window-handler: close event occurred for window with url ${newWinUrl}!`);
-                    removeWindowEventListener(browserWin);
-                });
-
-                if (browserWin.webContents) {
-                    // validate link and create a child window or open in browser
-                    handleChildWindow(browserWin.webContents);
-
-                    // Certificate verification proxy
-                    if (!isDevEnv) {
-                        browserWin.webContents.session.setCertificateVerifyProc(handleCertificateProxyVerification);
+                // try getting x and y position from query parameters
+                const query = newWinParsedUrl && parseQuerystring(newWinParsedUrl.query as string);
+                if (query && query.x && query.y) {
+                    const newX = Number.parseInt(query.x as string, 10);
+                    const newY = Number.parseInt(query.y as string, 10);
+                    // only accept if both are successfully parsed.
+                    if (Number.isInteger(newX) && Number.isInteger(newY)) {
+                        const newWinRect = { x: newX, y: newY, width, height };
+                        const { x, y } = getBounds(newWinRect, DEFAULT_POP_OUT_WIDTH, DEFAULT_POP_OUT_HEIGHT);
+                        newWinOptions.x = x;
+                        newWinOptions.y = y;
+                    } else {
+                        newWinOptions.x = 0;
+                        newWinOptions.y = 0;
                     }
-
-                    // Updates media permissions for preload context
-                    const { permissions } = config.getGlobalConfigFields([ 'permissions' ]);
-                    browserWin.webContents.send('is-screen-share-enabled', permissions.media);
+                } else {
+                    // create new window at slight offset from main window.
+                    const { x, y } = mainWindow.getBounds();
+                    newWinOptions.x = x + 50;
+                    newWinOptions.y = y + 50;
                 }
-            });
-        } else {
-            logger.info(`child-window-handler: new window url is ${newWinUrl} which is not of the same host,
-            so opening it in the default browser!`);
-            event.preventDefault();
-            windowHandler.openUrlInDefaultBrowser(newWinUrl);
-        }
+
+                newWinOptions.width = Math.max(width, DEFAULT_POP_OUT_WIDTH);
+                newWinOptions.height = Math.max(height, DEFAULT_POP_OUT_HEIGHT);
+                newWinOptions.minWidth = MIN_WIDTH;
+                newWinOptions.minHeight = MIN_HEIGHT;
+                newWinOptions.alwaysOnTop = mainWindow.isAlwaysOnTop();
+                newWinOptions.frame = true;
+                newWinOptions.winKey = newWinKey;
+
+                const childWebContents: WebContents = newWinOptions.webContents;
+                // Event needed to hide native menu bar
+                childWebContents.once('did-start-loading', () => {
+                    const browserWin = BrowserWindow.fromWebContents(childWebContents) as ICustomBrowserWindow;
+                    browserWin.origin = config.getGlobalConfigFields([ 'url' ]).url;
+                    if (isWindowsOS && browserWin && !browserWin.isDestroyed()) {
+                        browserWin.setMenuBarVisibility(false);
+                    }
+                });
+
+                childWebContents.once('did-finish-load', async () => {
+                    logger.info(`child-window-handler: child window content loaded for url ${newWinUrl}!`);
+                    const browserWin: ICustomBrowserWindow = BrowserWindow.fromWebContents(childWebContents) as ICustomBrowserWindow;
+                    if (!browserWin) {
+                        return;
+                    }
+                    windowHandler.addWindow(newWinKey, browserWin);
+                    const { url } = config.getGlobalConfigFields([ 'url' ]);
+                    browserWin.webContents.send('page-load', {
+                        isWindowsOS,
+                        locale: i18n.getLocale(),
+                        resources: i18n.loadedResources,
+                        origin: url,
+                        enableCustomTitleBar: false,
+                        isMainWindow: false,
+                    });
+                    // Inserts css on to the window
+                    await injectStyles(browserWin, false);
+                    browserWin.winName = frameName;
+                    browserWin.setAlwaysOnTop(mainWindow.isAlwaysOnTop());
+                    logger.info(`child-window-handler: setting always on top for child window? ${mainWindow.isAlwaysOnTop()}!`);
+
+                    // prevents window from navigating
+                    preventWindowNavigation(browserWin, true);
+
+                    // Handle media/other permissions
+                    handlePermissionRequests(browserWin.webContents);
+
+                    // Monitor window actions
+                    monitorWindowActions(browserWin);
+
+                    // Update initial bound changes
+                    sendInitialBoundChanges(browserWin);
+
+                    // Remove all attached event listeners
+                    browserWin.on('close', () => {
+                        logger.info(`child-window-handler: close event occurred for window with url ${newWinUrl}!`);
+                        removeWindowEventListener(browserWin);
+                    });
+
+                    if (browserWin.webContents) {
+                        // validate link and create a child window or open in browser
+                        handleChildWindow(browserWin.webContents);
+
+                        // Certificate verification proxy
+                        if (!isDevEnv) {
+                            browserWin.webContents.session.setCertificateVerifyProc(handleCertificateProxyVerification);
+                        }
+
+                        // Updates media permissions for preload context
+                        const { permissions } = config.getGlobalConfigFields([ 'permissions' ]);
+                        browserWin.webContents.send('is-screen-share-enabled', permissions.media);
+                    }
+                });
+            } else {
+                logger.info(`child-window-handler: new window url is ${newWinUrl} which is not of the same host,
+                so opening it in the default browser!`);
+                event.preventDefault();
+                windowHandler.openUrlInDefaultBrowser(newWinUrl);
+            }
+        });
     };
-    webContents.on('new-window', childWindow);
+    handleNewWindow(webContents);
 };
