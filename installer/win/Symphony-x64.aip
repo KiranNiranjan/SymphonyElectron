@@ -155,7 +155,7 @@
     <ROW File="Symphony.config_1" Component_="Symphony.config" FileName="SYMPHO~1.CON|Symphony.config" Attributes="0" SourcePath="..\..\dist\win-unpacked\config\Symphony.config" SelfReg="false" NextFile="ScreenSnippet.exe"/>
     <ROW File="Symphony.exe" Component_="Symphony.exe" FileName="Symphony.exe" Attributes="0" SourcePath="..\..\dist\win-unpacked\Symphony.exe" SelfReg="false" NextFile="am.pak" DigSign="true"/>
     <ROW File="am.pak" Component_="am.pak" FileName="am.pak" Attributes="0" SourcePath="..\..\dist\win-unpacked\locales\am.pak" SelfReg="false" NextFile="ar.pak"/>
-    <ROW File="app.asar" Component_="appupdate.yml" FileName="APP~1.ASA|app.asar" Attributes="0" SourcePath="..\..\dist\win-unpacked\resources\app.asar" SelfReg="false" NextFile="electron.asar"/>
+    <ROW File="app.asar" Component_="appupdate.yml" FileName="APP~1.ASA|app.asar" Attributes="0" SourcePath="..\..\dist\win-unpacked\resources\app.asar" SelfReg="false" NextFile="Symphony.config_1"/>
     <ROW File="ar.pak" Component_="am.pak" FileName="ar.pak" Attributes="0" SourcePath="..\..\dist\win-unpacked\locales\ar.pak" SelfReg="false" NextFile="bg.pak"/>
     <ROW File="bg.pak" Component_="am.pak" FileName="bg.pak" Attributes="0" SourcePath="..\..\dist\win-unpacked\locales\bg.pak" SelfReg="false" NextFile="bn.pak"/>
     <ROW File="bn.pak" Component_="am.pak" FileName="bn.pak" Attributes="0" SourcePath="..\..\dist\win-unpacked\locales\bn.pak" SelfReg="false" NextFile="ca.pak"/>
@@ -171,7 +171,6 @@
     <ROW File="de.pak" Component_="am.pak" FileName="de.pak" Attributes="0" SourcePath="..\..\dist\win-unpacked\locales\de.pak" SelfReg="false" NextFile="el.pak"/>
     <ROW File="dictionary" Component_="dictionary" FileName="DICTIO~1|dictionary" Attributes="0" SourcePath="..\..\library\dictionary" SelfReg="false" NextFile="chrome_100_percent.pak"/>
     <ROW File="el.pak" Component_="am.pak" FileName="el.pak" Attributes="0" SourcePath="..\..\dist\win-unpacked\locales\el.pak" SelfReg="false" NextFile="enGB.pak"/>
-    <ROW File="electron.asar" Component_="appupdate.yml" FileName="ELECTR~1.ASA|electron.asar" Attributes="0" SourcePath="..\..\dist\win-unpacked\resources\electron.asar" SelfReg="false" NextFile="Symphony.config_1"/>
     <ROW File="enAU.bdic" Component_="enAU.bdic" FileName="EN-AU~1.BDI|en-AU.bdic" Attributes="0" SourcePath="..\..\dist\win-unpacked\dictionaries\en-AU.bdic" SelfReg="false" NextFile="enCA.bdic"/>
     <ROW File="enCA.bdic" Component_="enAU.bdic" FileName="EN-CA~1.BDI|en-CA.bdic" Attributes="0" SourcePath="..\..\dist\win-unpacked\dictionaries\en-CA.bdic" SelfReg="false" NextFile="enGB.bdic"/>
     <ROW File="enGB.bdic" Component_="enAU.bdic" FileName="EN-GB~1.BDI|en-GB.bdic" Attributes="0" SourcePath="..\..\dist\win-unpacked\dictionaries\en-GB.bdic" SelfReg="false" NextFile="enUS.bdic"/>
