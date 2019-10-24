@@ -1,4 +1,4 @@
-import { ipcRenderer, webFrame } from 'electron';
+import { ipcRenderer } from 'electron';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { apiCmds, apiName } from '../common/api-interface';
@@ -88,18 +88,6 @@ ipcRenderer.on('page-load', (_event, { locale, resources, enableCustomTitleBar, 
 
         document.body.classList.add('sda-title-bar');
     }
-
-    webFrame.setSpellCheckProvider('en-US', {
-        spellCheck(words, callback) {
-            const misspelled = words.filter((word) => {
-                return ipcRenderer.sendSync(apiName.symphonyApi, {
-                    cmd: apiCmds.isMisspelled,
-                    word,
-                });
-            });
-            callback(misspelled);
-        },
-    });
 
     // injects snack bar
     snackBar.initSnackBar();
