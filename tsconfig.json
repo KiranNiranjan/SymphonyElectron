@@ -6,6 +6,7 @@
     "resolveJsonModule": true,
     "jsx": "react",
     "outDir": "lib",
+    "rootDir": ".",
     "lib": [
       "es2016",
       "dom"
@@ -27,9 +28,11 @@
       "node_modules/@types"
     ]
   },
+  "include": [
+    "."
+  ],
   "exclude": [
     "node_modules",
-    "lib",
     "tests",
     "spec"
   ]

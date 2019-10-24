@@ -1,5 +1,5 @@
 import * as electron from 'electron';
-import { app, BrowserWindow, CertificateVerifyProcRequest, nativeImage } from 'electron';
+import { app, BrowserWindow, nativeImage } from 'electron';
 import fetch from 'electron-fetch';
 import * as filesize from 'filesize';
 import * as fs from 'fs';
@@ -71,7 +71,7 @@ export const preventWindowNavigation = (browserWindow: BrowserWindow, isPopOutWi
                     electron.dialog.showMessageBox(browserWindow, {
                         type: 'warning',
                         buttons: [ 'OK' ],
-                        title: i18n.t('Not Allowed'),
+                        title: i18n.t('Not Allowed')(),
                         message: `${i18n.t(`Sorry, you are not allowed to access this website`)} (${winUrl}), ${i18n.t('please contact your administrator for more details')}`,
                     });
                 }
@@ -341,9 +341,9 @@ export const downloadManagerAction = (type, filePath): void => {
         }
         return;
     }
-
-    const showResponse = electron.shell.showItemInFolder(filePath);
-    if (!showResponse) {
+    if (fs.existsSync(filePath)) {
+        electron.shell.showItemInFolder(filePath);
+    } else {
         electron.dialog.showMessageBox(focusedWindow, {
             message,
             title,
@@ -427,11 +427,11 @@ export const injectStyles = async (mainWindow: BrowserWindow, isCustomTitleBar: 
 /**
  * Proxy verification for root certificates
  *
- * @param request {CertificateVerifyProcRequest}
+ * @param request
  * @param callback {(verificationResult: number) => void}
  */
 export const handleCertificateProxyVerification = (
-    request: CertificateVerifyProcRequest,
+    request,
     callback: (verificationResult: number) => void,
 ): void => {
     const { hostname: hostUrl, errorCode } = request;

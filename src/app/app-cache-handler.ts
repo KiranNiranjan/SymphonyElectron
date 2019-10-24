@@ -17,7 +17,7 @@ export const cleanUpAppCache = async (): Promise<void> => {
         logger.info(`app-cache-handler: last exit was clean, deleted the app cache file`);
         return;
     }
-    await new Promise((resolve) => session.defaultSession ? session.defaultSession.clearCache(resolve) : null);
+    await new Promise(async () => session.defaultSession ? await session.defaultSession.clearCache() : null);
     logger.info(`app-cache-handler: we didn't have a clean exit last time, so, cleared the cache that may have been corrupted!`);
 };
 

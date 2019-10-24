@@ -13,7 +13,6 @@ import { notification } from '../renderer/notification';
 import { AppMenu } from './app-menu';
 import { handleChildWindow } from './child-window-handler';
 import { config, IConfig } from './config-handler';
-import { SpellChecker } from './spell-check-handler';
 import { checkIfBuildExpired } from './ttl-handler';
 import DesktopCapturerSource = Electron.DesktopCapturerSource;
 import { versionHandler } from './version-handler';
@@ -68,7 +67,6 @@ export class WindowHandler {
     public isOnline: boolean;
     public url: string | undefined;
     public willQuitApp: boolean = false;
-    public spellchecker: SpellChecker | undefined;
     public isCustomTitleBar: boolean;
 
     private readonly contextIsolation: boolean;
@@ -132,8 +130,8 @@ export class WindowHandler {
     public createApplication() {
 
         this.updateVersionInfo();
-        this.spellchecker = new SpellChecker();
-        logger.info(`window-handler: initialized spellchecker module with locale ${this.spellchecker.locale}`);
+        // this.spellchecker = new SpellChecker();
+        // logger.info(`window-handler: initialized spellchecker module with locale ${this.spellchecker.locale}`);
 
         // set window opts with additional config
         this.mainWindow = new BrowserWindow({
@@ -240,23 +238,22 @@ export class WindowHandler {
             }
         });
 
-        this.mainWindow.webContents.on('crashed', (_event: Event, killed: boolean) => {
+        this.mainWindow.webContents.on('crashed', async (_event: Event, killed: boolean) => {
             if (killed) {
                 logger.info(`window-handler: main window crashed (killed)!`);
                 return;
             }
             logger.info(`window-handler: main window crashed!`);
-            electron.dialog.showMessageBox({
+            const { response } = await electron.dialog.showMessageBox({
                 type: 'error',
                 title: i18n.t('Renderer Process Crashed')(),
                 message: i18n.t('Oops! Looks like we have had a crash. Please reload or close this window.')(),
                 buttons: ['Reload', 'Close'],
-            }, (index: number) => {
-                if (!this.mainWindow || !windowExists(this.mainWindow)) {
-                    return;
-                }
-                index === 0 ? this.mainWindow.reload() : this.mainWindow.close();
             });
+            if (!this.mainWindow || !windowExists(this.mainWindow)) {
+                return;
+            }
+            response === 0 ? this.mainWindow.reload() : this.mainWindow.close();
         });
 
         // Handle main window close
@@ -551,7 +548,7 @@ export class WindowHandler {
             }
             this.basicAuthWindow.webContents.send('basic-auth-data', {hostname, isValidCredentials: isMultipleTries});
         });
-        const closeBasicAuth = (shouldClearSettings = true) => {
+        const closeBasicAuth = (_event, shouldClearSettings = true) => {
             if (shouldClearSettings) {
                 clearSettings();
             }
@@ -564,13 +561,8 @@ export class WindowHandler {
         const login = (_event, arg) => {
             const {username, password} = arg;
             callback(username, password);
-            closeBasicAuth(false);
+            closeBasicAuth(null, false);
         };
-
-        this.basicAuthWindow.once('close', () => {
-            ipcMain.removeListener('basic-auth-closed', closeBasicAuth);
-            ipcMain.removeListener('basic-auth-login', login);
-        });
 
         ipcMain.once('basic-auth-closed', closeBasicAuth);
         ipcMain.once('basic-auth-login', login);
@@ -709,7 +701,6 @@ export class WindowHandler {
 
         this.screenSharingIndicatorWindow.once('close', () => {
             this.removeWindow(streamId);
-            ipcMain.removeListener('stop-screen-sharing', stopScreenSharing);
         });
 
         ipcMain.once('stop-screen-sharing', stopScreenSharing);
@@ -822,7 +813,7 @@ export class WindowHandler {
      * Check if build is expired and show an error message
      * @param browserWindow Focused window instance
      */
-    private checkExpiry(browserWindow: BrowserWindow) {
+    private async checkExpiry(browserWindow: BrowserWindow) {
         logger.info(`window handler: calling ttl handler to check for build expiry!`);
         const buildExpired = checkIfBuildExpired();
         if (!buildExpired) {
@@ -830,21 +821,19 @@ export class WindowHandler {
             return;
         }
         logger.info(`window handler: build expired, will inform the user and quit the app!`);
-        const response = (resp: number) => {
-            if (resp === 0) {
-                electron.app.exit();
-            }
-        };
 
         const options = {
             type: 'error',
             title: i18n.t('Build expired')(),
             message: i18n.t('Sorry, this is a test build and it has expired. Please contact your administrator to get a production build.')(),
-            buttons: [i18n.t('Quit')()],
+            buttons: [ i18n.t('Quit')() ],
             cancelId: 0,
         };
 
-        electron.dialog.showMessageBox(browserWindow, options, response);
+        const { response } = await electron.dialog.showMessageBox(browserWindow, options);
+        if (response === 0) {
+            electron.app.exit();
+        }
     }
 
     /**
