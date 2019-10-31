@@ -25,7 +25,7 @@ const MAX_LOG_QUEUE_LENGTH = 100;
 if (isWindowsOS && process.env.LOCALAPPDATA) {
     app.setPath('appData', process.env.LOCALAPPDATA);
     app.setPath('userData', path.join(app.getPath('appData'), app.getName()));
-    app.setPath('logs', path.join(app.getPath('appData'), app.getName()));
+    app.setPath('logs', path.join(app.getPath('appData'), app.getName(), 'logs'));
 }
 
 class Logger {
