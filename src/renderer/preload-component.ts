@@ -61,6 +61,7 @@ const load = () => {
             break;
         case components.notification:
             loadStyle(components.notification);
+            window.name = 'Notification - Symphony';
             component = NotificationComp;
             break;
         case components.notificationSettings:
