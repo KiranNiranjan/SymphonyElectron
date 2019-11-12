@@ -18,7 +18,18 @@ import { ICustomBrowserWindow, windowHandler } from './window-handler';
 logger.info(`App started with the args ${JSON.stringify(process.argv)}`);
 
 const allowMultiInstance: string | boolean = getCommandLineArgs(process.argv, '--multiInstance', true) || isDevEnv;
+const isRelaunch: string | null = getCommandLineArgs(process.argv, '--relaunchToCleanUp', true);
 let isAppAlreadyOpen: boolean = false;
+
+if (isRelaunch) {
+    app.quit();
+    logger.info(`Cleaning up and quitting the application`);
+    // @ts-ignore
+    return;
+} else {
+    logger.info(`Setting up relaunch work around`);
+    app.relaunch({ args: process.argv.slice(1).concat(['--relaunchToCleanUp']) });
+}
 
 // Setting the env path child_process issue https://github.com/electron/electron/issues/7688
 (async () => {
