@@ -38,11 +38,10 @@ export default class NotificationHandler {
     private externalDisplay: Electron.Display | undefined;
 
     constructor(opts) {
-        this.settings = opts as ISettings;
-        this.setupNotificationPosition();
         const isRelaunch: string | null = getCommandLineArgs(process.argv, '--relaunchToCleanUp', true);
-
+        this.settings = opts as ISettings;
         if (!isRelaunch) {
+            this.setupNotificationPosition();
             app.once('ready', () => {
                 if (electron && electron.screen && typeof electron.screen.on === 'function') {
                     electron.screen.on('display-added', this.eventHandlers.onSetup);
