@@ -41,9 +41,11 @@ export default class NotificationHandler {
         this.setupNotificationPosition();
 
         app.once('ready', () => {
-            electron.screen.on('display-added', this.eventHandlers.onSetup);
-            electron.screen.on('display-removed', this.eventHandlers.onSetup);
-            electron.screen.on('display-metrics-changed', this.eventHandlers.onSetup);
+            if (electron && electron.screen && typeof electron.screen.on === 'function') {
+                electron.screen.on('display-added', this.eventHandlers.onSetup);
+                electron.screen.on('display-removed', this.eventHandlers.onSetup);
+                electron.screen.on('display-metrics-changed', this.eventHandlers.onSetup);
+            }
         });
     }
 
