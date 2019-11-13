@@ -36,11 +36,12 @@ export default class NotificationHandler {
     };
 
     private externalDisplay: Electron.Display | undefined;
+    private readonly isRelaunch: string | null;
 
     constructor(opts) {
-        const isRelaunch: string | null = getCommandLineArgs(process.argv, '--relaunchToCleanUp', true);
+        this.isRelaunch = getCommandLineArgs(process.argv, '--relaunchToCleanUp', true);
         this.settings = opts as ISettings;
-        if (!isRelaunch) {
+        if (!this.isRelaunch) {
             this.setupNotificationPosition();
             app.once('ready', () => {
                 if (electron && electron.screen && typeof electron.screen.on === 'function') {
@@ -71,6 +72,10 @@ export default class NotificationHandler {
     public setupNotificationPosition() {
         // This feature only applies to windows
         if (isMac || !app.isReady()) {
+            return;
+        }
+
+        if (this.isRelaunch) {
             return;
         }
 
