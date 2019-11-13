@@ -4,6 +4,7 @@ import * as electron from 'electron';
 
 import { windowExists } from '../app/window-utils';
 import { isMac } from '../common/env';
+import { getCommandLineArgs } from '../common/utils';
 
 interface ISettings {
     startCorner: startCorner;
@@ -39,14 +40,17 @@ export default class NotificationHandler {
     constructor(opts) {
         this.settings = opts as ISettings;
         this.setupNotificationPosition();
+        const isRelaunch: string | null = getCommandLineArgs(process.argv, '--relaunchToCleanUp', true);
 
-        app.once('ready', () => {
-            if (electron && electron.screen && typeof electron.screen.on === 'function') {
-                electron.screen.on('display-added', this.eventHandlers.onSetup);
-                electron.screen.on('display-removed', this.eventHandlers.onSetup);
-                electron.screen.on('display-metrics-changed', this.eventHandlers.onSetup);
-            }
-        });
+        if (!isRelaunch) {
+            app.once('ready', () => {
+                if (electron && electron.screen && typeof electron.screen.on === 'function') {
+                    electron.screen.on('display-added', this.eventHandlers.onSetup);
+                    electron.screen.on('display-removed', this.eventHandlers.onSetup);
+                    electron.screen.on('display-metrics-changed', this.eventHandlers.onSetup);
+                }
+            });
+        }
     }
 
     /**
