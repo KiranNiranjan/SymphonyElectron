@@ -1,7 +1,7 @@
 import { app } from 'electron';
 import * as path from 'path';
 
-import { isDevEnv } from '../common/env';
+import { isDevEnv, isWindowsOS } from '../common/env';
 import { logger } from '../common/logger';
 import { getCommandLineArgs } from '../common/utils';
 import { appStats } from './stats';
@@ -10,9 +10,18 @@ import { appStats } from './stats';
 const userDataPathArg: string | null = getCommandLineArgs(process.argv, '--userDataPath=', false);
 const userDataPath = userDataPathArg && userDataPathArg.substring(userDataPathArg.indexOf('=') + 1);
 
+const shouldDisableHardwareAcceleration: string | null = getCommandLineArgs(process.argv, '--disableHardwareAcceleration', true);
+
 // need to set this explicitly if using Squirrel
 // https://www.electron.build/configuration/configuration#Configuration-squirrelWindows
 app.setAppUserModelId('com.symphony.electron-desktop');
+
+// Disable hardware acceleration for
+// fixing the screen sharing issue
+// https://github.com/electron/electron/issues/6599
+if (isWindowsOS && shouldDisableHardwareAcceleration) {
+    app.disableHardwareAcceleration();
+}
 
 // Set user data path before app ready event
 if (isDevEnv) {
