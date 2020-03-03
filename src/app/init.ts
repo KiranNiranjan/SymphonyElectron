@@ -14,9 +14,6 @@ const userDataPath = userDataPathArg && userDataPathArg.substring(userDataPathAr
 // enable this feature only on windows as there is an issue with respect to MacOs
 // and the fix is not back ported to 3.1.x
 // https://github.com/electron/electron/pull/20497
-if (isWindowsOS) {
-    app.enableMixedSandbox();
-}
 
 // Set user data path before app ready event
 if (isDevEnv) {

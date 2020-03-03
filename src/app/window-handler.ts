@@ -861,7 +861,7 @@ export class WindowHandler {
     private getWindowOpts(windowOpts: Electron.BrowserWindowConstructorOptions, webPreferences: Electron.WebPreferences): ICustomBrowserWindowConstructorOpts {
         const defaultPreferencesOpts = {
             ...{
-                sandbox: true,
+                sandbox: false,
                 nodeIntegration: false,
                 contextIsolation: this.contextIsolation,
                 backgroundThrottling: this.backgroundThrottling,
