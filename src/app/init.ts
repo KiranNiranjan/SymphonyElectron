@@ -1,7 +1,7 @@
 import { app } from 'electron';
 import * as path from 'path';
 
-import { isDevEnv, isWindowsOS } from '../common/env';
+import { isDevEnv } from '../common/env';
 import { logger } from '../common/logger';
 import { getCommandLineArgs } from '../common/utils';
 import { appStats } from './stats';
