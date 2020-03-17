@@ -12,6 +12,7 @@ import {
     IScreenSnippet,
     LogLevel,
 } from '../common/api-interface';
+import { throttle } from '../common/utils';
 import { ICustomDesktopCapturerSource, ICustomSourcesOptions, IScreenSourceError } from './desktop-capturer';
 import { SSFApi } from './ssf-api';
 
@@ -44,6 +45,7 @@ export class AppBridge {
 
     public origin: string;
 
+    private readonly throttledShowNotification: (data: INotificationData) => void;
     private readonly callbackHandlers = {
         onMessage: (event) => this.handleMessage(event),
         onActivityCallback: (idleTime: number) => this.activityCallback(idleTime),
@@ -74,6 +76,9 @@ export class AppBridge {
             ssInstance.setBroadcastMessage(this.broadcastMessage);
         }
         window.addEventListener('message', this.callbackHandlers.onMessage);
+        this.throttledShowNotification = throttle((data: INotificationData) => {
+            notification.showNotification(data, this.callbackHandlers.onNotificationCallback);
+        }, 200);
     }
 
     /**
@@ -147,7 +152,7 @@ export class AppBridge {
                 ssf.getMediaSource(data as ICustomSourcesOptions, this.callbackHandlers.onMediaSourceCallback);
                 break;
             case apiCmds.notification:
-                notification.showNotification(data as INotificationData, this.callbackHandlers.onNotificationCallback);
+                this.throttledShowNotification(data as INotificationData);
                 break;
             case apiCmds.closeNotification:
                 notification.hideNotification(data as number);
