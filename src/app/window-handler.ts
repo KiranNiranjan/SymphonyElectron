@@ -394,7 +394,6 @@ export class WindowHandler {
             if (this.willQuitApp) {
                 logger.info(`window-handler: app is quitting, destroying all windows!`);
                 this.destroyAllWindows();
-                app.quit();
                 return;
             }
 
@@ -419,7 +418,6 @@ export class WindowHandler {
             if (isWindowsOS || isMac) {
                 this.execCmd(this.screenShareIndicatorFrameUtil, []);
             }
-            this.closeAllWindow();
             this.destroyAllWindows();
         });
 
