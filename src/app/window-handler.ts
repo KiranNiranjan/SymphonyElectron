@@ -396,7 +396,8 @@ export class WindowHandler {
                 if (this.mainWindow && this.mainWindow.webContents.isDevToolsOpened()) {
                     this.mainWindow.webContents.closeDevTools();
                 }
-                return this.destroyAllWindows();
+                this.destroyAllWindows();
+                return;
             }
 
             const { minimizeOnClose } = config.getConfigFields([ 'minimizeOnClose' ]);
