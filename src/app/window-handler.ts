@@ -397,7 +397,6 @@ export class WindowHandler {
                     this.mainWindow.webContents.closeDevTools();
                 }
                 this.destroyAllWindows();
-                app.exit(0);
                 return;
             }
 
@@ -418,11 +417,6 @@ export class WindowHandler {
         });
 
         this.mainWindow.once('closed', () => {
-            logger.info(`window-handler: main window closed, destroying all windows!`);
-            if (isWindowsOS || isMac) {
-                this.execCmd(this.screenShareIndicatorFrameUtil, []);
-            }
-            this.closeAllWindow();
             this.destroyAllWindows();
         });
 
@@ -1295,7 +1289,6 @@ export class WindowHandler {
                 this.removeWindow(winKey);
             }
         }
-        this.mainWindow = null;
     }
 
     /**
