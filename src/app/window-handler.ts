@@ -1293,7 +1293,9 @@ export class WindowHandler {
                 this.removeWindow(winKey);
             }
         }
-        this.mainWindow = null;
+        if (this.mainWindow && windowExists(this.mainWindow)) {
+            this.mainWindow.destroy();
+        }
     }
 
     /**
