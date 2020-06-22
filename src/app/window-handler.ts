@@ -396,7 +396,9 @@ export class WindowHandler {
                 if (this.mainWindow && this.mainWindow.webContents.isDevToolsOpened()) {
                     this.mainWindow.webContents.closeDevTools();
                 }
-                return this.destroyAllWindows();
+                this.destroyAllWindows();
+                app.exit(0);
+                return;
             }
 
             const { minimizeOnClose } = config.getConfigFields([ 'minimizeOnClose' ]);
@@ -1293,9 +1295,7 @@ export class WindowHandler {
                 this.removeWindow(winKey);
             }
         }
-        if (this.mainWindow && windowExists(this.mainWindow)) {
-            this.mainWindow.destroy();
-        }
+        this.mainWindow = null;
     }
 
     /**
