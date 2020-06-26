@@ -388,9 +388,14 @@ export class AppMenu {
         if (isWindowsOS) {
             submenu.push(
                 {
-                    role: 'quit',
                     visible: isWindowsOS,
                     label: i18n.t('Quit Symphony')(),
+                    click: async (_item) => {
+                        const  mainWindow = windowHandler.getMainWindow();
+                        if (mainWindow && windowExists(mainWindow)) {
+                            app.quit();
+                        }
+                    },
                 },
             );
         }
