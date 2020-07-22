@@ -21,6 +21,7 @@ const minMemoryFetchInterval = 4 * 60 * 60 * 1000;
 const maxMemoryFetchInterval = 12 * 60 * 60 * 1000;
 const snackBar = new SnackBar();
 const banner = new MessageBanner();
+let isInitialInfo = true;
 
 /**
  * creates API exposed from electron.
@@ -59,6 +60,21 @@ const getRandomTime = (min, max) => {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
+
+setInterval(async () => {
+    const memoryInfo = await process.getProcessMemoryInfo();
+    const cpuUsage = await process.getCPUUsage();
+    const systemMemoryInfo = await process.getSystemMemoryInfo();
+    ipcRenderer.send(apiName.symphonyApi, {
+        cmd: apiCmds.memoryInfoLogs,
+        isInitialInfo,
+        windowName: window.name,
+        memoryInfo,
+        cpuUsage,
+        systemMemoryInfo,
+    });
+    isInitialInfo = false;
+}, 5 * 60 * 1000);
 
 /**
  * Monitory memory with a randomized time

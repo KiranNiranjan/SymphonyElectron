@@ -180,6 +180,17 @@ ipcMain.on(apiName.symphonyApi, async (event: Electron.IpcMainEvent, arg: IApiAr
             if (windowHandler.appMenu) {
                 windowHandler.appMenu.buildMenu();
             }
+            break;
+        case apiCmds.memoryInfoLogs:
+            const { isInitialInfo, memoryInfo, cpuUsage, systemMemoryInfo, windowName } = arg;
+            if (isInitialInfo) {
+                logger.info(`** Memory/CPU Initial/After Reload data **`);
+            }
+            logger.info(`** Memory/CPU Information of ${windowName} **`);
+            logger.info('memory info', memoryInfo);
+            logger.info('cpu info', cpuUsage);
+            logger.info('system memory info', systemMemoryInfo);
+            break;
         default:
     }
 

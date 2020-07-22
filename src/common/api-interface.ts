@@ -32,6 +32,7 @@ export enum apiCmds {
     closeNotification = 'close-notification',
     isMisspelled = 'is-misspelled',
     memoryInfo = 'memory-info',
+    memoryInfoLogs = 'memory-info-logs',
     swiftSearch = 'swift-search',
     getConfigUrl = 'get-config-url',
     registerRestartFloater = 'register-restart-floater',
@@ -69,6 +70,8 @@ export interface IApiArgs {
     logName: string;
     logs: ILogs;
     cloudConfig: object;
+    isInitialInfo: boolean;
+    systemMemoryInfo: Electron.SystemMemoryInfo;
 }
 
 export type WindowTypes = 'screen-picker' | 'screen-sharing-indicator' | 'notification-settings';
