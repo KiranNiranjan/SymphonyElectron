@@ -16,6 +16,11 @@ const userDataPath =
   userDataPathArg &&
   userDataPathArg.substring(userDataPathArg.indexOf('=') + 1);
 
+// tslint:disable-next-line:no-var-requires
+if (require('electron-squirrel-startup')) { // @ts-ignore
+    return;
+}
+
 // force sandbox: true for all BrowserWindow instances.
 if (!isNodeEnv) {
   app.enableSandbox();
