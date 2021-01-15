@@ -86,6 +86,9 @@ const startApplication = async () => {
     }
   }
   await app.whenReady();
+  // need to set this explicitly if using Squirrel
+  // https://www.electron.build/configuration/configuration#Configuration-squirrelWindows
+  app.setAppUserModelId('com.symphony.electron-desktop');
   if (oneStart) {
     return;
   }
