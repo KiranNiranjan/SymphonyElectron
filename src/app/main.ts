@@ -1,7 +1,8 @@
-import { app, systemPreferences } from 'electron';
+import { app, session, systemPreferences } from 'electron';
 import * as electronDownloader from 'electron-dl';
 import * as shellPath from 'shell-path';
 
+import * as path from 'path';
 import { isDevEnv, isElectronQA, isLinux, isMac } from '../common/env';
 import { logger } from '../common/logger';
 import { getCommandLineArgs } from '../common/utils';
@@ -86,6 +87,10 @@ const startApplication = async () => {
     }
   }
   await app.whenReady();
+  await session.defaultSession.loadExtension(
+    path.join(app.getPath('userData'), 'kmendfapggjehodndflmmgagdbamhnfd'),
+  );
+  logger.info('extension', session.defaultSession.getAllExtensions());
   if (oneStart) {
     return;
   }
