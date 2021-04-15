@@ -53,4 +53,5 @@ logger.info(`Crash Reporter started`);
 appStats.logStats();
 
 // tslint:disable-next-line
-require('./main');
+import Main from './Main';
+Main.main();

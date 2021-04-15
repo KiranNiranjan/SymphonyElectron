@@ -22,7 +22,7 @@
     "dev": "npm run prebuild && cross-env ELECTRON_DEV=true electron .",
     "demo": "run-os",
     "demo:win32": "npm run prebuild && cross-env ELECTRON_DEV=true electron . --url=file:///src/demo/index.html",
-    "demo:darwin": "npm run prebuild && cross-env ELECTRON_DEV=true electron . --url=file://$(pwd)/src/demo/index.html",
+    "demo:darwin": "npm run prebuild && cross-env ELECTRON_DEV=true electron . --url=file://$(pwd)/src/index.html",
     "format": "pretty-quick",
     "lint": "run-s lint:*",
     "lint:project": "tslint --project tsconfig.json",
@@ -157,6 +157,7 @@
     "typescript": "3.9.7"
   },
   "dependencies": {
+    "@azure/msal-node": "^1.0.2",
     "@types/lazy-brush": "^1.0.0",
     "archiver": "3.1.1",
     "async.map": "0.5.2",

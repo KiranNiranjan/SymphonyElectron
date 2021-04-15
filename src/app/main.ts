@@ -1,200 +1,115 @@
-import { app, systemPreferences } from 'electron';
-import * as electronDownloader from 'electron-dl';
-import * as shellPath from 'shell-path';
+// @ts-nocheck
 
-import { isDevEnv, isElectronQA, isLinux, isMac } from '../common/env';
-import { logger } from '../common/logger';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { getCommandLineArgs } from '../common/utils';
-import { cleanUpAppCache, createAppCacheFile } from './app-cache-handler';
-import { autoLaunchInstance } from './auto-launch-controller';
-import { setChromeFlags, setSessionProperties } from './chrome-flags';
-import { config } from './config-handler';
-import './dialog-handler';
-import './main-api-handler';
-import { handlePerformanceSettings } from './perf-handler';
-import { protocolHandler } from './protocol-handler';
-import { ICustomBrowserWindow, windowHandler } from './window-handler';
+import AuthProvider from './AuthProvider';
+import { FetchManager } from './FetchManager';
 
-// Set automatic period substitution to false because of a bug in draft js on the client app
-// See https://perzoinc.atlassian.net/browse/SDA-2215 for more details
-if (isMac) {
-  systemPreferences.setUserDefault(
-    'NSAutomaticPeriodSubstitutionEnabled',
-    'string',
-    'false',
-  );
-}
+import { GRAPH_CONFIG, IPC_MESSAGES } from './Constants';
+const urlFromCmd = getCommandLineArgs(process.argv, '--url=', false);
+const url = urlFromCmd.substr(6);
 
-logger.info(`App started with the args ${JSON.stringify(process.argv)}`);
+export default class Main {
+  public static application: Electron.App;
+  public static mainWindow: Electron.BrowserWindow;
+  public static authProvider: AuthProvider;
+  public static accessToken: string;
+  public static networkModule: FetchManager;
 
-const allowMultiInstance: string | boolean =
-  getCommandLineArgs(process.argv, '--multiInstance', true) || isDevEnv;
-let isAppAlreadyOpen: boolean = false;
-
-// Setting the env path child_process issue https://github.com/electron/electron/issues/7688
-(async () => {
-  try {
-    const paths = await shellPath();
-    if (paths) {
-      return (process.env.PATH = paths);
-    }
-    if (isMac) {
-      process.env.PATH = [
-        './node_modules/.bin',
-        '/usr/local/bin',
-        process.env.PATH,
-      ].join(':');
-    }
-  } catch (e) {
-    if (isMac) {
-      process.env.PATH = [
-        './node_modules/.bin',
-        '/usr/local/bin',
-        process.env.PATH,
-      ].join(':');
-    }
-  }
-})();
-
-electronDownloader();
-handlePerformanceSettings();
-setChromeFlags();
-
-// Need this to prevent blank pop-out from 8.x versions
-// Refer - SDA-1877 - https://github.com/electron/electron/issues/18397
-if (!isElectronQA) {
-  app.allowRendererProcessReuse = true;
-}
-
-// Electron sets the default protocol
-if (!isDevEnv) {
-  app.setAsDefaultProtocolClient('symphony');
-}
-
-/**
- * Main function that initialises the application
- */
-let oneStart = false;
-const startApplication = async () => {
-  if (config.isFirstTimeLaunch()) {
-    logger.info(
-      `main: This is a first time launch! will update config and handle auto launch`,
-    );
-    await config.setUpFirstTimeLaunch();
-    if (!isLinux) {
-      await autoLaunchInstance.handleAutoLaunch();
-    }
-  }
-  await app.whenReady();
-  if (oneStart) {
-    return;
+  public static main(): void {
+    Main.application = app;
+    Main.application.on('window-all-closed', Main.onWindowAllClosed);
+    Main.application.on('ready', Main.onReady);
   }
 
-  logger.info(
-    'main: app is ready, performing initial checks oneStart: ' + oneStart,
-  );
-  oneStart = true;
-  createAppCacheFile();
-  // Picks global config values and updates them in the user config
-  await config.updateUserConfigOnStart();
-  setSessionProperties();
-  await windowHandler.createApplication();
-  logger.info(`main: created application`);
-};
+  private static async loadBaseUI(): Promise<void> {
+    await Main.mainWindow.loadURL(url);
+  }
 
-// Handle multiple/single instances
-if (!allowMultiInstance) {
-  logger.info('main: Multiple instances are not allowed, requesting lock', {
-    allowMultiInstance,
-  });
-  const gotTheLock = app.requestSingleInstanceLock();
+  private static onWindowAllClosed(): void {
+    Main.application.quit();
+  }
 
-  // quit if another instance is already running, ignore for dev env or if app was started with multiInstance flag
-  if (!gotTheLock) {
-    logger.info(`main: got the lock hence closing the new instance`, {
-      gotTheLock,
+  private static onClose(): void {
+    Main.mainWindow = null;
+  }
+
+  private static onReady(): void {
+    Main.createMainWindow();
+    Main.mainWindow.loadURL(url);
+    Main.mainWindow.on('closed', Main.onClose);
+    Main.authProvider = new AuthProvider();
+    Main.networkModule = new FetchManager();
+    Main.registerSubscriptions();
+
+    Main.attemptSSOSilent();
+  }
+
+  // Creates main application window
+  private static createMainWindow(): void {
+    this.mainWindow = new BrowserWindow({
+      width: 800,
+      height: 800,
+      webPreferences: {
+        nodeIntegration: true,
+      },
     });
-    app.exit();
-  } else {
-    logger.info(`main: Creating the first instance of the application`);
-    app.on('second-instance', (_event, argv) => {
-      // Someone tried to run a second instance, we should focus our window.
-      logger.info(
-        `main: We've got a second instance of the app, will check if it's allowed and exit if not`,
-      );
-      const mainWindow = windowHandler.getMainWindow();
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        if (isMac) {
-          logger.info(`main: We are on mac, so, showing the existing window`);
-          return mainWindow.show();
-        }
-        if (mainWindow.isMinimized()) {
-          logger.info(`main: our main window is minimised, will restore it!`);
-          mainWindow.restore();
-        }
-        mainWindow.focus();
-        isAppAlreadyOpen = true;
-        protocolHandler.processArgv(argv, isAppAlreadyOpen);
-      }
-    });
-    startApplication();
   }
-} else {
-  logger.info(`main: multi instance allowed, creating second instance`, {
-    allowMultiInstance,
-  });
-  startApplication();
-}
 
-/**
- * Is triggered when all the windows are closed
- * In which case we quit the app
- */
-app.on('window-all-closed', () => {
-  logger.info(`main: all windows are closed, quitting the app!`);
-  app.quit();
-});
+  private static publish(message: string, payload: any): void {
+    Main.mainWindow.webContents.send(message, payload);
+  }
 
-/**
- * Creates a new empty cache file when the app is quit
- */
-app.on('quit', () => {
-  logger.info(`main: quitting the app!`);
-  cleanUpAppCache();
-});
+  private static async attemptSSOSilent(): Promise<void> {
+    const account = await Main.authProvider.loginSilent();
+    await Main.loadBaseUI();
 
-/**
- * Cleans up reference before quiting
- */
-app.on('before-quit', () => (windowHandler.willQuitApp = true));
+    if (account) {
+      console.log('Successful silent account retrieval');
+      Main.publish(IPC_MESSAGES.SHOW_WELCOME_MESSAGE, account);
+    }
+  }
 
-/**
- * Is triggered when the application is launched
- * or clicking the application's dock or taskbar icon
- *
- * This event is emitted only on macOS at this moment
- */
-app.on('activate', () => {
-  const mainWindow: ICustomBrowserWindow | null = windowHandler.getMainWindow();
-  if (!mainWindow || mainWindow.isDestroyed()) {
-    logger.info(
-      `main: main window not existing or destroyed, creating a new instance of the main window!`,
+  private static async login(): Promise<void> {
+    const account = await Main.authProvider.login(Main.mainWindow);
+    await Main.loadBaseUI();
+    Main.publish(IPC_MESSAGES.SHOW_WELCOME_MESSAGE, account);
+  }
+
+  private static async getProfile(): Promise<void> {
+    const token = await Main.authProvider.getProfileToken(Main.mainWindow);
+    const account = Main.authProvider.currentAccount;
+    await Main.loadBaseUI();
+    Main.publish(IPC_MESSAGES.SHOW_WELCOME_MESSAGE, account);
+    const graphResponse = await Main.networkModule.callEndpointWithToken(
+      GRAPH_CONFIG.GRAPH_ME_ENDPT,
+      token,
     );
-    startApplication();
-    return;
+    Main.publish(IPC_MESSAGES.SET_PROFILE, graphResponse);
   }
-  logger.info(`main: activating & showing main window now!`);
-  mainWindow.show();
-});
 
-/**
- * Validates and Sends protocol action
- *
- * This event is emitted only on macOS at this moment
- */
-app.on('open-url', (_event, url) => {
-  logger.info(
-    `main: we got a protocol request with url ${url}! processing the request!`,
-  );
-  protocolHandler.sendProtocol(url);
-});
+  private static async getMail(): Promise<void> {
+    const token = await Main.authProvider.getMailToken(Main.mainWindow);
+    const account = Main.authProvider.currentAccount;
+    await Main.loadBaseUI();
+    Main.publish(IPC_MESSAGES.SHOW_WELCOME_MESSAGE, account);
+    const graphResponse = await Main.networkModule.callEndpointWithToken(
+      GRAPH_CONFIG.GRAPH_MAIL_ENDPT,
+      token,
+    );
+    Main.publish(IPC_MESSAGES.SET_MAIL, graphResponse);
+  }
+
+  private static async logout(): Promise<void> {
+    await Main.authProvider.logout();
+    await Main.loadBaseUI();
+  }
+
+  // Router that maps callbacks/actions to specific messages received from the Renderer
+  private static registerSubscriptions(): void {
+    ipcMain.on(IPC_MESSAGES.LOGIN, Main.login);
+    ipcMain.on(IPC_MESSAGES.GET_PROFILE, Main.getProfile);
+    ipcMain.on(IPC_MESSAGES.GET_MAIL, Main.getMail);
+    ipcMain.on(IPC_MESSAGES.LOGOUT, Main.logout);
+  }
+}
