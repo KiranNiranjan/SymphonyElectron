@@ -1,4 +1,4 @@
-import { app, session, systemPreferences } from 'electron';
+import { app, BrowserWindow, session, systemPreferences } from 'electron';
 import * as electronDownloader from 'electron-dl';
 import * as shellPath from 'shell-path';
 
@@ -106,7 +106,10 @@ const startApplication = async () => {
   setSessionProperties();
   await windowHandler.createApplication();
   const authProvider = new AuthProvider();
-  await authProvider.loginSilent();
+  const acc = await authProvider.loginSilent();
+  if (!acc) {
+    await authProvider.login(windowHandler.getMainWindow() as BrowserWindow);
+  }
   logger.info(`main: created application`);
 };
 
