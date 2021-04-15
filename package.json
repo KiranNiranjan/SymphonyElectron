@@ -112,6 +112,7 @@
     "url": "https://support.symphony.com"
   },
   "devDependencies": {
+    "@azure/msal-node": "^1.0.2",
     "@types/cheerio": "^0.22.22",
     "@types/enzyme": "^3.10.7",
     "@types/ffi-napi": "2.4.1",

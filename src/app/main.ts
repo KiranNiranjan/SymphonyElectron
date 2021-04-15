@@ -7,6 +7,7 @@ import { isDevEnv, isElectronQA, isLinux, isMac } from '../common/env';
 import { logger } from '../common/logger';
 import { getCommandLineArgs } from '../common/utils';
 import { cleanUpAppCache, createAppCacheFile } from './app-cache-handler';
+import AuthProvider from './AuthProvider';
 import { autoLaunchInstance } from './auto-launch-controller';
 import { setChromeFlags, setSessionProperties } from './chrome-flags';
 import { config } from './config-handler';
@@ -104,6 +105,8 @@ const startApplication = async () => {
   await config.updateUserConfigOnStart();
   setSessionProperties();
   await windowHandler.createApplication();
+  const authProvider = new AuthProvider();
+  await authProvider.loginSilent();
   logger.info(`main: created application`);
 };
 
