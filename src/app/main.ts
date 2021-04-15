@@ -1,6 +1,7 @@
 // @ts-nocheck
 
 import { app, BrowserWindow, ipcMain } from 'electron';
+import * as path from 'path';
 import { getCommandLineArgs } from '../common/utils';
 import AuthProvider from './AuthProvider';
 import { FetchManager } from './FetchManager';
@@ -52,6 +53,7 @@ export default class Main {
       height: 800,
       webPreferences: {
         nodeIntegration: true,
+        preload: path.join(__dirname, '../renderer/_preload-main.js'),
       },
     });
   }

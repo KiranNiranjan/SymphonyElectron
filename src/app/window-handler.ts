@@ -16,13 +16,7 @@ import * as path from 'path';
 import { format, parse } from 'url';
 
 import { apiName, Themes, WindowTypes } from '../common/api-interface';
-import {
-  isDevEnv,
-  isLinux,
-  isMac,
-  isNodeEnv,
-  isWindowsOS,
-} from '../common/env';
+import { isDevEnv, isLinux, isMac, isWindowsOS } from '../common/env';
 import { i18n, LocaleType } from '../common/i18n';
 import { logger } from '../common/logger';
 import {
@@ -126,6 +120,7 @@ export class WindowHandler {
   public screenShareIndicatorFrameUtil: string;
   public shouldShowWelcomeScreen: boolean = false;
   private readonly defaultPodUrl: string = 'https://[POD].symphony.com';
+  // @ts-ignore
   private readonly contextIsolation: boolean;
   private readonly backgroundThrottling: boolean;
   private readonly windowOpts: ICustomBrowserWindowConstructorOpts;
@@ -2037,9 +2032,9 @@ export class WindowHandler {
   ): ICustomBrowserWindowConstructorOpts {
     const defaultPreferencesOpts = {
       ...{
-        sandbox: !isNodeEnv,
-        nodeIntegration: isNodeEnv,
-        contextIsolation: isNodeEnv ? false : this.contextIsolation,
+        sandbox: false,
+        nodeIntegration: true,
+        contextIsolation: false,
         backgroundThrottling: this.backgroundThrottling,
         enableRemoteModule: true,
       },
