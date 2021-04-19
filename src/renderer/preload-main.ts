@@ -87,6 +87,8 @@ if (ssfWindow.ssf) {
     closeNotification: ssfWindow.ssf.closeNotification,
     restartApp: ssfWindow.ssf.restartApp,
     closeAllWrapperWindows: ssfWindow.ssf.closeAllWrapperWindows,
+    login: ssfWindow.ssf.login,
+    getAccount: ssfWindow.ssf.getAccount,
   });
 }
 

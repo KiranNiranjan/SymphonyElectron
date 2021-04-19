@@ -1,0 +1,86 @@
+<!--
+# Copyright 2021 . All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Auth Demo</title>
+  </head>
+  <body>
+    <h1>Symphony Azure Auth Demo</h1>
+
+    <button id="login">login</button>
+
+    <h2>Get account info</h2>
+    <button id="getInfo">fetch</button>
+    <div id="accountContent"></div>
+    <script>
+      function tableMarkupFromObjectArray(obj) {
+        let headers = `
+  <th>Index</th>
+  ${Object.keys(obj[0])
+    .map(
+      (col) => `
+  <th>${col}</th>`,
+    )
+    .join('')}`;
+
+        let content = obj
+          .map(
+            (row, idx) => `
+<tr>
+      <td>${idx}</td>
+      ${Object.values(row)
+        .map(
+          (datum) => `
+      <td>${datum}</td>`,
+        )
+        .join('')}
+    </tr>
+`,
+          )
+          .join('');
+
+        let tablemarkup = `
+  <table>
+    ${headers}
+    ${content}
+  </table>
+  `;
+        return tablemarkup;
+      }
+
+      var login = document.getElementById('login');
+      var getInfo = document.getElementById('getInfo');
+
+      login.addEventListener('click', () => {
+        if (window.manaSSF) {
+          window.manaSSF.login();
+        }
+      });
+
+      getInfo.addEventListener('click', () => {
+        if (window.manaSSF) {
+          window.manaSSF.getAccount().then((info) => {
+            document.getElementById(
+              'accountContent',
+            ).innerHTML = tableMarkupFromObjectArray(info);
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

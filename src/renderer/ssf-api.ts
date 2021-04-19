@@ -1,5 +1,4 @@
 import { ipcRenderer, remote } from 'electron';
-const os = remote.require('os');
 import { buildNumber, searchAPIVersion } from '../../package.json';
 import { IDownloadItem } from '../app/download-handler';
 import { ICustomBrowserWindow } from '../app/window-handler';
@@ -26,6 +25,8 @@ import { throttle } from '../common/utils';
 import { getSource } from './desktop-capturer';
 import SSFNotificationHandler from './notification-ssf-hendler';
 import { ScreenSnippetBcHandler } from './screen-snippet-bc-handler';
+
+const os = remote.require('os');
 
 let isAltKey: boolean = false;
 let isMenuOpen: boolean = false;
@@ -673,6 +674,19 @@ export class SSFApi {
       cmd: apiCmds.closeNotification,
       notificationId,
     });
+  }
+
+  public login() {
+    ipcRenderer.send(apiName.symphonyApi, {
+      cmd: apiCmds.login,
+    });
+  }
+
+  public getAccount() {
+    const data = ipcRenderer.sendSync(apiName.symphonyApi, {
+      cmd: apiCmds.getAccount,
+    });
+    return Promise.resolve([data || { noData: 'there is no data' }]);
   }
 }
 

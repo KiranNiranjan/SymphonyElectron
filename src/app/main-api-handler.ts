@@ -11,6 +11,7 @@ import { logger } from '../common/logger';
 import { activityDetection } from './activity-detection';
 import { analytics } from './analytics-handler';
 import appStateHandler from './app-state-handler';
+import AuthProvider from './AuthProvider';
 import { CloudConfigDataTypes, config, ICloudConfig } from './config-handler';
 import { downloadHandler } from './download-handler';
 import { memoryMonitor } from './memory-monitor';
@@ -31,6 +32,8 @@ import {
   updateLocale,
   windowExists,
 } from './window-utils';
+
+const authProvider = new AuthProvider();
 
 /**
  * Handle API related ipc messages from renderers. Only messages from windows
@@ -274,6 +277,15 @@ ipcMain.on(
         break;
       case apiCmds.closeAllWrapperWindows:
         windowHandler.closeAllWindows();
+        break;
+      case apiCmds.login:
+        const browserWin = BrowserWindow.fromWebContents(event.sender);
+        if (browserWin) {
+          authProvider.login(browserWin);
+        }
+        break;
+      case apiCmds.getAccount:
+        event.returnValue = authProvider.currentAccount;
         break;
       default:
         break;

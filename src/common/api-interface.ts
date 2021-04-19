@@ -46,6 +46,8 @@ export enum apiCmds {
   setIsMana = 'set-is-mana',
   showNotification = 'show-notification',
   closeAllWrapperWindows = 'close-all-windows',
+  login = 'login',
+  getAccount = 'getAccount',
 }
 
 export enum apiName {
