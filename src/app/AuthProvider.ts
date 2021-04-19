@@ -19,9 +19,9 @@ const CUSTOM_FILE_PROTOCOL_NAME = 'msal';
 
 const MSAL_CONFIG: Configuration = {
   auth: {
-    clientId: '89e61572-2f96-47ba-b571-9d8c8f96b69d',
+    clientId: 'b1aa6bbc-cdf2-4167-a8d0-eafe9896f0f5',
     authority:
-      'https://login.microsoftonline.com/5d97b14d-c396-4aee-b524-c86d33e9b660',
+      'https://login.microsoftonline.com/7c2bef39-1210-4e1f-a1d1-645ab01598d7',
   },
   cache: {
     cachePlugin,
