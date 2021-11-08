@@ -1009,9 +1009,7 @@ export const monitorNetworkInterception = (url: string) => {
   }
 };
 
-export const loadBrowserViews = async (
-  mainWindow: BrowserWindow,
-): Promise<WebContents> => {
+export const loadBrowserViews = (mainWindow: BrowserWindow): WebContents => {
   mainWindow.setMenuBarVisibility(false);
 
   const titleBarView = new BrowserView({
@@ -1154,7 +1152,7 @@ export const loadBrowserViews = async (
       mainEvents.publish('enter-full-screen');
     }
   });
-  await titleBarView.webContents.loadURL(titleBarWindowUrl);
+  titleBarView.webContents.loadURL(titleBarWindowUrl);
   titleBarView.setBounds({
     ...mainWindow.getBounds(),
     ...{ x: 0, y: 0, height: TITLE_BAR_HEIGHT },

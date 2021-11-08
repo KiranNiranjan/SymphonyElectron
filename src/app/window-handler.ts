@@ -386,7 +386,7 @@ export class WindowHandler {
       this.mainWindow &&
       windowExists(this.mainWindow)
     ) {
-      this.mainWebContents = await loadBrowserViews(this.mainWindow);
+      this.mainWebContents = loadBrowserViews(this.mainWindow);
       this.mainWebContents.loadURL(this.url, { userAgent });
     } else {
       this.mainWindow.loadURL(this.url, { userAgent });
