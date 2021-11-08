@@ -125,6 +125,7 @@ export default class WindowsTitleBar extends React.Component<{}, IState> {
             onClick={this.eventHandlers.onMinimize}
             onContextMenu={this.eventHandlers.onDisableContextMenu}
             onMouseDown={this.handleMouseDown}
+            disabled={isDisabled}
           >
             <svg x='0px' y='0px' viewBox='0 0 14 1'>
               <rect fill='rgba(255, 255, 255, 0.9)' width='14' height='0.6' />
@@ -141,6 +142,7 @@ export default class WindowsTitleBar extends React.Component<{}, IState> {
             onClick={this.eventHandlers.onClose}
             onContextMenu={this.eventHandlers.onDisableContextMenu}
             onMouseDown={this.handleMouseDown}
+            disabled={isDisabled}
           >
             <svg x='0px' y='0px' viewBox='0 0 14 10.2'>
               <polygon
