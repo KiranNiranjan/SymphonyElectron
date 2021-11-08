@@ -380,18 +380,13 @@ export class WindowHandler {
     logger.info(`Loading main window with url ${this.url}`);
     const userAgent = this.getUserAgent(this.mainWindow.webContents);
 
-    if (
+    this.mainWebContents =
       this.config.isCustomTitleBar === CloudConfigDataTypes.ENABLED &&
       isWindowsOS &&
       this.mainWindow &&
       windowExists(this.mainWindow)
-    ) {
-      this.mainWebContents = loadBrowserViews(this.mainWindow);
-      this.mainWebContents.loadURL(this.url, { userAgent });
-    } else {
-      this.mainWindow.loadURL(this.url, { userAgent });
-      this.mainWebContents = this.mainWindow.webContents;
-    }
+        ? loadBrowserViews(this.mainWindow)
+        : this.mainWindow.webContents;
 
     // check for build expiry in case of test builds
     this.checkExpiry(this.mainWindow);
