@@ -680,6 +680,17 @@ export class WindowHandler {
       this.mainWebContents.on('console-message', onConsoleMessages);
     }
 
+    if (
+      this.config.isCustomTitleBar === CloudConfigDataTypes.ENABLED &&
+      isWindowsOS &&
+      this.mainWindow &&
+      windowExists(this.mainWindow)
+    ) {
+      await this.mainWebContents.loadURL(this.url, { userAgent });
+    } else {
+      await this.mainWindow.loadURL(this.url, { userAgent });
+    }
+
     return this.mainWindow;
   }
 
