@@ -6,6 +6,7 @@ import {
 } from '../../common/api-interface';
 import { isWindowsOS } from '../../common/env';
 import { notification } from '../../renderer/notification';
+import { mainEvents } from '../main-event-handler';
 import { windowHandler } from '../window-handler';
 import { ElectronNotification } from './electron-notification';
 
@@ -87,6 +88,13 @@ class NotificationHelper {
         data,
         notificationData,
       });
+      mainEvents.publish(apiCmds.notificationActions, [
+        {
+          event,
+          data,
+          notificationData,
+        },
+      ]);
     }
   }
 

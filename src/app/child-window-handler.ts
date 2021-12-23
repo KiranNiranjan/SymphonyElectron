@@ -10,6 +10,7 @@ import {
 import * as path from 'path';
 import { parse as parseQuerystring } from 'querystring';
 import { format, parse, Url } from 'url';
+import { apiCmds } from '../common/api-interface';
 import { isWindowsOS } from '../common/env';
 import { i18n } from '../common/i18n';
 import { logger } from '../common/logger';
@@ -42,7 +43,11 @@ const DEFAULT_POP_OUT_HEIGHT = 600;
 const MIN_WIDTH = 300;
 const MIN_HEIGHT = 300;
 
-const CHILD_WINDOW_EVENTS = ['enter-full-screen', 'leave-full-screen'];
+const CHILD_WINDOW_EVENTS = [
+  'enter-full-screen',
+  'leave-full-screen',
+  apiCmds.notificationActions,
+];
 
 /**
  * Verifies protocol for a new url to check if it is http or https
