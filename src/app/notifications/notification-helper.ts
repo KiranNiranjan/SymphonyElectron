@@ -1,4 +1,5 @@
 import {
+  apiCmds,
   ElectronNotificationData,
   INotificationData,
   NotificationActions,
@@ -81,7 +82,7 @@ class NotificationHelper {
   ) {
     const mainWebContents = windowHandler.getMainWebContents();
     if (mainWebContents && !mainWebContents.isDestroyed()) {
-      mainWebContents.send('notification-actions', {
+      mainWebContents.send(apiCmds.notificationActions, {
         event,
         data,
         notificationData,

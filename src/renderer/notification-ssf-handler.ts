@@ -34,7 +34,7 @@ export default class SSFNotificationHandler {
       notificationOpts,
     });
 
-    ipcRenderer.once('notification-actions', (_event, args) => {
+    ipcRenderer.once(apiCmds.notificationActions, (_event, args) => {
       if (args.id === this.id) {
         switch (args.event) {
           case NotificationActions.notificationClicked:

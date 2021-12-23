@@ -29,6 +29,7 @@ export enum apiCmds {
   downloadManagerAction = 'download-manager-action',
   getMediaSource = 'get-media-source',
   notification = 'notification',
+  notificationActions = 'notification-actions',
   closeNotification = 'close-notification',
   isMisspelled = 'is-misspelled',
   memoryInfo = 'memory-info',

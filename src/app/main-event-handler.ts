@@ -19,6 +19,8 @@ export class MainProcessEvents {
     allWebContests.forEach((w) => {
       if (w && !w.isDestroyed()) {
         w.send(eventName, args);
+      } else if (allWebContests.has(w)) {
+        allWebContests.delete(w);
       }
     });
   }

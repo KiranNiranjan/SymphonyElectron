@@ -374,6 +374,7 @@ export class AppBridge {
    * @param data {any}
    */
   private broadcastMessage(method: string, data: any): void {
+    console.warn('method', method, 'data', data);
     window.postMessage({ method, data }, this.origin);
   }
 }

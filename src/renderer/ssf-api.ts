@@ -946,12 +946,14 @@ local.ipcRenderer.on(
     }
   },
 );
+console.warn('preload js');
 
 /**
  * An event triggered by the main process on notification actions
  * @param {INotificationData}
  */
-local.ipcRenderer.on('notification-actions', (_event, args) => {
+local.ipcRenderer.on(apiCmds.notificationActions, (_event, args) => {
+  console.warn('preload js');
   const callback = notificationActionCallbacks.get(args.data.id);
   const data = args.data;
   data.notificationData = args.notificationData;
