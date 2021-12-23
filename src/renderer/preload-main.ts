@@ -39,8 +39,8 @@ const createAPI = () => {
   // API exposed to renderer process.
   //
   // @ts-ignore
-  ssfWindow.ssf = new SSFApi();
-  Object.freeze(ssfWindow.ssf);
+  /*ssfWindow.ssf = new SSFApi();
+  Object.freeze(ssfWindow.ssf);*/
 };
 
 createAPI();
