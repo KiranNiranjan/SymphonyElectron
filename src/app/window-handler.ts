@@ -196,6 +196,7 @@ export class WindowHandler {
           title: 'Symphony',
         },
         {
+          contextIsolation: true,
           preload: path.join(__dirname, '../renderer/_preload-main.js'),
         },
       ),
@@ -235,6 +236,16 @@ export class WindowHandler {
     i18n.setLocale(locale);
 
     this.listenForLoad();
+
+    logger.info(
+      `window handler: env details`,
+      this.contextIsolation,
+      isNodeEnv,
+      isDevEnv,
+      isMac,
+      isWindowsOS,
+      isLinux,
+    );
   }
 
   /**
@@ -2044,7 +2055,7 @@ export class WindowHandler {
       ...{
         sandbox: !isNodeEnv,
         nodeIntegration: isNodeEnv,
-        contextIsolation: isNodeEnv ? false : this.contextIsolation,
+        contextIsolation: true,
         backgroundThrottling: this.backgroundThrottling,
         enableRemoteModule: true,
       },
