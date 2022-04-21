@@ -15,6 +15,7 @@ interface IApp {
   getPath(type: string): string;
   getName(): string;
   isReady(): boolean;
+  whenReady(): Promise<boolean>;
   getVersion(): string;
   on(eventName: any, cb: any): void;
   once(eventName: any, cb: any): void;
@@ -75,6 +76,7 @@ export const app: IApp = {
   },
   getName: () => appName,
   isReady: () => isReady,
+  whenReady: () => Promise.resolve(isReady),
   getVersion: () => version,
   on: (event, cb) => {
     ipcEmitter.on(event, cb);
