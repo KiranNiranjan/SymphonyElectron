@@ -49,6 +49,7 @@ import {
   handlePermissionRequests,
   monitorWindowActions,
   onConsoleMessages,
+  updateAlwaysOnTop,
 } from './window-actions';
 import {
   createComponentWindow,
@@ -1401,11 +1402,11 @@ export class WindowHandler {
    * @param sources
    * @param id
    */
-  public createScreenPickerWindow(
+  public async createScreenPickerWindow(
     window: WebContents,
     sources: DesktopCapturerSource[],
     id: number,
-  ): void {
+  ): Promise<void> {
     if (this.screenPickerWindow && windowExists(this.screenPickerWindow)) {
       this.screenPickerWindow.close();
     }
@@ -1428,6 +1429,9 @@ export class WindowHandler {
 
     this.screenPickerWindow = createComponentWindow('screen-picker', opts);
     this.moveWindow(this.screenPickerWindow);
+    if (this.config.alwaysOnTop === CloudConfigDataTypes.ENABLED) {
+      await updateAlwaysOnTop(false, false, false);
+    }
     this.screenPickerWindow.webContents.once('did-finish-load', () => {
       if (!this.screenPickerWindow || !windowExists(this.screenPickerWindow)) {
         return;
@@ -1465,7 +1469,7 @@ export class WindowHandler {
 
     ipcMain.on('screen-source-select', screenSourceSelect);
 
-    ipcMain.once('screen-source-selected', (_event, source) => {
+    ipcMain.once('screen-source-selected', async (_event, source) => {
       logger.info(`window-handler: screen-source-selected`, source, id);
       if (source == null) {
         this.execCmd(this.screenShareIndicatorFrameUtil, []);
@@ -1500,8 +1504,12 @@ export class WindowHandler {
         // SDA-3635 hack
         setTimeout(() => this.screenPickerWindow?.close(), 500);
       }
+      // Enable always on top
+      if (this.config.alwaysOnTop === CloudConfigDataTypes.ENABLED) {
+        await updateAlwaysOnTop(true, false, false);
+      }
     });
-    this.screenPickerWindow.once('closed', () => {
+    this.screenPickerWindow.once('closed', async () => {
       ipcMain.removeListener('screen-source-select', screenSourceSelect);
       this.removeWindow(opts.winKey);
       this.screenPickerWindow = null;
@@ -1513,6 +1521,10 @@ export class WindowHandler {
           this.screenPickerPlaceholderWindow.close();
           this.screenPickerPlaceholderWindow = null;
         }
+      }
+      // Enable always on top
+      if (this.config.alwaysOnTop === CloudConfigDataTypes.ENABLED) {
+        await updateAlwaysOnTop(true, false, false);
       }
     });
   }
