@@ -49,7 +49,6 @@ import {
   handlePermissionRequests,
   monitorWindowActions,
   onConsoleMessages,
-  updateAlwaysOnTop,
 } from './window-actions';
 import {
   createComponentWindow,
@@ -443,6 +442,16 @@ export class WindowHandler {
 
     this.mainWindow.once('ready-to-show', (event: Event) => {
       logger.info(`window-handler: Main Window ready to show: ${event}`);
+    });
+
+    this.mainWindow.on('focus', () => {
+      if (!this.mainWindow || !windowExists(this.mainWindow)) {
+        return;
+      }
+      if (this.config.alwaysOnTop === CloudConfigDataTypes.ENABLED) {
+        this.mainWindow.setAlwaysOnTop(false);
+        this.mainWindow.setAlwaysOnTop(true);
+      }
     });
 
     this.mainWebContents.on(
@@ -1429,9 +1438,6 @@ export class WindowHandler {
 
     this.screenPickerWindow = createComponentWindow('screen-picker', opts);
     this.moveWindow(this.screenPickerWindow);
-    if (this.config.alwaysOnTop === CloudConfigDataTypes.ENABLED) {
-      await updateAlwaysOnTop(false, false, false);
-    }
     this.screenPickerWindow.webContents.once('did-finish-load', () => {
       if (!this.screenPickerWindow || !windowExists(this.screenPickerWindow)) {
         return;
@@ -1504,10 +1510,6 @@ export class WindowHandler {
         // SDA-3635 hack
         setTimeout(() => this.screenPickerWindow?.close(), 500);
       }
-      // Enable always on top
-      if (this.config.alwaysOnTop === CloudConfigDataTypes.ENABLED) {
-        await updateAlwaysOnTop(true, false, false);
-      }
     });
     this.screenPickerWindow.once('closed', async () => {
       ipcMain.removeListener('screen-source-select', screenSourceSelect);
@@ -1521,10 +1523,6 @@ export class WindowHandler {
           this.screenPickerPlaceholderWindow.close();
           this.screenPickerPlaceholderWindow = null;
         }
-      }
-      // Enable always on top
-      if (this.config.alwaysOnTop === CloudConfigDataTypes.ENABLED) {
-        await updateAlwaysOnTop(true, false, false);
       }
     });
   }
