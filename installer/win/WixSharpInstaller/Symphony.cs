@@ -230,6 +230,7 @@ class Script
                                        .Add<Symphony.ExitDialog>();
 
         project.Load += project_Load;
+        project.AfterInstall += SetInstallScope;
 
         project.ControlPanelInfo.NoRepair = true;
         project.ControlPanelInfo.NoModify = true;
@@ -242,6 +243,17 @@ class Script
         Compiler.BuildMsi(project);
     }
 
+    static void SetInstallScope(SetupEventArgs e)
+    {
+        if (e.Session["MSIINSTALLPERUSER"] == "1")
+        {
+            e.Session["ALLUSERS"] = "2"; // Set ALLUSERS property to 2 for per-user installation
+        }
+        else
+        {
+            e.Session["ALLUSERS"] = "1"; // Set ALLUSERS property to 1 for per-machine installation
+        }
+    }
 
     static void project_Load(SetupEventArgs e)
     {
