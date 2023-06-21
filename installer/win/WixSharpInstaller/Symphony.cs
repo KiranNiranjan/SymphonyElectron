@@ -211,6 +211,9 @@ class Script
             {
                 UsesProperties = "INSTALLDIR,LAUNCH_ON_INSTALL,USER_DATA_PATH"
             },
+            {
+                new ManagedAction(CustomAction.SetInstallScope, Return.check, When.After, Step.InstallInitialize, Condition.NOT_Installed),
+            },
         };
 
         // Use our own Symphony branded bitmap for installation dialogs
@@ -230,7 +233,6 @@ class Script
                                        .Add<Symphony.ExitDialog>();
 
         project.Load += project_Load;
-        project.AfterInstall += SetInstallScope;
 
         project.ControlPanelInfo.NoRepair = true;
         project.ControlPanelInfo.NoModify = true;
@@ -527,6 +529,21 @@ public class CustomActions
             session.Log("Error executing StartAfterInstall: " + e.ToString());
             return ActionResult.Failure;
         }
+        return ActionResult.Success;
+    }
+
+    [CustomAction]
+    public static ActionResult SetInstallScope(Session session)
+    {
+        if (session["MSIINSTALLPERUSER"] == "1")
+        {
+            session["ALLUSERS"] = ""; // Set ALLUSERS property to "" for per-user installation
+        }
+        else
+        {
+            session["ALLUSERS"] = "1"; // Set ALLUSERS property to 1 for per-machine installation
+        }
+
         return ActionResult.Success;
     }
 }
