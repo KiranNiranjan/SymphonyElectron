@@ -138,7 +138,7 @@ class Script
         project.Properties = new[]
         {
             new PublicProperty("APPDIR", ""),
-            new PublicProperty("ALLUSERS", "2"),
+            new PublicProperty("ALLUSERS", "1"),
             new PublicProperty("ALWAYS_ON_TOP", "DISABLED" ),
             new PublicProperty("AUTO_LAUNCH_PATH", ""),
             new PublicProperty("AUTO_START", "ENABLED"),
@@ -247,7 +247,7 @@ class Script
     {
         if (e.Session["MSIINSTALLPERUSER"] == "1")
         {
-            e.Session["ALLUSERS"] = "2"; // Set ALLUSERS property to 2 for per-user installation
+            e.Session["ALLUSERS"] = ""; // Set ALLUSERS property to "" for per-user installation
         }
         else
         {
