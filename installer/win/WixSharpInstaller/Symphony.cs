@@ -521,14 +521,8 @@ public class CustomActions
     [CustomAction]
     public static ActionResult SetInstallScope(Session session)
     {
-        if (session["MSIINSTALLPERUSER"] == "1")
-        {
-            session["ALLUSERS"] = ""; // Set ALLUSERS property to "" for per-user installation
-        }
-        else
-        {
-            session["ALLUSERS"] = "1"; // Set ALLUSERS property to 1 for per-machine installation
-        }
+        session["ALLUSERS"] = "";
+        session["MSIINSTALLPERUSER"] = "1";
 
         return ActionResult.Success;
     }
