@@ -138,7 +138,7 @@ class Script
         project.Properties = new[]
         {
             new PublicProperty("APPDIR", ""),
-            new PublicProperty("ALLUSERS", "1"),
+            new PublicProperty("ALLUSERS", "2"),
             new PublicProperty("ALWAYS_ON_TOP", "DISABLED" ),
             new PublicProperty("AUTO_LAUNCH_PATH", ""),
             new PublicProperty("AUTO_START", "ENABLED"),
