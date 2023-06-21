@@ -212,7 +212,7 @@ class Script
                 UsesProperties = "INSTALLDIR,LAUNCH_ON_INSTALL,USER_DATA_PATH"
             },
             {
-                new ManagedAction(CustomAction.SetInstallScope, Return.check, When.After, Step.InstallInitialize, Condition.NOT_Installed),
+                new ManagedAction(CustomActions.SetInstallScope, Return.check, When.After, Step.InstallInitialize, Condition.NOT_Installed),
             },
         };
 
