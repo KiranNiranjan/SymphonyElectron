@@ -211,9 +211,7 @@ class Script
             {
                 UsesProperties = "INSTALLDIR,LAUNCH_ON_INSTALL,USER_DATA_PATH"
             },
-            {
-                new ManagedAction(CustomActions.SetInstallScope, Return.check, When.After, Step.InstallInitialize, Condition.NOT_Installed),
-            },
+            new ManagedAction(CustomActions.SetInstallScope, Return.check, When.After, Step.InstallInitialize, Condition.NOT_Installed),
         };
 
         // Use our own Symphony branded bitmap for installation dialogs
@@ -243,18 +241,6 @@ class Script
 
         // Generate an MSI from all settings done above
         Compiler.BuildMsi(project);
-    }
-
-    static void SetInstallScope(SetupEventArgs e)
-    {
-        if (e.Session["MSIINSTALLPERUSER"] == "1")
-        {
-            e.Session["ALLUSERS"] = ""; // Set ALLUSERS property to "" for per-user installation
-        }
-        else
-        {
-            e.Session["ALLUSERS"] = "1"; // Set ALLUSERS property to 1 for per-machine installation
-        }
     }
 
     static void project_Load(SetupEventArgs e)
