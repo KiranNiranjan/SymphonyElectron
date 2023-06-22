@@ -120,6 +120,7 @@ class Script
         project.GUID = new System.Guid("{4042AD1C-90E1-4032-B6B9-2BF6A4214096}");
         project.ProductId = System.Guid.NewGuid();
         project.UpgradeCode = new System.Guid("{36402281-8141-4797-8A90-07CFA75EFA55}");
+        project.InstallScope = InstallScope.perUser;
 
         // Allow any versions to be upgraded/downgraded freely
         project.MajorUpgradeStrategy = MajorUpgradeStrategy.Default;
@@ -211,7 +212,6 @@ class Script
             {
                 UsesProperties = "INSTALLDIR,LAUNCH_ON_INSTALL,USER_DATA_PATH"
             },
-            new ManagedAction(CustomActions.SetInstallScope, Return.check, When.After, Step.InstallInitialize, Condition.NOT_Installed),
         };
 
         // Use our own Symphony branded bitmap for installation dialogs
@@ -236,7 +236,6 @@ class Script
         project.ControlPanelInfo.NoModify = true;
         project.ControlPanelInfo.ProductIcon = @"..\..\..\images\icon.ico";
         project.ControlPanelInfo.Manufacturer = "Symphony";
-        project.ControlPanelInfo.InstallLocation = Registry.CurrentUser;
 
         project.Platform = Platform.x64;
 
@@ -516,15 +515,6 @@ public class CustomActions
             session.Log("Error executing StartAfterInstall: " + e.ToString());
             return ActionResult.Failure;
         }
-        return ActionResult.Success;
-    }
-
-    [CustomAction]
-    public static ActionResult SetInstallScope(Session session)
-    {
-        session["ALLUSERS"] = "";
-        session["MSIINSTALLPERUSER"] = "1";
-
         return ActionResult.Success;
     }
 }
