@@ -139,7 +139,7 @@ class Script
         project.Properties = new[]
         {
             new PublicProperty("APPDIR", ""),
-            new PublicProperty("ALLUSERS", "1"),
+            new PublicProperty("ALLUSERS", "2"),
             new PublicProperty("ALWAYS_ON_TOP", "DISABLED" ),
             new PublicProperty("AUTO_LAUNCH_PATH", ""),
             new PublicProperty("AUTO_START", "ENABLED"),
@@ -175,29 +175,29 @@ class Script
             // whether it is a new version or the same version, but we don't want to display it if no reinstallation
             // have been done. To detect this, we always write a new GUID to the fill InstallVariant.info on every
             // installation.
-            new ElevatedManagedAction(CustomActions.InstallVariant, Return.check, When.After, Step.InstallFiles, Condition.NOT_BeingRemoved )
+            /* new ElevatedManagedAction(CustomActions.InstallVariant, Return.check, When.After, Step.InstallFiles, Condition.NOT_BeingRemoved )
             {
                 // INSTALLDIR is a built-in property, and we need it to know which path to write the InstallVariant to
                 UsesProperties = "INSTALLDIR"
-            },
+            }, */
 
             // UpdateConfig
             //
             // After installation, the Symphony.config file needs to be updated with values from the install properties,
             // either their default values as specified above, or with the overridden value if an override was specified
             // on the command line when the installer was started.
-            new ElevatedManagedAction(CustomActions.UpdateConfig, Return.check, When.After, Step.InstallFiles, Condition.NOT_BeingRemoved )
+            /* new ElevatedManagedAction(CustomActions.UpdateConfig, Return.check, When.After, Step.InstallFiles, Condition.NOT_BeingRemoved )
             {
                 // The UpdateConfig action needs the built-in property INSTALLDIR as well as most of the custom properties
                 UsesProperties = "INSTALLDIR,POD_URL,CONTEXT_ORIGIN_URL,MINIMIZE_ON_CLOSE,ALWAYS_ON_TOP,AUTO_START,BRING_TO_FRONT,MEDIA,LOCATION,NOTIFICATIONS,MIDI_SYSEX,POINTER_LOCK,FULL_SCREEN,OPEN_EXTERNAL,CUSTOM_TITLE_BAR,DEV_TOOLS_ENABLED,AUTO_LAUNCH_PATH,USER_DATA_PATH,OVERRIDE_USER_AGENT,CHROME_FLAGS,ENABLE_BROWSER_LOGIN,BROWSER_LOGIN_AUTOCONNECT"
-            },
+            }, */
 
             // CleanRegistry
             //
             // We have some registry keys which are added by the SDA application when it is first launched. This custom
             // action will clean up those keys on uninstall. The name/location of keys have changed between different
             // versions of SDA, so we clean up all known variations, and ignore any missing ones.
-            new ElevatedManagedAction(CustomActions.CleanRegistry, Return.ignore, When.After, Step.RemoveFiles, Condition.BeingUninstalled ),
+            /* new ElevatedManagedAction(CustomActions.CleanRegistry, Return.ignore, When.After, Step.RemoveFiles, Condition.BeingUninstalled ), */
 
 
             // CleanRegistryCurrentUser
