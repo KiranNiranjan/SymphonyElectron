@@ -120,6 +120,7 @@ class Script
         project.GUID = new System.Guid("{4042AD1C-90E1-4032-B6B9-2BF6A4214096}");
         project.ProductId = System.Guid.NewGuid();
         project.UpgradeCode = new System.Guid("{36402281-8141-4797-8A90-07CFA75EFA55}");
+        project.SetRegRoot(RegistryRootType.CurrentUser);
 
         // Allow any versions to be upgraded/downgraded freely
         project.MajorUpgradeStrategy = MajorUpgradeStrategy.Default;
