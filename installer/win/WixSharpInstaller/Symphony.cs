@@ -95,9 +95,9 @@ class Script
             new LaunchCondition("VersionNT>=600 AND WindowsBuild>=6001", "OS not supported"),
 
             // Add registry entry used by protocol handler to launch symphony when opening symphony:// URIs
-            new RegValue(WixSharp.RegistryHive.ClassesRoot, productName, "", "URL:symphony"),
-            new RegValue(WixSharp.RegistryHive.ClassesRoot, productName, "URL Protocol", ""),
-            new RegValue(WixSharp.RegistryHive.ClassesRoot, productName + @"\shell\open\command", "", "\"[INSTALLDIR]Symphony.exe\" " + userDataPathArgument + " \"%1\""),
+            // new RegValue(WixSharp.RegistryHive.ClassesRoot, productName, "", "URL:symphony"),
+            // new RegValue(WixSharp.RegistryHive.ClassesRoot, productName, "URL Protocol", ""),
+            // new RegValue(WixSharp.RegistryHive.ClassesRoot, productName + @"\shell\open\command", "", "\"[INSTALLDIR]Symphony.exe\" " + userDataPathArgument + " \"%1\""),
 
             // When installing or uninstalling, we want Symphony to be closed down, but the standard way of sending a WM_CLOSE message
             // will not work for us, as we have a "minimize on close" option, which stops the app from terminating on WM_CLOSE. So we
