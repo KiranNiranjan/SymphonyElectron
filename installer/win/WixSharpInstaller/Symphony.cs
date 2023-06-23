@@ -231,6 +231,7 @@ class Script
                                        .Add<Symphony.ExitDialog>();
 
         project.Load += project_Load;
+        project.AfterInstall += MoveRegistryEntries;
 
         project.ControlPanelInfo.NoRepair = true;
         project.ControlPanelInfo.NoModify = true;
@@ -241,6 +242,36 @@ class Script
 
         // Generate an MSI from all settings done above
         Compiler.BuildMsi(project);
+    }
+
+    static void MoveRegistryEntries(SetupEventArgs e)
+    {
+        const string sourceUninstallPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
+        const string destinationUninstallPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
+
+        using (RegistryKey sourceKey = Registry.LocalMachine.OpenSubKey(sourceUninstallPath))
+        {
+            string[] subKeyNames = sourceKey.GetSubKeyNames();
+
+            foreach (string subKeyName in subKeyNames)
+            {
+                using (RegistryKey sourceSubKey = sourceKey.OpenSubKey(subKeyName))
+                {
+                    if (sourceSubKey == null)
+                        continue;
+
+                    // Read the display name of the application
+                    string displayName = sourceSubKey.GetValue("DisplayName") as string;
+
+                    if (!string.IsNullOrEmpty(displayName) && displayName.Equals("Symphony"))
+                    {
+                        // Move the registry entry from HKLM to HKCU
+                        string destinationSubKeyPath = $"{destinationUninstallPath}\\{subKeyName}";
+                        RegistryHelper.MoveKey(RegistryHive.LocalMachine, sourceUninstallPath, RegistryHive.CurrentUser, destinationSubKeyPath);
+                    }
+                }
+            }
+        }
     }
 
     static void project_Load(SetupEventArgs e)
