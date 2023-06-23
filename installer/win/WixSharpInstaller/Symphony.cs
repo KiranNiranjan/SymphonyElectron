@@ -251,7 +251,7 @@ class Script
 
         var uninstallKey = Registry.LocalMachine.GetSubKey(sourceUninstallPath);
         // Move all of the subkeys to a new location.
-        uninstallKey.MoveTo(RegistryHive.CurrentUser, destinationUninstallPath);
+        uninstallKey.MoveTo(Registry.CurrentUser, destinationUninstallPath);
     }
 
     static void project_Load(SetupEventArgs e)
