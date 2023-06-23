@@ -249,29 +249,9 @@ class Script
         const string sourceUninstallPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
         const string destinationUninstallPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
 
-        using (RegistryKey sourceKey = Registry.LocalMachine.OpenSubKey(sourceUninstallPath))
-        {
-            string[] subKeyNames = sourceKey.GetSubKeyNames();
-
-            foreach (string subKeyName in subKeyNames)
-            {
-                using (RegistryKey sourceSubKey = sourceKey.OpenSubKey(subKeyName))
-                {
-                    if (sourceSubKey == null)
-                        continue;
-
-                    // Read the display name of the application
-                    string displayName = sourceSubKey.GetValue("DisplayName") as string;
-
-                    if (!string.IsNullOrEmpty(displayName) && displayName.Equals("Symphony"))
-                    {
-                        // Move the registry entry from HKLM to HKCU
-                        string destinationSubKeyPath = $"{destinationUninstallPath}\\{subKeyName}";
-                        RegistryHelper.MoveKey(RegistryHive.LocalMachine, sourceUninstallPath, RegistryHive.CurrentUser, destinationSubKeyPath);
-                    }
-                }
-            }
-        }
+        var uninstallKey = Registry.LocalMachine.GetSubKey(sourceUninstallPath);
+        // Move all of the subkeys to a new location.
+        uninstallKey.MoveTo(RegistryHive.CurrentUser, destinationUninstallPath);
     }
 
     static void project_Load(SetupEventArgs e)
