@@ -231,7 +231,6 @@ class Script
                                        .Add<Symphony.ExitDialog>();
 
         project.Load += project_Load;
-        project.AfterInstall += MoveRegistryEntries;
 
         project.ControlPanelInfo.NoRepair = true;
         project.ControlPanelInfo.NoModify = true;
@@ -242,16 +241,6 @@ class Script
 
         // Generate an MSI from all settings done above
         Compiler.BuildMsi(project);
-    }
-
-    static void MoveRegistryEntries(SetupEventArgs e)
-    {
-        const string sourceUninstallPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
-        const string destinationUninstallPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
-
-        var uninstallKey = Registry.LocalMachine.GetSubKey(sourceUninstallPath);
-        // Move all of the subkeys to a new location.
-        uninstallKey.MoveTo(Registry.CurrentUser, destinationUninstallPath);
     }
 
     static void project_Load(SetupEventArgs e)
