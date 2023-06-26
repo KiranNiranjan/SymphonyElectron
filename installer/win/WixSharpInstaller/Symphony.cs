@@ -28,13 +28,14 @@ class Script
         var productName = "Symphony";
 
         var userDataPathArgument = "--userDataPath=\"[USER_DATA_PATH]\"";
+        AutoElements.DisableAutoKeyPath = true;
 
         // Create a wixsharp project instance and assign the project name to it, and a hierarchy of all files to include
         // Files are taken from multiple locations, and not all files in each location should be included, which is why
         // the file list is rather long and explicit. At some point we might make the `dist` folder match exactly the
         // desired contents of installation, and then we can simplify this bit.
         var project = new ManagedProject(productName,
-            new Dir(@"[LocalAppDataFolder]\" + productName,
+            new Dir(@"%ProgramFiles%\" + productName,
                 new File(new Id("symphony_exe"), @"..\..\..\dist\win-unpacked\Symphony.exe",
                     // Create two shortcuts to the main Symphony.exe file, one on the desktop and one in the program menu
                     new FileShortcut(productName, @"%Desktop%")
