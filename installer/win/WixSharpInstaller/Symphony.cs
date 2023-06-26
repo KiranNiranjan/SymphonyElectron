@@ -163,7 +163,7 @@ class Script
             new PublicProperty("BROWSER_LOGIN_AUTOCONNECT", "false"),
             new PublicProperty("CHROME_FLAGS", ""),
             new Property("MSIINSTALLPERUSER", "1"),
-            new Property("PROGRAMSFOLDER", System.Environment.ExpandEnvironmentVariables(@"%PROGRAMFILES%"))
+            new Property("PROGRAMSFOLDER", System.Environment.ExpandEnvironmentVariables(@"%PROGRAMFILES%")),
             new Property("LOCALAPPDATA", System.Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\Programs\Symphony\"))
         };
 
