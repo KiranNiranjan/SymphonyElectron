@@ -34,7 +34,7 @@ class Script
         // the file list is rather long and explicit. At some point we might make the `dist` folder match exactly the
         // desired contents of installation, and then we can simplify this bit.
         var project = new ManagedProject(productName,
-            new Dir(@"%LOCALAPPDATA%\" + productName,
+            new Dir(@"[LocalAppDataFolder]\" + productName,
                 new File(new Id("symphony_exe"), @"..\..\..\dist\win-unpacked\Symphony.exe",
                     // Create two shortcuts to the main Symphony.exe file, one on the desktop and one in the program menu
                     new FileShortcut(productName, @"%Desktop%")
@@ -163,8 +163,7 @@ class Script
             new PublicProperty("BROWSER_LOGIN_AUTOCONNECT", "false"),
             new PublicProperty("CHROME_FLAGS", ""),
             new Property("MSIINSTALLPERUSER", "1"),
-            new Property("PROGRAMSFOLDER", System.Environment.ExpandEnvironmentVariables(@"%PROGRAMFILES%")),
-            new Property("LOCALAPPDATA", System.Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\Programs\Symphony\"))
+            new Property("PROGRAMSFOLDER", System.Environment.ExpandEnvironmentVariables(@"%PROGRAMFILES%"))
         };
 
         // Define the custom actions we want to run, and at what point of the installation we want to execute them.
