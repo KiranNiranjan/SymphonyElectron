@@ -6,15 +6,15 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.MyApp.exe_1934736722" Guid="6f330b47-2577-43ad-9095-186107f9ed45">
               <File Id="MyApp.exe_1934736722" Source="Files\Bin\MyApp.exe" />
             </Component>
 
-            <Directory Id="INSTALLDIR.Docs" Name="Docs">
-              <Directory Id="INSTALLDIR.Docs.Manual" Name="Manual">
+            <Directory Id="Docs" Name="Docs">
+              <Directory Id="Manual" Name="Manual">
 
                 <Component Id="Component.Manual.txt_4237331741" Guid="6f330b47-2577-43ad-9095-1861fc3dd9f8">
                   <File Id="Manual.txt_4237331741" Source="Files\Docs\Manual.txt" />
@@ -40,8 +40,8 @@
 
           </Directory>
 
-          <Component Id="ProgramFilesFolder.My_Company" Guid="6f330b47-2577-43ad-9095-1861c5635c14" KeyPath="yes">
-            <RemoveFolder Id="ProgramFilesFolder.My_Company" On="uninstall" />
+          <Component Id="My20Company" Guid="6f330b47-2577-43ad-9095-186154b4b41d" KeyPath="yes">
+            <RemoveFolder Id="My20Company" On="uninstall" />
           </Component>
 
         </Directory>
@@ -63,7 +63,7 @@
       <ComponentRef Id="PATH" />
       <ComponentRef Id="Component.MyApp.exe_1934736722" />
       <ComponentRef Id="Component.Manual.txt_4237331741" />
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
+      <ComponentRef Id="My20Company" />
     </Feature>
 
   </Product>

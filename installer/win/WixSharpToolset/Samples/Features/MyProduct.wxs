@@ -6,15 +6,15 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.MyApp.exe_1263008064" Guid="6f330b47-2577-43ad-9095-1861fd85162f">
               <File Id="MyApp.exe_1263008064" Source="Files\Bin\MyApp.exe" />
             </Component>
 
-            <Directory Id="INSTALLDIR.Docs" Name="Docs">
-              <Directory Id="INSTALLDIR.Docs.Manual" Name="Manual">
+            <Directory Id="Docs" Name="Docs">
+              <Directory Id="Manual" Name="Manual">
 
                 <Component Id="Component.Manual.txt_90490314" Guid="6f330b47-2577-43ad-9095-1861b6bfcf84">
                   <File Id="Manual.txt_90490314" Source="Files\Docs\Manual.txt" />
@@ -27,11 +27,11 @@
               </Directory>
             </Directory>
 
-            <Directory Id="INSTALLDIR.logdocs" Name="logdocs">
+            <Directory Id="logdocs" Name="logdocs">
 
-              <Component Id="Component.INSTALLDIR.logdocs" Guid="6f330b47-2577-43ad-9095-1861ed7f9601" KeyPath="yes">
+              <Component Id="Component.logdocs" Guid="6f330b47-2577-43ad-9095-18613b084261" KeyPath="yes">
                 <CreateFolder />
-                <RemoveFolder Id="INSTALLDIR.logdocs" On="uninstall" />
+                <RemoveFolder Id="logdocs" On="uninstall" />
               </Component>
 
               <Component Id="Component.DirPermission" Guid="6f330b47-2577-43ad-9095-186183cff837" KeyPath="yes">
@@ -42,11 +42,11 @@
 
             </Directory>
 
-            <Directory Id="INSTALLDIR.logtuts" Name="logtuts">
+            <Directory Id="logtuts" Name="logtuts">
 
-              <Component Id="Component.INSTALLDIR.logtuts" Guid="6f330b47-2577-43ad-9095-1861daf7ee70" KeyPath="yes">
+              <Component Id="Component.logtuts" Guid="6f330b47-2577-43ad-9095-18619fa36ba3" KeyPath="yes">
                 <CreateFolder />
-                <RemoveFolder Id="INSTALLDIR.logtuts" On="uninstall" />
+                <RemoveFolder Id="logtuts" On="uninstall" />
               </Component>
 
               <Component Id="Component.DirPermission.1" Guid="6f330b47-2577-43ad-9095-18611b6e19be" KeyPath="yes">
@@ -58,8 +58,8 @@
             </Directory>
           </Directory>
 
-          <Component Id="ProgramFilesFolder.My_Company" Guid="6f330b47-2577-43ad-9095-1861c5635c14" KeyPath="yes">
-            <RemoveFolder Id="ProgramFilesFolder.My_Company" On="uninstall" />
+          <Component Id="My20Company" Guid="6f330b47-2577-43ad-9095-186154b4b41d" KeyPath="yes">
+            <RemoveFolder Id="My20Company" On="uninstall" />
           </Component>
 
         </Directory>
@@ -69,30 +69,30 @@
     <UIRef Id="WixUI_FeatureTree" />
     <UIRef Id="WixUI_ErrorProgressText" />
 
-    <Feature Id="MyApp_Binaries" Title="MyApp Binaries" Absent="allow" Level="1" Description="Application binaries">
+    <Feature Id="MyApp20Binaries" Title="MyApp Binaries" Absent="allow" Level="1" Description="Application binaries">
       <ComponentRef Id="Component.MyApp.exe_1263008064" />
 
-      <Feature Id="MyApp_Documentation" Title="MyApp Documentation" Absent="allow" Level="1">
+      <Feature Id="MyApp20Documentation" Title="MyApp Documentation" Absent="allow" Level="1">
         <ComponentRef Id="Component.Manual.txt_90490314" />
-        <ComponentRef Id="Component.INSTALLDIR.logdocs" />
+        <ComponentRef Id="Component.logdocs" />
         <ComponentRef Id="Component.DirPermission" />
 
-        <Feature Id="MyApp_Tutorial" Title="MyApp Tutorial" Absent="allow" Level="1">
+        <Feature Id="MyApp20Tutorial" Title="MyApp Tutorial" Absent="allow" Level="1">
           <ComponentRef Id="Component.Tutorial.txt_3577894460" />
-          <ComponentRef Id="Component.INSTALLDIR.logtuts" />
+          <ComponentRef Id="Component.logtuts" />
           <ComponentRef Id="Component.DirPermission.1" />
-          <ComponentRef Id="ProgramFilesFolder.My_Company" />
+          <ComponentRef Id="My20Company" />
         </Feature>
 
-        <ComponentRef Id="ProgramFilesFolder.My_Company" />
+        <ComponentRef Id="My20Company" />
       </Feature>
 
-      <Feature Id="MyApp_Light_Documentation" Title="MyApp Light Documentation" Absent="allow" Level="1">
+      <Feature Id="MyApp20Light20Documentation" Title="MyApp Light Documentation" Absent="allow" Level="1">
         <ComponentRef Id="Component.Tutorial.txt_3577894460" />
-        <ComponentRef Id="ProgramFilesFolder.My_Company" />
+        <ComponentRef Id="My20Company" />
       </Feature>
 
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
+      <ComponentRef Id="My20Company" />
     </Feature>
 
   </Product>

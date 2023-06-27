@@ -5,7 +5,7 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder" Name="ProgramFiles64Folder">
-        <Directory Id="ProgramFiles64Folder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.myapp_exe" Guid="6f330b47-2577-43ad-9095-186160f21aed" Win64="yes">
@@ -19,8 +19,8 @@
               <RemoveFolder Id="INSTALLDIR" On="uninstall" />
             </Component>
 
-            <Directory Id="INSTALLDIR.Docs" Name="Docs">
-              <Directory Id="INSTALLDIR.Docs.Manual" Name="Manual">
+            <Directory Id="Docs" Name="Docs">
+              <Directory Id="Manual" Name="Manual">
 
                 <Component Id="Component.Manual.txt_1852709518" Guid="6f330b47-2577-43ad-9095-186198bbae95" Win64="yes">
                   <File Id="Manual.txt_1852709518" Source="Files\Docs\Manual.txt" />
@@ -30,16 +30,16 @@
             </Directory>
           </Directory>
 
-          <Component Id="ProgramFiles64Folder.My_Company" Guid="6f330b47-2577-43ad-9095-186161aa8225" KeyPath="yes" Win64="yes">
-            <RemoveFolder Id="ProgramFiles64Folder.My_Company" On="uninstall" />
+          <Component Id="My20Company" Guid="6f330b47-2577-43ad-9095-186154b4b41d" KeyPath="yes" Win64="yes">
+            <RemoveFolder Id="My20Company" On="uninstall" />
           </Component>
 
         </Directory>
       </Directory>
     </Directory>
 
-    <?include E:\PrivateData\Galos\Projects\WixSharp\Source\src\WixSharp.Samples\Wix# Samples\InjectXML\CommonProperies.wxi?>
-    <?include E:\PrivateData\Galos\Projects\WixSharp\Source\src\WixSharp.Samples\Wix# Samples\InjectXML\CommonProperies2.wxi?>
+    <?include D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\InjectXML\CommonProperies.wxi?>
+    <?include D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\InjectXML\CommonProperies2.wxi?>
 
     <UIRef Id="WixUI_Minimal" />
     <UIRef Id="WixUI_ErrorProgressText" />
@@ -48,7 +48,7 @@
       <ComponentRef Id="EventSourceEx" />
       <ComponentRef Id="Component.myapp_exe" />
       <ComponentRef Id="Component.Manual.txt_1852709518" />
-      <ComponentRef Id="ProgramFiles64Folder.My_Company" />
+      <ComponentRef Id="My20Company" />
     </Feature>
 
     <FeatureRef Id="BinaryOnlyFeature" />

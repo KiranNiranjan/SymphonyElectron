@@ -6,9 +6,11 @@
 using System;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using Microsoft.Deployment.WindowsInstaller;
 using WixSharp;
 using WixSharp.Bootstrapper;
 using WixSharp.CommonTasks;
+
 using io = System.IO;
 
 public class InstallScript
@@ -33,7 +35,7 @@ public class InstallScript
 
         var bootstrapper =
                 new Bundle("My Product",
-                    new PackageGroupRef("NetFx40Web"),
+                    // new PackageGroupRef("NetFx40Web"),
                     //new ExePackage(@"..\redist\dotNetFx40_Full_x86_x64.exe") //just a demo sample
                     //{
                     //     Name = "Microsoft .NET Framework 4.0",
@@ -44,16 +46,23 @@ public class InstallScript
                     //     Compressed = true
                     //},
 
-                    //msiOnlinePackage, //just a demo sample
+                    //msiOnlinePackage, // just a demo sample
 
                     new MsiPackage(crtMsi)
                     {
                         DisplayInternalUI = true,
                         Visible = true,
-                        MsiProperties = "PACKAGE_PROPERTY=[BundleVariable]"
+                        MsiProperties = "INSTALLDIR=[InstallFolder]",
+                        InstallCondition = "MyCheckbox<>0"
                     },
+                    // new MspPackage("Patch.msp")
+                    // {
+                    //     DisplayInternalUI = true,
+                    //     Slipstream = false
+                    // },
                     new MsiPackage(productMsi)
                     {
+                        MsiProperties = "INSTALLDIR=c:\\",
                         DisplayInternalUI = true,
                         Payloads = new[] { "script.dll".ToPayload() }
                     });
@@ -64,6 +73,7 @@ public class InstallScript
         bootstrapper.UpgradeCode = new Guid("6f330b47-2577-43ad-9095-1861bb25889b");
         bootstrapper.Application.LogoFile = "logo.png";
         bootstrapper.Application.Payloads = new[] { "logo.png".ToPayload() };
+        bootstrapper.Application.ThemeFile = "Theme.xml".PathGetFullPath();
 
         // adding themes
         // var themes = new[]
@@ -72,12 +82,16 @@ public class InstallScript
         //     };
         // bootstrapper.Application.Payloads = themes;
 
-        bootstrapper.Application.LicensePath = "licence.html";  //HyperlinkLicense app with embedded license file
-        bootstrapper.Application.LicensePath = "licence.rtf"; //RtfLicense app with embedded license file
-        // bootstrapper.Application.LicensePath = "http://opensource.org/licenses/MIT"; //HyperlinkLicense app with online license file
-        // bootstrapper.Application.LicensePath = null; //HyperlinkLicense app with no license
+        bootstrapper.Application.LicensePath = "licence.html"; //HyperlinkLicense app with embedded license file
+        bootstrapper.Application.LicensePath = "licence.rtf"; // RtfLicense app with embedded license file
+                                                              // bootstrapper.Application.LicensePath = "http://opensource.org/licenses/MIT"; //HyperlinkLicense app with online license file
+                                                              // bootstrapper.Application.LicensePath = null; //HyperlinkLicense app with no license
 
-        bootstrapper.Application.AttributesDefinition = "ShowVersion=yes; ShowFilesInUse=yes";
+        // if you want to use `WixStandardBootstrapperApplication.HyperlinkSidebarLicense`
+        // you need to clear bootstrapper.Application.LicensePath and uncomment the next line
+        // bootstrapper.Application.LogoSideFile = "logo.png";
+
+        bootstrapper.Application.AttributesDefinition = "ShowVersion=yes; ShowFilesInUse=yes"; // you can also use bootstrapper.Application.Show* = true;
         bootstrapper.Include(WixExtension.Util);
 
         bootstrapper.IncludeWixExtension(@"WixDependencyExtension.dll", "dep", "http://schemas.microsoft.com/wix/DependencyExtension");
@@ -102,25 +116,28 @@ public class InstallScript
 
         // bootstrapper.AddXml("Wix/Bundle", "<Log PathVariable=\"LogFileLocation\"/>");
 
+        string installDir = "%ProgramFiles(x86)%".PathJoin("CompanyName", "MyApp").ExpandEnvVars();
         bootstrapper.AddXmlElement("Wix/Bundle", "Log", "PathVariable=LogFileLocation");
-        bootstrapper.Variables = new[] { new Variable("LogFileLocation", @"C:\temp\setup.log") { Overridable = true } };
+        bootstrapper.Variables = new[]
+        {
+            new Variable("LogFileLocation", @"C:\temp\setup.log") { Overridable = true },
+            new Variable("MyCheckbox", "0", VariableType.numeric) { Overridable = true },
+            new Variable("MyCheckboxLabel", "Install CRT?", VariableType.@string) { Overridable = true },
+            // note 'InstallFolder' is a special built-in variable that can be changed by the user from the options page
+            new Variable("InstallFolder", installDir) { Overridable = true }
+        };
         // or
         // bootstrapper.Variables = "BundleVariable=333".ToStringVariables();
         // bootstrapper.Variables = Variables.ToStringVariables("BundleVariable=333");
 
         bootstrapper.PreserveTempFiles = true;
 
-        // Add MspPackage manually (demo only).
-        // In the future releases the direct support for MspPackage element will be added.
-        // bootstrapper.WixSourceGenerated += (doc) => doc.FindSingle("Chain")
-        //                                                .AddElement("MspPackage",
-        //                                                            "SourceFile=Patch.msp; Slipstream=no");
-
         // bootstrapper.WixSourceGenerated += doc => doc.FindSingle("WixStandardBootstrapperApplication")
         //                                              .AddAttributes("ShowVersion=yes; ShowFilesInUse=no");
 
         //in real life scenarios suppression may need to be enabled (see SuppressWixMbaPrereqVars documentation)
         //bootstrapper.SuppressWixMbaPrereqVars = true;
+
         var setup = bootstrapper.Build("app_setup");
         Console.WriteLine(setup);
         //---------------------------------------------------------
@@ -158,7 +175,16 @@ public class InstallScript
                 new Dir(@"%ProgramFiles%\My Company\CRT",
                     new File("readme.txt")))
             { InstallScope = InstallScope.perMachine };
+        crtProj.UI = WUI.WixUI_InstallDir;
         crtProj.Load += CrtProj_Load;
+
+        // crtProj.BeforeInstall += args =>
+        // {
+        //     if (args.IsUninstalling)
+        //         MessageBox.Show(args.InstallDir, "Uninstalling...");
+        //     else
+        //         MessageBox.Show(args.InstallDir, "Installing...");
+        // };
         return crtProj.BuildMsi();
     }
 

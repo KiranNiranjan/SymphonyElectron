@@ -6,7 +6,7 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.readme.txt_1240382565" Guid="6f330b47-2577-43ad-9095-18615005cac4">
@@ -22,8 +22,8 @@
 
           </Directory>
 
-          <Component Id="ProgramFilesFolder.My_Company" Guid="6f330b47-2577-43ad-9095-1861c5635c14" KeyPath="yes">
-            <RemoveFolder Id="ProgramFilesFolder.My_Company" On="uninstall" />
+          <Component Id="My20Company" Guid="6f330b47-2577-43ad-9095-186154b4b41d" KeyPath="yes">
+            <RemoveFolder Id="My20Company" On="uninstall" />
           </Component>
 
         </Directory>
@@ -87,7 +87,7 @@
 
     </Directory>
 
-    <Feature Id="MyApp_Binaries" Title="MyApp Binaries" Absent="allow" Level="1">
+    <Feature Id="MyApp20Binaries" Title="MyApp Binaries" Absent="allow" Level="1">
       <ComponentRef Id="Component.readme.txt_1240382565" />
       <ComponentRef Id="Registry.1" />
       <ComponentRef Id="Registry.2" />
@@ -96,7 +96,7 @@
       <ComponentRef Id="Registry.5" />
       <ComponentRef Id="Registry.6" />
       <ComponentRef Id="RemoveRegistryKey" />
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
+      <ComponentRef Id="My20Company" />
       <ComponentRef Id="TARGETDIR" />
     </Feature>
 

@@ -6,7 +6,7 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.MyApp.exe_1263008064" Guid="6f330b47-2577-43ad-9095-1861fd85162f">
@@ -20,39 +20,39 @@
               </File>
             </Component>
 
-            <Directory Id="INSTALLDIR.Docs" Name="Docs">
+            <Directory Id="Docs" Name="Docs">
 
-              <Component Id="Component.INSTALLDIR.Docs.EmptyDirectory" Guid="6f330b47-2577-43ad-9095-1861d14d9aed" KeyPath="yes">
+              <Component Id="Component.Docs.EmptyDirectory" Guid="6f330b47-2577-43ad-9095-1861adc75445" KeyPath="yes">
                 <CreateFolder />
-                <RemoveFolder Id="INSTALLDIR.Docs" On="uninstall" />
+                <RemoveFolder Id="Docs" On="uninstall" />
               </Component>
 
             </Directory>
 
-            <Directory Id="INSTALLDIR.Docs2" Name="Docs2">
+            <Directory Id="Docs2_" Name="Docs2">
 
               <Component Id="Component.DirPermission" Guid="6f330b47-2577-43ad-9095-186183cff837" KeyPath="yes">
                 <CreateFolder>
                   <PermissionEx User="Everyone" GenericAll="yes" xmlns="http://schemas.microsoft.com/wix/UtilExtension" />
                 </CreateFolder>
-                <RemoveFolder Id="INSTALLDIR.Docs2" On="uninstall" />
+                <RemoveFolder Id="Docs2_" On="uninstall" />
               </Component>
 
             </Directory>
 
-            <Directory Id="INSTALLDIR.Empty" Name="Empty">
+            <Directory Id="Empty" Name="Empty">
 
-              <Component Id="Component.INSTALLDIR.Empty.EmptyDirectory" Guid="6f330b47-2577-43ad-9095-186111f7eb0c" KeyPath="yes">
+              <Component Id="Component.Empty.EmptyDirectory" Guid="6f330b47-2577-43ad-9095-1861b516bed7" KeyPath="yes">
                 <CreateFolder />
-                <RemoveFolder Id="INSTALLDIR.Empty" On="uninstall" />
+                <RemoveFolder Id="Empty" On="uninstall" />
               </Component>
 
             </Directory>
           </Directory>
 
-          <Component Id="ProgramFilesFolder.My_Company" Guid="6f330b47-2577-43ad-9095-1861c5635c14" KeyPath="yes">
+          <Component Id="My20Company" Guid="6f330b47-2577-43ad-9095-186154b4b41d" KeyPath="yes">
             <CreateFolder />
-            <RemoveFolder Id="ProgramFilesFolder.My_Company" On="uninstall" />
+            <RemoveFolder Id="My20Company" On="uninstall" />
           </Component>
 
         </Directory>
@@ -67,10 +67,10 @@
     <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
       <ComponentRef Id="Component.MyApp.exe_1263008064" />
       <ComponentRef Id="Component.Manual.txt_1988094941" />
-      <ComponentRef Id="Component.INSTALLDIR.Docs.EmptyDirectory" />
+      <ComponentRef Id="Component.Docs.EmptyDirectory" />
       <ComponentRef Id="Component.DirPermission" />
-      <ComponentRef Id="Component.INSTALLDIR.Empty.EmptyDirectory" />
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
+      <ComponentRef Id="Component.Empty.EmptyDirectory" />
+      <ComponentRef Id="My20Company" />
     </Feature>
 
   </Product>

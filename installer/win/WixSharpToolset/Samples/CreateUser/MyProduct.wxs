@@ -5,15 +5,15 @@
     <Media Id="1" Cabinet="MyProduct.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="INSTALLDIR" Name="ProgramFilesFolder">
+      <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
 
-        <Component Id="Component.INSTALLDIR.EmptyDirectory" Guid="6f330b47-2577-43ad-9095-1861dc68777d" KeyPath="yes">
+        <Component Id="Component.ProgramFilesFolder.EmptyDirectory" Guid="6f330b47-2577-43ad-9095-18615d8d29d5" KeyPath="yes">
           <CreateFolder />
-          <RemoveFolder Id="INSTALLDIR" On="uninstall" />
+          <RemoveFolder Id="ProgramFilesFolder" On="uninstall" />
         </Component>
 
         <Component Id="USER" Guid="6f330b47-2577-43ad-9095-1861437cb6b7" KeyPath="yes">
-          <User Id="USER" Name="USER" CreateUser="yes" Domain="LBSMEL-1BQHTN2" Password="Password123" PasswordNeverExpires="yes" xmlns="http://schemas.microsoft.com/wix/UtilExtension" />
+          <User Id="USER" Name="USER" CreateUser="yes" Domain="LBSMEL-9FRL2J3" Password="Password123" PasswordNeverExpires="yes" xmlns="http://schemas.microsoft.com/wix/UtilExtension" />
 
           <CreateFolder />
         </Component>
@@ -29,7 +29,7 @@
 
     <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
       <ComponentRef Id="USER" />
-      <ComponentRef Id="Component.INSTALLDIR.EmptyDirectory" />
+      <ComponentRef Id="Component.ProgramFilesFolder.EmptyDirectory" />
       <ComponentRef Id="TARGETDIR" />
     </Feature>
 

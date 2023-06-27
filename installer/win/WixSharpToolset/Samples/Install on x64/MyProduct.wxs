@@ -6,15 +6,15 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder" Name="ProgramFiles64Folder">
-        <Directory Id="ProgramFiles64Folder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.MyApp.exe_1712224215" Guid="6f330b47-2577-43ad-9095-18610a86e369" Win64="yes">
               <File Id="MyApp.exe_1712224215" Source="Files\Bin\MyApp.exe" />
             </Component>
 
-            <Directory Id="INSTALLDIR.Docs" Name="Docs">
-              <Directory Id="INSTALLDIR.Docs.Manual" Name="Manual">
+            <Directory Id="Docs" Name="Docs">
+              <Directory Id="Manual" Name="Manual">
 
                 <Component Id="Component.Manual.txt_538200640" Guid="6f330b47-2577-43ad-9095-186125b9d75f" Win64="yes">
                   <File Id="Manual.txt_538200640" Source="Files\Docs\Manual.txt" />
@@ -24,17 +24,14 @@
             </Directory>
           </Directory>
         </Directory>
-      </Directory>
 
-      <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-
-        <Component Id="Registry.1" Guid="6f330b47-2577-43ad-9095-1861b742561a" Win64="no" KeyPath="yes">
+        <Component Id="Registry.1" Guid="6f330b47-2577-43ad-9095-1861b742561a" Win64="yes" KeyPath="yes">
           <RegistryKey Root="HKLM" Key="Software\My Company\My Product">
             <RegistryValue Id="Message" Type="string" KeyPath="no" Value="Hello" Name="Message" />
           </RegistryKey>
 
           <CreateFolder />
-          <RemoveFolder Id="ProgramFilesFolder" On="uninstall" />
+          <RemoveFolder Id="ProgramFiles64Folder" On="uninstall" />
         </Component>
 
       </Directory>

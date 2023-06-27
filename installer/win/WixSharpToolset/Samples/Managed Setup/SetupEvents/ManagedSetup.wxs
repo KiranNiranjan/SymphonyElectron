@@ -6,18 +6,18 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.MyApp.exe_1037639828" Guid="6f330b47-2577-43ad-9095-186182364b5b">
               <File Id="MyApp.exe_1037639828" Source="..\Files\bin\MyApp.exe" />
             </Component>
 
-            <Directory Id="INSTALLDIR.Docs" Name="Docs">
+            <Directory Id="Docs" Name="Docs">
 
-              <Component Id="Component.INSTALLDIR.Docs" Guid="6f330b47-2577-43ad-9095-186191ad87d5" KeyPath="yes">
+              <Component Id="Component.Docs" Guid="6f330b47-2577-43ad-9095-186153d5fe2b" KeyPath="yes">
                 <CreateFolder />
-                <RemoveFolder Id="INSTALLDIR.Docs" On="uninstall" />
+                <RemoveFolder Id="Docs" On="uninstall" />
               </Component>
 
               <Component Id="Component.readme.txt_397842600" Guid="6f330b47-2577-43ad-9095-18614039ec6c">
@@ -27,8 +27,8 @@
             </Directory>
           </Directory>
 
-          <Component Id="ProgramFilesFolder.My_Company" Guid="6f330b47-2577-43ad-9095-1861c5635c14" KeyPath="yes">
-            <RemoveFolder Id="ProgramFilesFolder.My_Company" On="uninstall" />
+          <Component Id="My20Company" Guid="6f330b47-2577-43ad-9095-186154b4b41d" KeyPath="yes">
+            <RemoveFolder Id="My20Company" On="uninstall" />
           </Component>
 
         </Directory>
@@ -64,8 +64,8 @@
     <CustomAction Id="Set_CancelRequestHandler_Props" Property="CancelRequestHandler" Value="UpgradeCode=[UpgradeCode];INSTALLDIR=[INSTALLDIR];UILevel=[UILevel];ProductCode=[ProductCode];ADDLOCAL=[ADDLOCAL];ADDFEATURES=[ADDFEATURES]" />
     <CustomAction Id="CancelRequestHandler" BinaryKey="WixSharp_InitRuntime_Action_File" DllEntry="CancelRequestHandler" Return="check" Impersonate="no" Execute="deferred" />
     <CustomAction Id="WixSharp_Load_Action" BinaryKey="WixSharp_InitRuntime_Action_File" DllEntry="WixSharp_Load_Action" Return="check" Execute="immediate" />
-    <CustomAction Id="WixSharp_BeforeInstall_Action" BinaryKey="WixSharp_InitRuntime_Action_File" DllEntry="WixSharp_BeforeInstall_Action" Return="check" Execute="immediate" Impersonate="yes" />
-    <CustomAction Id="Set_WixSharp_AfterInstall_Action_Props" Property="WixSharp_AfterInstall_Action" Value="WixSharp_AfterInstall_Handlers=[WixSharp_AfterInstall_Handlers];WIXSHARP_RUNTIME_DATA=[WIXSHARP_RUNTIME_DATA];INSTALLDIR=[INSTALLDIR];UILevel=[UILevel];ProductName=[ProductName];ADDLOCAL=[ADDLOCAL];INSTALLDIR=[INSTALLDIR];UILevel=[UILevel];ProductCode=[ProductCode];ADDLOCAL=[ADDLOCAL];ADDFEATURES=[ADDFEATURES]" />
+    <CustomAction Id="WixSharp_BeforeInstall_Action" BinaryKey="WixSharp_InitRuntime_Action_File" DllEntry="WixSharp_BeforeInstall_Action" Return="check" Execute="immediate" />
+    <CustomAction Id="Set_WixSharp_AfterInstall_Action_Props" Property="WixSharp_AfterInstall_Action" Value="WixSharp_AfterInstall_Handlers=[WixSharp_AfterInstall_Handlers];WIXSHARP_RUNTIME_DATA=[WIXSHARP_RUNTIME_DATA];INSTALLDIR=[INSTALLDIR];UILevel=[UILevel];ProductName=[ProductName];FOUNDPREVIOUSVERSION=[FOUNDPREVIOUSVERSION];MsiLogFileLocation=[MsiLogFileLocation];ADDLOCAL=[ADDLOCAL];INSTALLDIR=[INSTALLDIR];UILevel=[UILevel];ProductCode=[ProductCode];ADDLOCAL=[ADDLOCAL];ADDFEATURES=[ADDFEATURES]" />
     <CustomAction Id="WixSharp_AfterInstall_Action" BinaryKey="WixSharp_InitRuntime_Action_File" DllEntry="WixSharp_AfterInstall_Action" Return="check" Impersonate="no" Execute="deferred" />
 
     <Binary Id="SetInstallDir_File" SourceFile="%this%.CA.dll" />
@@ -84,26 +84,26 @@
     <Property Id="WixSharp_UI_INSTALLDIR" Value="INSTALLDIR" />
     <Property Id="UAC_REVEALER_ENABLED" Value="true" />
     <Property Id="UAC_WARNING" Value="Please wait for UAC prompt to appear.&#xD;&#xA;&#xD;&#xA;If it appears minimized then activate it from the taskbar." />
-    <Property Id="WixSharp_InstallDialogs" Value="WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.WelcomeDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.LicenceDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.SetupTypeDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.FeaturesDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.InstallDirDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.ProgressDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.ExitDialog" />
-    <Property Id="WixSharp_ModifyDialogs" Value="WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.MaintenanceTypeDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.FeaturesDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.ProgressDialog&#xA;WixSharp.UI, Version=1.14.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.ExitDialog" />
-    <Property Id="WixSharp_UIInitialized_Handlers" Value="SetupEvents, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|Project_UIInitialized" />
-    <Property Id="WixSharp_UILoaded_Handlers" Value="SetupEvents, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|project_UIInit" />
-    <Property Id="WixSharp_Load_Handlers" Value="SetupEvents, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|project_Load" />
-    <Property Id="WixSharp_BeforeInstall_Handlers" Value="SetupEvents, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|project_BeforeInstall&#xD;&#xA;SetupEvents, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script+&lt;&gt;c|&lt;Main&gt;b__0_0" />
-    <Property Id="WixSharp_AfterInstall_Handlers" Value="SetupEvents, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|project_AfterInstall&#xD;&#xA;SetupEvents, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script+&lt;&gt;c|&lt;Main&gt;b__0_1" />
+    <Property Id="WixSharp_InstallDialogs" Value="WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.WelcomeDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.LicenceDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.SetupTypeDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.FeaturesDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.InstallDirDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.ProgressDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.ExitDialog" />
+    <Property Id="WixSharp_ModifyDialogs" Value="WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.MaintenanceTypeDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.FeaturesDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.ProgressDialog&#xA;WixSharp.UI, Version=1.20.3.0, Culture=neutral, PublicKeyToken=3775edd25acc43c2|WixSharp.UI.Forms.ExitDialog" />
+    <Property Id="WixSharp_UIInitialized_Handlers" Value="setup.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|Project_UIInitialized" />
+    <Property Id="WixSharp_UILoaded_Handlers" Value="setup.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|project_UIInit" />
+    <Property Id="WixSharp_Load_Handlers" Value="setup.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|project_Load" />
+    <Property Id="WixSharp_BeforeInstall_Handlers" Value="setup.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|project_BeforeInstall&#xD;&#xA;setup.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|&lt;Main&gt;b__0" />
+    <Property Id="WixSharp_AfterInstall_Handlers" Value="setup.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|project_AfterInstall&#xD;&#xA;setup.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|&lt;Main&gt;b__1" />
 
-    <Feature Id="MyApp_Binaries" Title="MyApp Binaries" Absent="allow" Level="1">
+    <Feature Id="MyApp20Binaries" Title="MyApp Binaries" Absent="allow" Level="1">
       <ComponentRef Id="Component.MyApp.exe_1037639828" />
-      <ComponentRef Id="Component.INSTALLDIR.Docs" />
+      <ComponentRef Id="Component.Docs" />
       <ComponentRef Id="Component.readme.txt_397842600" />
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
+      <ComponentRef Id="My20Company" />
       <ComponentRef Id="TARGETDIR" />
     </Feature>
 
-    <Feature Id="MyApp_Tools" Title="MyApp Tools" Absent="allow" Level="1">
+    <Feature Id="MyApp20Tools" Title="MyApp Tools" Absent="allow" Level="1">
       <ComponentRef Id="Component.TOOLSDIR" />
       <ComponentRef Id="Component.setup.cs_3762836523" />
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
+      <ComponentRef Id="My20Company" />
       <ComponentRef Id="TARGETDIR" />
     </Feature>
 
@@ -114,7 +114,7 @@
     <InstallExecuteSequence>
       <Custom Action="WixSharp_InitRuntime_Action" Before="AppSearch"> (1) </Custom>
       <Custom Action="Set_CancelRequestHandler_Props" Before="InstallFinalize" />
-      <Custom Action="CancelRequestHandler" After="Set_CancelRequestHandler_Props"> (NOT (REMOVE="ALL")) </Custom>
+      <Custom Action="CancelRequestHandler" After="Set_CancelRequestHandler_Props"> (1) </Custom>
       <Custom Action="WixSharp_Load_Action" Before="AppSearch">1</Custom>
       <Custom Action="WixSharp_BeforeInstall_Action" Before="InstallFiles">1</Custom>
       <Custom Action="Set_WixSharp_AfterInstall_Action_Props" After="InstallFiles" />

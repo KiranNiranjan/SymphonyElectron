@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="554de617-9758-491f-b173-14041bedf3b1" Name="FeatureCondition" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="554de617-9758-491f-b173-14040bedf3b0" Manufacturer="oleg.shilo">
+  <Product Id="f8f3b09c-307c-42b1-9ff0-7282c42077f9" Name="FeatureCondition" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="f8f3b09c-307c-42b1-9ff0-7282b42077f8" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
     <Media Id="1" Cabinet="FeatureCondition.cab" EmbedCab="yes" />
 
@@ -8,26 +8,26 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="Features">
 
-            <Component Id="Component.default.txt_1135202871" Guid="554de617-9758-491f-b173-1404d168e7ee">
+            <Component Id="Component.default.txt_1135202871" Guid="f8f3b09c-307c-42b1-9ff0-72827a9b6b36">
               <File Id="default.txt_1135202871" Source="Files\default.txt" />
             </Component>
 
-            <Component Id="Component.a.txt_1857897549" Guid="554de617-9758-491f-b173-1404a13a591b">
+            <Component Id="Component.a.txt_1857897549" Guid="f8f3b09c-307c-42b1-9ff0-72824a6ddd63">
               <File Id="a.txt_1857897549" Source="Files\a.txt" />
             </Component>
 
-            <Component Id="Component.b.txt_1872643149" Guid="554de617-9758-491f-b173-1404a5ca512e">
+            <Component Id="Component.b.txt_1872643149" Guid="f8f3b09c-307c-42b1-9ff0-72824efdd576">
               <File Id="b.txt_1872643149" Source="Files\b.txt" />
             </Component>
 
-            <Component Id="Component.c.txt_1871135821" Guid="554de617-9758-491f-b173-140420bbb11c">
+            <Component Id="Component.c.txt_1871135821" Guid="f8f3b09c-307c-42b1-9ff0-7282c9ee3564">
               <File Id="c.txt_1871135821" Source="Files\c.txt" />
             </Component>
 
-            <Component Id="Component.d.txt_1869104205" Guid="554de617-9758-491f-b173-1404d4c52aeb">
+            <Component Id="Component.d.txt_1869104205" Guid="f8f3b09c-307c-42b1-9ff0-72827df8ae33">
               <File Id="d.txt_1869104205" Source="Files\d.txt" />
             </Component>
 
@@ -39,11 +39,11 @@
     <UIRef Id="WixUI_FeatureTree" />
     <UIRef Id="WixUI_ErrorProgressText" />
 
-    <Feature Id="Feature_A" Title="Feature A" Absent="allow" Level="1">
+    <Feature Id="Feature20A" Title="Feature A" Absent="allow" Level="1">
       <ComponentRef Id="Component.a.txt_1857897549" />
     </Feature>
 
-    <Feature Id="Feature_B" Title="Feature B" Absent="allow" Level="2">
+    <Feature Id="Feature20B" Title="Feature B" Absent="allow" Level="2">
       <Condition Level="1"><![CDATA[PROP1 = 1]]></Condition>
 
       <ComponentRef Id="Component.b.txt_1872643149" />
@@ -52,11 +52,11 @@
     <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
       <ComponentRef Id="Component.default.txt_1135202871" />
 
-      <Feature Id="Feature_C" Title="Feature C" Absent="allow" Level="1">
+      <Feature Id="Feature20C" Title="Feature C" Absent="allow" Level="1">
         <ComponentRef Id="Component.c.txt_1871135821" />
       </Feature>
 
-      <Feature Id="Feature_D" Title="Feature D" Absent="allow" Level="1">
+      <Feature Id="Feature20D" Title="Feature D" Absent="allow" Level="1">
         <Condition Level="2"><![CDATA[PROP1 = 1]]></Condition>
 
         <ComponentRef Id="Component.d.txt_1869104205" />

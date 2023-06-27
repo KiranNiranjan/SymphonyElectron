@@ -6,15 +6,15 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.MyApp.exe_1263008064" Guid="6f330b47-2577-43ad-9095-1861fd85162f">
               <File Id="MyApp.exe_1263008064" Source="Files\Bin\MyApp.exe" />
             </Component>
 
-            <Directory Id="INSTALLDIR.Docs" Name="Docs">
-              <Directory Id="INSTALLDIR.Docs.Manual" Name="Manual">
+            <Directory Id="Docs" Name="Docs">
+              <Directory Id="Manual" Name="Manual">
 
                 <Component Id="Component.Manual.txt_90490314" Guid="6f330b47-2577-43ad-9095-1861b6bfcf84">
                   <File Id="Manual.txt_90490314" Source="Files\Docs\Manual.txt" />

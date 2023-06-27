@@ -1,14 +1,15 @@
 //css_dir ..\..\;
+
 //css_ref Wix_bin\SDK\Microsoft.Deployment.WindowsInstaller.dll;
 //css_ref System.Core.dll;
-using Microsoft.Deployment.WindowsInstaller;
 using System;
 using System.Diagnostics;
 using System.Windows.Forms;
+using Microsoft.Deployment.WindowsInstaller;
 using WixSharp;
 using WixSharp.CommonTasks;
-using WixSharp.UI.Forms;
 using WixSharp.UI;
+using WixSharp.UI.Forms;
 
 class Script
 {
@@ -37,6 +38,11 @@ class Script
             DowngradeErrorMessage = "A later version of [ProductName] is already installed. Setup will now exit."
         };
 
+        project.Load +=
+            e => MessageBox.Show(e.Session.GetMainWindow(), e.ToString(), "Before (Install/Uninstall) - " + e.Session.QueryProductVersion());
+
+        // project.PreserveTempFiles = true;
+
         return project;
     }
 
@@ -61,8 +67,8 @@ class Script
     {
         ManagedProject project = CreateProject();
 
-        // Note the `project.UIInitialized += ...` code below is for demo purpose only. It to demonstrates custom handling
-        // of downgrade condition. This code can be replaced with a single equivalent call `project.ScheduleDowngradeUICheck();`
+        // Note the `project.UIInitialized += ...` code below is for demo purpose only. It demonstrates custom handling
+        // of downgrade condition.
 
         project.ManagedUI = ManagedUI.Default;
         project.UIInitialized += (SetupEventArgs e) =>

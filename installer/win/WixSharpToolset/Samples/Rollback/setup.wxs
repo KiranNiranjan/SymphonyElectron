@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-  <Product Id="0361a9cf-5337-4351-9a56-facd958dafcf" Name="CustomActionTest" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="0361a9cf-5337-4351-9a56-facd858dafce" Manufacturer="oleg.shilo">
+  <Product Id="5514c6fc-df0f-47b6-a852-1879a98e3740" Name="CustomActionTest" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="5514c6fc-df0f-47b6-a852-1879998e373f" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
     <Media Id="1" Cabinet="CustomActionTest.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
-            <Component Id="Component.registrator_exe" Guid="0361a9cf-5337-4351-9a56-facd5052c088">
+            <Component Id="Component.registrator_exe" Guid="5514c6fc-df0f-47b6-a852-1879645348f9">
               <File Id="registrator_exe" Source="Files\Registrator.exe" />
             </Component>
 

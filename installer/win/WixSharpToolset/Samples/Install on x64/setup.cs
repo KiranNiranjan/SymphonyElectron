@@ -66,9 +66,6 @@ class Script
     static void Compiler_WixSourceGenerated(XDocument document)
     {
         document.Descendants("Component")
-                .ForEach(comp=>comp.SetAttributeValue("Win64", "yes"));
+                .ForEach(comp => comp.SetAttributeValue("Win64", "yes"));
     }
 }
-
-
-

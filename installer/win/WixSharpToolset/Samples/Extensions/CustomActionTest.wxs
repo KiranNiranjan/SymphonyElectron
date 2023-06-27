@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="0a19e649-c42a-43eb-9236-d5ae2b81be12" Name="CustomActionTest" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="0a19e649-c42a-43eb-9236-d5ae1b81be11" Manufacturer="oleg.shilo">
+  <Product Id="a2acc39a-0738-4b94-aca0-a7c52054ea80" Name="CustomActionTest" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="a2acc39a-0738-4b94-aca0-a7c51054ea7f" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
     <Media Id="1" Cabinet="CustomActionTest.cab" EmbedCab="yes" />
 
@@ -8,7 +8,7 @@
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
         <Directory Id="INSTALLDIR" Name="CustomActionTest">
 
-          <Component Id="Component.readme.txt_571154970" Guid="0a19e649-c42a-43eb-9236-d5aeec668ac2">
+          <Component Id="Component.readme.txt_571154970" Guid="a2acc39a-0738-4b94-aca0-a7c5e139b630">
             <File Id="readme.txt_571154970" Source="readme.txt" />
             <RemoveFolderEx Id="RemoveFolderEx" On="uninstall" Property="DIR_PATH_PROPERTY_NAME" xmlns="http://schemas.microsoft.com/wix/UtilExtension" />
           </Component>

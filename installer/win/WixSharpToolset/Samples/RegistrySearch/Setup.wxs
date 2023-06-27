@@ -1,31 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="f15aa41a-6f42-4c0f-ab5e-95d4eb8119eb" Name="Setup" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="f15aa41a-6f42-4c0f-ab5e-95d4db8119ea" Manufacturer="oleg.shilo">
+  <Product Id="a077569c-cc11-466c-8e42-73e51ff86371" Name="Setup" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="a077569c-cc11-466c-8e42-73e50ff86370" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
     <Media Id="1" Cabinet="Setup.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
-            <Component Id="Component.MyApp.exe_3984491948" Guid="f15aa41a-6f42-4c0f-ab5e-95d42634a8b5">
+            <Component Id="Component.MyApp.exe_3984491948" Guid="a077569c-cc11-466c-8e42-73e55aabf23b">
               <File Id="MyApp.exe_3984491948" Source="Files\MyApp.exe" />
             </Component>
 
-            <Component Id="Component.DotNET_2.0_Manual.txt_3320879757" Guid="f15aa41a-6f42-4c0f-ab5e-95d40c25aac9">
+            <Component Id="Component.DotNET202.020Manual.txt_3320879757" Guid="a077569c-cc11-466c-8e42-73e5c205349a">
               <Condition>NETFRAMEWORK20="#1"</Condition>
-              <File Id="DotNET_2.0_Manual.txt_3320879757" Source="Files\DotNET 2.0 Manual.txt" />
+              <File Id="DotNET202.020Manual.txt_3320879757" Source="Files\DotNET 2.0 Manual.txt" />
             </Component>
 
-            <Component Id="Component.DotNET_3.0_Manual.txt_3894379730" Guid="f15aa41a-6f42-4c0f-ab5e-95d47499134f">
+            <Component Id="Component.DotNET203.020Manual.txt_3894379730" Guid="a077569c-cc11-466c-8e42-73e5b751f859">
               <Condition>NETFRAMEWORK30="#1"</Condition>
-              <File Id="DotNET_3.0_Manual.txt_3894379730" Source="Files\DotNET 3.0 Manual.txt" />
+              <File Id="DotNET203.020Manual.txt_3894379730" Source="Files\DotNET 3.0 Manual.txt" />
             </Component>
 
-            <Component Id="Component.DotNET_3.5_Manual.txt_3894375755" Guid="f15aa41a-6f42-4c0f-ab5e-95d4a18c8e9a">
+            <Component Id="Component.DotNET203.520Manual.txt_3894375755" Guid="a077569c-cc11-466c-8e42-73e5cb8d99a2">
               <Condition>NETFRAMEWORK35="#1"</Condition>
-              <File Id="DotNET_3.5_Manual.txt_3894375755" Source="Files\DotNET 3.5 Manual.txt" />
+              <File Id="DotNET203.520Manual.txt_3894375755" Source="Files\DotNET 3.5 Manual.txt" />
             </Component>
 
           </Directory>
@@ -56,9 +56,9 @@
 
     <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
       <ComponentRef Id="Component.MyApp.exe_3984491948" />
-      <ComponentRef Id="Component.DotNET_2.0_Manual.txt_3320879757" />
-      <ComponentRef Id="Component.DotNET_3.0_Manual.txt_3894379730" />
-      <ComponentRef Id="Component.DotNET_3.5_Manual.txt_3894375755" />
+      <ComponentRef Id="Component.DotNET202.020Manual.txt_3320879757" />
+      <ComponentRef Id="Component.DotNET203.020Manual.txt_3894379730" />
+      <ComponentRef Id="Component.DotNET203.520Manual.txt_3894375755" />
     </Feature>
 
   </Product>

@@ -6,19 +6,19 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.MyCompany" Name="MyCompany">
+        <Directory Id="MyCompany" Name="MyCompany">
           <Directory Id="INSTALLDIR" Name="MyProduct">
 
-            <Component Id="Component.some.dll_3523078776" Guid="ac19c6e4-9724-4e90-8ac7-6e69a2819b78">
-              <File Id="some.dll_3523078776" Source="Release\Bin\some.dll">
+            <Component Id="Component.some.dll_23738188" Guid="ac19c6e4-9724-4e90-8ac7-6e69615c1675">
+              <File Id="some.dll_23738188" Source="Release\Bin\some.dll">
                 <NativeImage Id="NativeImage" Platform="32bit" xmlns="http://schemas.microsoft.com/wix/NetFxExtension" />
               </File>
             </Component>
 
-            <Component Id="Component.some.exe_1183967844" Guid="ac19c6e4-9724-4e90-8ac7-6e693204462a">
-              <File Id="some.exe_1183967844" Source="Release\Bin\some.exe">
-                <Shortcut Id="Shortcut.some.exe_1183967844.some.exe" WorkingDirectory="INSTALLDIR" Directory="INSTALLDIR" Name="some.exe.lnk" />
-                <Shortcut Id="Shortcut.some.exe_1183967844.some.exe.1" WorkingDirectory="INSTALLDIR" Directory="DesktopFolder" Name="some.exe.lnk" />
+            <Component Id="Component.some.exe_2361800504" Guid="ac19c6e4-9724-4e90-8ac7-6e690695e017">
+              <File Id="some.exe_2361800504" Source="Release\Bin\some.exe">
+                <Shortcut Id="Shortcut.some.exe_2361800504.some.exe" WorkingDirectory="INSTALLDIR" Directory="INSTALLDIR" Name="some.exe.lnk" />
+                <Shortcut Id="Shortcut.some.exe_2361800504.some.exe.1" WorkingDirectory="INSTALLDIR" Directory="DesktopFolder" Name="some.exe.lnk" />
               </File>
 
               <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
@@ -26,8 +26,8 @@
               </RegistryKey>
             </Component>
 
-            <Component Id="Component.Uninstall_MyProduct" Guid="ac19c6e4-9724-4e90-8ac7-6e692419dccb">
-              <Shortcut Id="INSTALLDIR.Uninstall_MyProduct" WorkingDirectory="System64Folder" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Name="Uninstall MyProduct.lnk" />
+            <Component Id="Component.Uninstall20MyProduct" Guid="ac19c6e4-9724-4e90-8ac7-6e6954c4ab98">
+              <Shortcut Id="INSTALLDIR.Uninstall20MyProduct" WorkingDirectory="System64Folder" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Name="Uninstall MyProduct.lnk" />
 
               <CreateFolder />
               <RemoveFolder Id="INSTALLDIR" On="uninstall" />
@@ -39,23 +39,23 @@
 
             <Directory Id="GlobalResources" Name="GlobalResources">
 
-              <Component Id="Component.some.res_3677318861" Guid="ac19c6e4-9724-4e90-8ac7-6e693fea269e">
-                <File Id="some.res_3677318861" Source="Release\Bin\GlobalResources\some.res" />
+              <Component Id="Component.some.res_2176579357" Guid="ac19c6e4-9724-4e90-8ac7-6e69ec7dea67">
+                <File Id="some.res_2176579357" Source="Release\Bin\GlobalResources\some.res" />
               </Component>
 
             </Directory>
 
             <Directory Id="Images" Name="Images">
 
-              <Component Id="Component.some.bmp_2336491725" Guid="ac19c6e4-9724-4e90-8ac7-6e6917cce59b">
-                <File Id="some.bmp_2336491725" Source="Release\Bin\Images\some.bmp" />
+              <Component Id="Component.some.bmp_2481064705" Guid="ac19c6e4-9724-4e90-8ac7-6e69c3fb7b4c">
+                <File Id="some.bmp_2481064705" Source="Release\Bin\Images\some.bmp" />
               </Component>
 
             </Directory>
           </Directory>
 
-          <Component Id="ProgramFilesFolder.MyCompany" Guid="ac19c6e4-9724-4e90-8ac7-6e690c68f0cf" KeyPath="yes">
-            <RemoveFolder Id="ProgramFilesFolder.MyCompany" On="uninstall" />
+          <Component Id="MyCompany" Guid="ac19c6e4-9724-4e90-8ac7-6e69166e6b2b" KeyPath="yes">
+            <RemoveFolder Id="MyCompany" On="uninstall" />
           </Component>
 
         </Directory>
@@ -84,14 +84,14 @@
     <UIRef Id="WixUI_ErrorProgressText" />
 
     <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
-      <ComponentRef Id="Component.some.dll_3523078776" />
-      <ComponentRef Id="Component.some.exe_1183967844" />
-      <ComponentRef Id="Component.Uninstall_MyProduct" />
-      <ComponentRef Id="Component.some.res_3677318861" />
-      <ComponentRef Id="Component.some.bmp_2336491725" />
+      <ComponentRef Id="Component.some.dll_23738188" />
+      <ComponentRef Id="Component.some.exe_2361800504" />
+      <ComponentRef Id="Component.Uninstall20MyProduct" />
+      <ComponentRef Id="Component.some.res_2176579357" />
+      <ComponentRef Id="Component.some.bmp_2481064705" />
       <ComponentRef Id="Component.DesktopFolder.EmptyDirectory" />
       <ComponentRef Id="TARGETDIR" />
-      <ComponentRef Id="ProgramFilesFolder.MyCompany" />
+      <ComponentRef Id="MyCompany" />
     </Feature>
 
   </Product>

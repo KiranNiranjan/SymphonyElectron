@@ -18,8 +18,8 @@ class Script
     static private void BuildMsi()
     {
         var project = new ManagedProject("MyProduct",
-                    new Dir(@"C:\My Company\My Product",
-                        new File("readme.txt")));
+                      new Dir(@"C:\My Company\My Product",
+                          new File("readme.txt")));
         project.ManagedUI = new ManagedUI();
 
         project.ManagedUI.InstallDialogs.Add(Dialogs.InstallScope)
@@ -29,6 +29,7 @@ class Script
         project.ManagedUI.ModifyDialogs.Add(Dialogs.Progress)
                                        .Add(Dialogs.Exit);
 
+        project.PreserveTempFiles = true;
         project.BuildMsi();
     }
 
@@ -42,7 +43,7 @@ class Script
                 new File("readme.txt")),
             new RegValue(RegistryHive.LocalMachine, @"SOFTWARE\My Company\My Product", "InstallDir", "[INSTALLDIR]") { Condition = new Condition("ALLUSERS=\"1\"") },
             new RegValue(RegistryHive.CurrentUser, @"SOFTWARE\My Company\My Product", "InstallPerUser", "yes") { Condition = new Condition("MSIINSTALLPERUSER=\"1\"") }
-        );
+                                        );
         project.ManagedUI = new ManagedUI();
 
         project.ManagedUI.InstallDialogs.Add(Dialogs.InstallScope)
@@ -56,7 +57,7 @@ class Script
 
         project.UIInitialized += (SetupEventArgs e) =>
         {
-            if (e.IsInstalling && !e.IsUpgrading)
+            if (e.IsInstalling && !e.IsUpgradingInstalledVersion)
             {
                 e.Session["ALLUSERS"] = "2";
 

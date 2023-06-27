@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="cabfa15e-2f95-4473-bfd5-ecde0af6fb10" Name="PropertiesTest" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="cabfa15e-2f95-4473-bfd5-ecdefaf6fb0f" Manufacturer="oleg.shilo">
+  <Product Id="2883cc46-5452-46aa-ab4c-837c8b33cc06" Name="PropertiesTest" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="2883cc46-5452-46aa-ab4c-837c7b33cc05" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
     <Media Id="1" Cabinet="PropertiesTest.cab" EmbedCab="yes" />
 
@@ -8,7 +8,7 @@
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
         <Directory Id="INSTALLDIR" Name="PropertiesTest">
 
-          <Component Id="Component.INSTALLDIR.EmptyDirectory" Guid="cabfa15e-2f95-4473-bfd5-ecde1c39eaf1" KeyPath="yes">
+          <Component Id="Component.INSTALLDIR.EmptyDirectory" Guid="2883cc46-5452-46aa-ab4c-837c9d76bbe7" KeyPath="yes">
             <CreateFolder />
             <RemoveFolder Id="INSTALLDIR" On="uninstall" />
           </Component>

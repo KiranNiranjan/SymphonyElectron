@@ -1,0 +1,20 @@
+﻿setup
+
+
+exe
+C#
+.cs
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\CustomUI.WPF\bin\obj\
+ConsoleApplication1
+none
+false
+TRACE;CSS_PROJECT
+
+3-2007104979
+
+5-1003261695
+73-1056693070
+CustomDialogPanel.xaml;CustomWpfDialog.xaml;CustomWpfDialogRaw.xaml;
+
+False
+

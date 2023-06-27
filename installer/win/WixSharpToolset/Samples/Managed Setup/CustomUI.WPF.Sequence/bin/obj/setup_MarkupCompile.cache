@@ -1,0 +1,20 @@
+﻿setup
+
+
+exe
+C#
+.cs
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\CustomUI.WPF.Sequence\bin\obj\
+ConsoleApplication1
+none
+false
+TRACE;CSS_PROJECT
+
+81183257576
+
+9-1911545423
+126245832113
+Dialogs\FeaturesDialog.xaml;Dialogs\ProgressDialog.xaml;Dialogs\MaintenanceTypeDialog.xaml;Dialogs\SetupTypeDialog.xaml;Dialogs\InstallDirDialog.xaml;Dialogs\ExitDialog.xaml;Dialogs\WelcomeDialog.xaml;Dialogs\LicenseAgreementDialog.xaml;
+
+False
+

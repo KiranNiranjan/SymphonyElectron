@@ -2,16 +2,16 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product Id="6fe30b47-2577-43ad-9095-1861ca25889c" Name="My Product" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="6fe30b47-2577-43ad-9095-1861ba25889b" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" InstallPrivileges="elevated" Languages="1033" />
-    <Media Id="1" Cabinet="My_Product.cab" EmbedCab="yes" />
+    <Media Id="1" Cabinet="My20Product.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.myapp_exe" Guid="6fe30b47-2577-43ad-9095-186160f21aed">
               <File Id="myapp_exe" Source="AppFiles\MyApp.exe">
-                <Shortcut Id="Shortcut.myapp_exe.MyApp" WorkingDirectory="INSTALLDIR" Directory="My_Product.1" Name="MyApp.lnk" />
+                <Shortcut Id="Shortcut.myapp_exe.MyApp" WorkingDirectory="INSTALLDIR" Directory="My20Product.1" Name="MyApp.lnk" />
                 <Shortcut Id="Shortcut.myapp_exe.MyApp.1" WorkingDirectory="INSTALLDIR" Directory="DesktopFolder" Name="MyApp.lnk" />
               </File>
 
@@ -32,8 +32,8 @@
               <File Id="MyApp.ico_978421111" Source="AppFiles\MyApp.ico" />
             </Component>
 
-            <Component Id="Component.Uninstall_MyApp" Guid="6fe30b47-2577-43ad-9095-18614b454462">
-              <Shortcut Id="INSTALLDIR.Uninstall_MyApp" WorkingDirectory="System64Folder" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Name="Uninstall MyApp.lnk" />
+            <Component Id="Component.Uninstall20MyApp" Guid="6fe30b47-2577-43ad-9095-1861436db81f">
+              <Shortcut Id="INSTALLDIR.Uninstall20MyApp" WorkingDirectory="System64Folder" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Name="Uninstall MyApp.lnk" />
 
               <CreateFolder />
               <RemoveFolder Id="INSTALLDIR" On="uninstall" />
@@ -45,8 +45,8 @@
 
           </Directory>
 
-          <Component Id="ProgramFilesFolder.My_Company" Guid="6fe30b47-2577-43ad-9095-1861c5635c14" KeyPath="yes">
-            <RemoveFolder Id="ProgramFilesFolder.My_Company" On="uninstall" />
+          <Component Id="My20Company" Guid="6fe30b47-2577-43ad-9095-186154b4b41d" KeyPath="yes">
+            <RemoveFolder Id="My20Company" On="uninstall" />
           </Component>
 
         </Directory>
@@ -77,14 +77,14 @@
       </Directory>
 
       <Directory Id="ProgramMenuFolder" Name="ProgramMenuFolder">
-        <Directory Id="My_Company" Name="My Company">
-          <Directory Id="My_Product.1" Name="My Product">
+        <Directory Id="My20Company.1" Name="My Company">
+          <Directory Id="My20Product.1" Name="My Product">
 
-            <Component Id="Component.Uninstall_MyApp.1" Guid="6fe30b47-2577-43ad-9095-18617e97157f">
-              <Shortcut Id="My_Product.1.Uninstall_MyApp.1" WorkingDirectory="System64Folder" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Name="Uninstall MyApp.lnk" />
+            <Component Id="Component.Uninstall20MyApp.1" Guid="6fe30b47-2577-43ad-9095-1861660b4029">
+              <Shortcut Id="My20Product.1.Uninstall20MyApp.1" WorkingDirectory="System64Folder" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Name="Uninstall MyApp.lnk" />
 
               <CreateFolder />
-              <RemoveFolder Id="My_Product.1" On="uninstall" />
+              <RemoveFolder Id="My20Product.1" On="uninstall" />
 
               <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
                 <RegistryValue Value="0" Type="string" KeyPath="yes" />
@@ -93,8 +93,8 @@
 
           </Directory>
 
-          <Component Id="My_Company" Guid="6fe30b47-2577-43ad-9095-186144d63144">
-            <RemoveFolder Id="My_Company" On="uninstall" />
+          <Component Id="My20Company.1" Guid="6fe30b47-2577-43ad-9095-186125d2aa01">
+            <RemoveFolder Id="My20Company.1" On="uninstall" />
 
             <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
               <RegistryValue Value="0" Type="string" KeyPath="yes" />
@@ -123,9 +123,11 @@
 
     </Directory>
 
-    <UI />
+    <UI>
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+    </UI>
 
-    <WixVariable Id="WixUILicenseRtf" Value="E:\PrivateData\Galos\Projects\WixSharp\Source\src\WixSharp.Samples\Wix# Samples\AllInOne\AppFiles\License.rtf" />
+    <WixVariable Id="WixUILicenseRtf" Value="D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\AllInOne\AppFiles\License.rtf" />
 
     <CustomAction Id="registrator_exe" ExeCommand="" FileKey="registrator_exe" Return="check" Execute="immediate" />
     <CustomAction Id="registrator_exe.1" ExeCommand="/u" FileKey="registrator_exe" Return="check" Execute="immediate" />
@@ -141,6 +143,7 @@
     <CustomAction Id="WixSharp_RemoveResilientPackage_Action" BinaryKey="WixSharp_SetPackageName_Action_File" DllEntry="WixSharp_RemoveResilientPackage_Action" Return="ignore" Impersonate="no" Execute="deferred" />
     <CustomAction Id="Set_WixSharp_CreateResilientPackage_Action_Props" Property="WixSharp_CreateResilientPackage_Action" Value="UserSID=[UserSID];OriginalDatabase=[OriginalDatabase];ALLUSERS=[ALLUSERS];WIXSHARP_RESILIENT_SOURCE_DIR=[WIXSHARP_RESILIENT_SOURCE_DIR];INSTALLDIR=[INSTALLDIR];UILevel=[UILevel];ProductCode=[ProductCode];ADDLOCAL=[ADDLOCAL];ADDFEATURES=[ADDFEATURES]" />
     <CustomAction Id="WixSharp_CreateResilientPackage_Action" BinaryKey="WixSharp_SetPackageName_Action_File" DllEntry="WixSharp_CreateResilientPackage_Action" Return="ignore" Impersonate="no" Execute="deferred" />
+    <CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
 
     <Binary Id="VBScriptFile_File" SourceFile="CustomActions\Sample.vbs" />
     <Binary Id="MyManagedAction_File" SourceFile="%this%.CA.dll" />
@@ -149,25 +152,29 @@
     <UIRef Id="WixUI_Mondo" />
     <UIRef Id="WixUI_ErrorProgressText" />
 
-    <Feature Id="MyApp_Binaries" Title="MyApp Binaries" Absent="allow" Level="1">
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch app" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <Property Id="WixShellExecTarget" Value="[#myapp_exe]" />
+
+    <Feature Id="MyApp20Binaries" Title="MyApp Binaries" Absent="allow" Level="1">
       <ComponentRef Id="Component.myapp_exe" />
       <ComponentRef Id="Component.registrator_exe" />
       <ComponentRef Id="Component.MyApp.ico_978421111" />
-      <ComponentRef Id="Component.Uninstall_MyApp" />
+      <ComponentRef Id="Component.Uninstall20MyApp" />
       <ComponentRef Id="Component.MyApp_" />
-      <ComponentRef Id="Component.Uninstall_MyApp.1" />
+      <ComponentRef Id="Component.Uninstall20MyApp.1" />
       <ComponentRef Id="Component.DesktopFolder.EmptyDirectory" />
       <ComponentRef Id="Registry.1" />
       <ComponentRef Id="TARGETDIR" />
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
-      <ComponentRef Id="My_Company" />
+      <ComponentRef Id="My20Company" />
+      <ComponentRef Id="My20Company.1" />
     </Feature>
 
-    <Feature Id="MyApp_Documentation" Title="MyApp Documentation" Absent="allow" Level="1">
+    <Feature Id="MyApp20Documentation" Title="MyApp Documentation" Absent="allow" Level="1">
       <ComponentRef Id="Component.Readme.txt_279978952" />
       <ComponentRef Id="TARGETDIR" />
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
-      <ComponentRef Id="My_Company" />
+      <ComponentRef Id="My20Company" />
+      <ComponentRef Id="My20Company.1" />
     </Feature>
 
     <InstallExecuteSequence>

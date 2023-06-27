@@ -1,21 +1,20 @@
 //css_dir ..\..\..\;
 //css_ref Wix_bin\SDK\Microsoft.Deployment.WindowsInstaller.dll;
-//css_ref WixSharp.UI.dll;
-//css_ref System.Core.dll;
-//css_ref System.Xml.dll;
+//css_ref WixSharp.UI;
+//css_ref System.Core;
+//css_ref System.Xml;
 
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Principal;
-
 using System.Windows.Forms;
 using System.Xml.Linq;
 using Microsoft.Deployment.WindowsInstaller;
 using WixSharp;
 using WixSharp.CommonTasks;
 
-public class Script
+public static class Script
 {
     static public void Main()
     {
@@ -51,7 +50,7 @@ public class Script
 
         //project.ManagedUI = ManagedUI.Empty;
         project.ManagedUI = ManagedUI.Default; //Wix# ManagedUI
-        //project.UI = WUI.WixUI_ProgressOnly; //native MSI UI
+        // project.UI = WUI.WixUI_ProgressOnly; //native MSI UI
 
         project.UILoaded += project_UIInit;
         project.UIInitialized += Project_UIInitialized;
@@ -74,10 +73,24 @@ public class Script
                 Tasks.StartService("some_service", throwOnError: false);
         };
 
+        // project.UnelevateAfterInstallEvent(); // just for demo purposes
+
         project.GUID = new Guid("6f330b47-2577-43ad-9095-1861ba25889b");
-        // project.PreserveTempFiles = true;
+        project.PreserveTempFiles = true;
 
         Compiler.BuildMsi(project);
+    }
+
+    static ManagedProject UnelevateAfterInstallEvent(this ManagedProject project)
+    {
+        project.WixSourceGenerated +=
+            doc =>
+            {
+                doc.FindAll("CustomAction")
+                   .Single(x => x.HasAttribute("Id", "WixSharp_AfterInstall_Action"))
+                   .SetAttribute("Execute", "immediate");
+            };
+        return project;
     }
 
     static void Project_UIInitialized(SetupEventArgs e)
@@ -137,7 +150,7 @@ public class Script
 
         var msi = e.MsiFile;
 
-        if (!e.IsInstalling && !e.IsUpgrading)
+        if (!e.IsInstalling && !e.IsUpgradingInstalledVersion)
             SetEnvVersion(e.Session);
 
         // MSI doesn't preserve any e.Session properties if they are accessed from deferred actions (e.g. project_AfterInstall)

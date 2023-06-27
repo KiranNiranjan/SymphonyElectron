@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="TARGETDIR">
+            <Directory Id="dirCFD54C07EFB094CAD317543172D62CC3" Name="bin" />
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <DirectoryRef Id="dirCFD54C07EFB094CAD317543172D62CC3">
+            <Component Id="cmpF5B9B216578D7C5C4977F9D5874E0C2E" Guid="{0524B948-2F7F-4F6B-B1B7-F08A439CE2EF}">
+                <Class Id="{1A8E24DE-A48B-35C1-B653-789A546D1D79}" Context="InprocServer32" Description="csscript.Settings" ThreadingModel="both" ForeignServer="mscoree.dll">
+                    <ProgId Id="csscript.Settings" Description="csscript.Settings" />
+                </Class>
+                <Class Id="{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}" Context="InprocServer32" Description="CSScriptLibrary.CSScript" ThreadingModel="both" ForeignServer="mscoree.dll">
+                    <ProgId Id="CSScriptLibrary.CSScript" Description="CSScriptLibrary.CSScript" />
+                </Class>
+                <Class Id="{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}" Context="InprocServer32" Description="CSScriptLibrary.AssemblyResolver" ThreadingModel="both" ForeignServer="mscoree.dll">
+                    <ProgId Id="CSScriptLibrary.AssemblyResolver" Description="CSScriptLibrary.AssemblyResolver" />
+                </Class>
+                <File Id="filD814A50844020C2977271F08018D7F1D" KeyPath="yes" Source="SourceDir\bin\CSScriptLibrary2.dll" />
+                <ProgId Id="Record" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" Value="" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\InprocServer32\2.3.0.0" Name="Class" Value="csscript.Settings" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\InprocServer32\2.3.0.0" Name="Assembly" Value="CSScriptLibrary, Version=2.3.0.0, Culture=neutral, PublicKeyToken=70fcc3d18c749033" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\InprocServer32\2.3.0.0" Name="RuntimeVersion" Value="v2.0.50727" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\InprocServer32\2.3.0.0" Name="CodeBase" Value="file:///D:/dev/Galos/wixsharp3/Source/src/WixSharp.Samples/Wix# Samples/ComServer/Files/bin/CSScriptLibrary2.dll" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\InprocServer32" Name="Class" Value="csscript.Settings" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\InprocServer32" Name="Assembly" Value="CSScriptLibrary, Version=2.3.0.0, Culture=neutral, PublicKeyToken=70fcc3d18c749033" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\InprocServer32" Name="RuntimeVersion" Value="v2.0.50727" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{1A8E24DE-A48B-35C1-B653-789A546D1D79}\InprocServer32" Name="CodeBase" Value="file:///D:/dev/Galos/wixsharp3/Source/src/WixSharp.Samples/Wix# Samples/ComServer/Files/bin/CSScriptLibrary2.dll" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" Value="" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\InprocServer32\2.3.0.0" Name="Class" Value="CSScriptLibrary.CSScript" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\InprocServer32\2.3.0.0" Name="Assembly" Value="CSScriptLibrary, Version=2.3.0.0, Culture=neutral, PublicKeyToken=70fcc3d18c749033" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\InprocServer32\2.3.0.0" Name="RuntimeVersion" Value="v2.0.50727" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\InprocServer32\2.3.0.0" Name="CodeBase" Value="file:///D:/dev/Galos/wixsharp3/Source/src/WixSharp.Samples/Wix# Samples/ComServer/Files/bin/CSScriptLibrary2.dll" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\InprocServer32" Name="Class" Value="CSScriptLibrary.CSScript" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\InprocServer32" Name="Assembly" Value="CSScriptLibrary, Version=2.3.0.0, Culture=neutral, PublicKeyToken=70fcc3d18c749033" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\InprocServer32" Name="RuntimeVersion" Value="v2.0.50727" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{2FBFF1D8-7FF7-3AA2-9BCF-A74ED877F68B}\InprocServer32" Name="CodeBase" Value="file:///D:/dev/Galos/wixsharp3/Source/src/WixSharp.Samples/Wix# Samples/ComServer/Files/bin/CSScriptLibrary2.dll" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" Value="" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\InprocServer32\2.3.0.0" Name="Class" Value="CSScriptLibrary.AssemblyResolver" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\InprocServer32\2.3.0.0" Name="Assembly" Value="CSScriptLibrary, Version=2.3.0.0, Culture=neutral, PublicKeyToken=70fcc3d18c749033" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\InprocServer32\2.3.0.0" Name="RuntimeVersion" Value="v2.0.50727" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\InprocServer32\2.3.0.0" Name="CodeBase" Value="file:///D:/dev/Galos/wixsharp3/Source/src/WixSharp.Samples/Wix# Samples/ComServer/Files/bin/CSScriptLibrary2.dll" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\InprocServer32" Name="Class" Value="CSScriptLibrary.AssemblyResolver" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\InprocServer32" Name="Assembly" Value="CSScriptLibrary, Version=2.3.0.0, Culture=neutral, PublicKeyToken=70fcc3d18c749033" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\InprocServer32" Name="RuntimeVersion" Value="v2.0.50727" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="CLSID\{DE48BF9D-AEA9-3720-A7F0-A112134F7A14}\InprocServer32" Name="CodeBase" Value="file:///D:/dev/Galos/wixsharp3/Source/src/WixSharp.Samples/Wix# Samples/ComServer/Files/bin/CSScriptLibrary2.dll" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="Record\{BBF8DA7A-7C5A-3558-BED9-AECBD589289B}\2.3.0.0" Name="Class" Value="csscript.Settings+HideOptions" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="Record\{BBF8DA7A-7C5A-3558-BED9-AECBD589289B}\2.3.0.0" Name="Assembly" Value="CSScriptLibrary, Version=2.3.0.0, Culture=neutral, PublicKeyToken=70fcc3d18c749033" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="Record\{BBF8DA7A-7C5A-3558-BED9-AECBD589289B}\2.3.0.0" Name="RuntimeVersion" Value="v2.0.50727" Type="string" Action="write" />
+                <RegistryValue Root="HKCR" Key="Record\{BBF8DA7A-7C5A-3558-BED9-AECBD589289B}\2.3.0.0" Name="CodeBase" Value="file:///D:/dev/Galos/wixsharp3/Source/src/WixSharp.Samples/Wix# Samples/ComServer/Files/bin/CSScriptLibrary2.dll" Type="string" Action="write" />
+            </Component>
+        </DirectoryRef>
+    </Fragment>
+</Wix>

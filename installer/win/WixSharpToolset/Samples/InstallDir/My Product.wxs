@@ -1,32 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="fff37eac-1a0f-4340-93fb-887574c91afe" Name="My Product" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="fff37eac-1a0f-4340-93fb-887564c91afd" Manufacturer="oleg.shilo">
+  <Product Id="c7fc4722-13a5-453f-95b0-e08a4bc6078a" Name="My Product" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="c7fc4722-13a5-453f-95b0-e08a3bc60789" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
-    <Media Id="1" Cabinet="My_Product.cab" EmbedCab="yes" />
+    <Media Id="1" Cabinet="My20Product.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
         <Directory Id="INSTALLDIR" Name="My Product">
 
-          <Component Id="Component.myapp.exe_572060024" Guid="fff37eac-1a0f-4340-93fb-8875cf30362d">
+          <Component Id="Component.myapp.exe_572060024" Guid="c7fc4722-13a5-453f-95b0-e08aa62d23b9">
             <File Id="myapp.exe_572060024" Source="myapp.exe" KeyPath="yes">
-              <Shortcut Id="Shortcut.myapp.exe_572060024.My_App" WorkingDirectory="INSTALLDIR" Directory="ProgramMenuFolder.My_Product" Name="My App.lnk" Advertise="yes" />
+              <Shortcut Id="Shortcut.myapp.exe_572060024.My20App" WorkingDirectory="INSTALLDIR" Directory="INSTALLDIR" Name="My App.lnk" Advertise="yes" />
             </File>
-          </Component>
-
-        </Directory>
-      </Directory>
-
-      <Directory Id="ProgramMenuFolder" Name="ProgramMenuFolder">
-        <Directory Id="ProgramMenuFolder.My_Product" Name="My Product">
-
-          <Component Id="Component.ProgramMenuFolder.My_Product.EmptyDirectory" Guid="fff37eac-1a0f-4340-93fb-8875b295e312">
-            <CreateFolder />
-            <RemoveFolder Id="ProgramMenuFolder.My_Product" On="uninstall" />
-
-            <RegistryKey Root="HKCU" Key="Software\WixSharp\Used">
-              <RegistryValue Value="0" Type="string" KeyPath="yes" />
-            </RegistryKey>
           </Component>
 
         </Directory>
@@ -35,27 +20,20 @@
 
     <UI />
 
-    <CustomAction Id="InstallCRTAction" BinaryKey="InstallCRTAction_File" DllEntry="InstallCRTAction" Return="check" Execute="immediate" />
     <CustomAction Id="WixSharp_InitRuntime_Action" BinaryKey="WixSharp_InitRuntime_Action_File" DllEntry="WixSharp_InitRuntime_Action" Return="check" Execute="immediate" />
     <CustomAction Id="WixSharp_BeforeInstall_Action" BinaryKey="WixSharp_InitRuntime_Action_File" DllEntry="WixSharp_BeforeInstall_Action" Return="check" Execute="immediate" />
 
-    <Binary Id="InstallCRTAction_File" SourceFile="%this%.CA.dll" />
     <Binary Id="WixSharp_InitRuntime_Action_File" SourceFile="WixSharp.CA.dll" />
 
     <UIRef Id="WixUI_InstallDir" />
     <UIRef Id="WixUI_ErrorProgressText" />
 
-    <Property Id="WixSharp_BeforeInstall_Handlers" Value="InstallDir, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script+&lt;&gt;c|&lt;Main&gt;b__1_0" />
+    <Property Id="WixSharp_BeforeInstall_Handlers" Value="setup.cs, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Script|&lt;Main&gt;b__1" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
 
     <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
       <ComponentRef Id="Component.myapp.exe_572060024" />
-      <ComponentRef Id="Component.ProgramMenuFolder.My_Product.EmptyDirectory" />
     </Feature>
-
-    <InstallUISequence>
-      <Custom Action="InstallCRTAction" Before="LaunchConditions"> (NOT Installed) </Custom>
-    </InstallUISequence>
 
     <InstallExecuteSequence>
       <Custom Action="WixSharp_InitRuntime_Action" Before="AppSearch"> (1) </Custom>

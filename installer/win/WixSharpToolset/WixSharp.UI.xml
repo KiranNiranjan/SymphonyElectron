@@ -694,7 +694,7 @@
         </member>
         <member name="M:WixSharp.ISession.IsRepairing">
             <summary>
-            Gets a value indicating whether the product is being repaired.
+            Gets a value indicating whether the MSI is running in Repair mode.
             <para>
             This method will fail to retrieve the correct value if called from the deferred custom action and the session properties
             that it depends on are not preserved with 'UsesProperties' or 'DefaultUsesProperties'.
@@ -716,6 +716,14 @@
             Writes a message to the log, if logging is enabled.
             </summary>
             <param name="msg">The line to be written to the log</param>
+        </member>
+        <member name="P:WixSharp.ISession.LogFile">
+            <summary>
+            Gets the log file.
+            </summary>
+            <value>
+            The log file.
+            </value>
         </member>
         <member name="T:WixSharp.MsiSessionAdapter">
             <summary>
@@ -789,7 +797,7 @@
         </member>
         <member name="M:WixSharp.MsiSessionAdapter.IsInstalling">
             <summary>
-            Gets a value indicating whether the product is being installed.
+            Gets a value indicating whether the MSI is running in "installing" mode.
             <para>
             This method will fail to retrieve the correct value if called from the deferred custom action and the session properties
             that it depends on are not preserved with 'UsesProperties' or 'DefaultUsesProperties'.
@@ -801,16 +809,17 @@
         </member>
         <member name="M:WixSharp.MsiSessionAdapter.IsRepairing">
             <summary>
-            Gets a value indicating whether the product is being repaired.
+            Gets a value indicating whether the MSI is running in "repair" mode.
             <para>
             This method will fail to retrieve the correct value if called from the deferred custom action and the session properties
             that it depends on are not preserved with 'UsesProperties' or 'DefaultUsesProperties'.
             </para>
             </summary>
+            <returns></returns>
         </member>
         <member name="M:WixSharp.MsiSessionAdapter.IsUninstalling">
             <summary>
-            Determines whether MSI is running in "uninstalling" mode.
+            Determines whether the MSI is running in "uninstalling" mode.
             <para>
             This method will fail to retrieve the correct value if called from the deferred custom action and the session properties
             that it depends on are not preserved with 'UsesProperties' or 'DefaultUsesProperties'.
@@ -823,6 +832,14 @@
             Writes a message to the log, if logging is enabled.
             </summary>
             <param name="msg">The line to be written to the log</param>
+        </member>
+        <member name="P:WixSharp.MsiSessionAdapter.LogFile">
+            <summary>
+            Gets the log file.
+            </summary>
+            <value>
+            The log file.
+            </value>
         </member>
         <member name="T:WixSharp.ManagedUI">
              <summary>
@@ -853,9 +870,14 @@
              </code>
              </example>
         </member>
+        <member name="P:WixSharp.ManagedUI.DefaultWpf">
+            <summary>
+            The default WPF implementation of ManagedUI. It implements all major dialogs of a typical MSI UI.
+            </summary>
+        </member>
         <member name="F:WixSharp.ManagedUI.Default">
             <summary>
-            The default implementation of ManagedUI. It implements all major dialogs of a typical MSI UI.
+            The default WinForm implementation of ManagedUI. It implements all major dialogs of a typical MSI UI.
             </summary>
         </member>
         <member name="F:WixSharp.ManagedUI.Empty">
@@ -1480,6 +1502,13 @@
             </summary>
             <value>The current dialog.</value>
         </member>
+        <member name="M:WixSharp.UIShell.CreateDefaultWpfDialgHost">
+            <summary>
+            Creates an instance of the WinForm dialog that can host WPF content.
+            This method is not to be used by users but WixSharp compiler only.
+            </summary>
+            <returns></returns>
+        </member>
         <member name="P:WixSharp.UIShell.CurrentDialogIndex">
             <summary>
             Gets or sets the current dialog by the dialog index.
@@ -1511,6 +1540,13 @@
             Plays the specified dialog in demo mode.
             </summary>
             <param name="dialog">The dialog.</param>
+        </member>
+        <member name="M:WixSharp.UIShell.Play(System.String,System.Type[])">
+            <summary>
+            Plays the specified dialog set.
+            </summary>
+            <param name="demoProperties">The demo properties.</param>
+            <param name="dialogSet">The dialog set.</param>
         </member>
         <member name="P:WixSharp.UIShell.IsDemoMode">
             <summary>

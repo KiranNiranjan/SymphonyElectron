@@ -6,7 +6,7 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
             <Component Id="Component.MyApp.exe_4109771830" Guid="1adf5503-75f1-4ebc-adc5-82604dbd4d9b">
@@ -28,8 +28,8 @@
 
           </Directory>
 
-          <Component Id="ProgramFilesFolder.My_Company" Guid="1adf5503-75f1-4ebc-adc5-8260ccbe5ed4" KeyPath="yes">
-            <RemoveFolder Id="ProgramFilesFolder.My_Company" On="uninstall" />
+          <Component Id="My20Company" Guid="1adf5503-75f1-4ebc-adc5-82605b0fb6dd" KeyPath="yes">
+            <RemoveFolder Id="My20Company" On="uninstall" />
           </Component>
 
         </Directory>
@@ -48,7 +48,7 @@
       <ComponentRef Id="config.ini" />
       <ComponentRef Id="config.ini.1" />
       <ComponentRef Id="Component.MyApp.exe_4109771830" />
-      <ComponentRef Id="ProgramFilesFolder.My_Company" />
+      <ComponentRef Id="My20Company" />
     </Feature>
 
   </Product>

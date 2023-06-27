@@ -1,0 +1,7 @@
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\Self-executable_Msi\bin\Self-executable_Msi\obj\Self_executable_Msi.Resources.resources
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\Self-executable_Msi\bin\Self-executable_Msi\obj\Self-executable_Msi.csproj.GenerateResource.cache
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\Self-executable_Msi\bin\Self-executable_Msi\obj\Self-executable_Msi.csproj.CoreCompileInputs.cache
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\Self-executable_Msi\bin\Self-executable_Msi\obj\Self-executable_Msi.exe
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\Self-executable_Msi\bin\Self-executable_Msi\obj\Self-executable_Msi.pdb
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\Self-executable_Msi\bin\Self-executable_Msi\Self-executable_Msi.exe
+D:\dev\Galos\wixsharp3\Source\src\WixSharp.Samples\Wix# Samples\Managed Setup\Self-executable_Msi\bin\Self-executable_Msi\Self-executable_Msi.pdb

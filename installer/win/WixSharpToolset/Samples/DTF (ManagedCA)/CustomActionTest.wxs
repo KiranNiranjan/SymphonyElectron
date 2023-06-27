@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="8575d7ab-da7b-47cd-8dd9-db4599ba03cf" Name="CustomActionTest" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="8575d7ab-da7b-47cd-8dd9-db4589ba03ce" Manufacturer="oleg.shilo">
+  <Product Id="4e0e5381-6773-4e51-a127-a9935a59691e" Name="CustomActionTest" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="4e0e5381-6773-4e51-a127-a9934a59691d" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
     <Media Id="1" Cabinet="CustomActionTest.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.My_Company" Name="My Company">
+        <Directory Id="My20Company" Name="My Company">
           <Directory Id="INSTALLDIR" Name="My Product">
 
-            <Component Id="Component.setup.cs_2149165361" Guid="8575d7ab-da7b-47cd-8dd9-db45a110153f">
+            <Component Id="Component.setup.cs_2149165361" Guid="4e0e5381-6773-4e51-a127-a99362af7b8e">
               <File Id="setup.cs_2149165361" Source="setup.cs" />
             </Component>
 

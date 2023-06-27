@@ -1,12 +1,12 @@
 //css_dir ..\..\;
 //css_ref Wix_bin\SDK\Microsoft.Deployment.WindowsInstaller.dll;
 //css_ref System.Core.dll;
+using Microsoft.Deployment.WindowsInstaller;
 using System;
-using System.Xml;
-using System.Xml.Linq;
 using System.Linq;
 using System.Windows.Forms;
-using Microsoft.Deployment.WindowsInstaller;
+using System.Xml;
+using System.Xml.Linq;
 using WixSharp;
 using WixSharp.CommonTasks;
 
@@ -52,7 +52,7 @@ internal static class Script
                     new PathFileAction(@"%WindowsFolder%\notepad.exe", "readme.txt", @"INSTALLDIR", Return.asyncNoWait, When.After, Step.InstallFinalize, Condition.NOT_Installed),
 
                     new ManagedAction(CustomActions.MyManagedAction, "%this%"),
-					
+
                     new LaunchApplicationFromExitDialog(exeId: "myapp_exe", description: "Launch app"),
 
                     new InstalledFileAction("myapp_exe", ""));
@@ -68,14 +68,16 @@ internal static class Script
             // Optionally enable an ability to repair the installation even when the original MSI is no longer available.
             project.EnableResilientPackage();
 
-            // Uncomment to optionally enable the full UI for "Uninstall/Change" button in the Control Panel.
+            // Uncomment one of the following to optionally enable the full UI for "Uninstall/Change" button in the Control Panel.
+            // project.EnableUninstallFullUI();
             // project.EnableUninstallFullUI("[#myapp_exe],0");
+            // project.EnableUninstallFullUIWithExtraParameters(@"/L*V [TempFolder]CustomMsiLog.log PARAM1=VALUE1 PARAM2=VALUE2");
+            // project.EnableUninstallFullUI("[#myapp_exe],0", @"/L*V [TempFolder]CustomMsiLog.log");
 
-            // project.PreserveTempFiles = true;
+            project.PreserveTempFiles = true;
             project.WixSourceGenerated += Compiler_WixSourceGenerated;
-            project.BuildMsi();
 
-            // project.BuildMsiCmd();
+            project.BuildMsi();
         }
         catch (System.Exception ex)
         {

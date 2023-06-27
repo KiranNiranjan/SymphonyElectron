@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="a89fa512-02ba-4828-a0b8-8f52441797f0" Name="MyMergeModuleSetup" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="a89fa512-02ba-4828-a0b8-8f52341797ef" Manufacturer="oleg.shilo">
+  <Product Id="e8a46bc0-963e-4033-9721-aaba30c2705a" Name="MyMergeModuleSetup" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="e8a46bc0-963e-4033-9721-aaba20c27059" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
@@ -10,7 +10,7 @@
           <Merge Id="MyMergeModule1.msm" FileCompression="yes" Language="1033" SourceFile="Files\MyMergeModule1.msm" DiskId="1" />
         </Directory>
 
-        <Component Id="foo" Guid="a89fa512-02ba-4828-a0b8-8f52c97e9c98" KeyPath="yes">
+        <Component Id="foo" Guid="e8a46bc0-963e-4033-9721-aabab5297502" KeyPath="yes">
           <Environment Id="foo" Name="foo" Value="bar" Action="set" />
 
           <CreateFolder />
@@ -19,7 +19,7 @@
 
       </Directory>
 
-      <Component Id="TARGETDIR" Guid="a89fa512-02ba-4828-a0b8-8f52a7e70762" KeyPath="yes">
+      <Component Id="TARGETDIR" Guid="e8a46bc0-963e-4033-9721-aaba9392e0cc" KeyPath="yes">
         <RemoveFolder Id="TARGETDIR" On="uninstall" />
       </Component>
 
@@ -33,11 +33,11 @@
     <Feature Id="Complete" Title="Complete" Absent="allow" Level="1">
       <ComponentRef Id="foo" />
 
-      <Feature Id="Feature_A" Title="Feature A" Absent="allow" Level="1" Description="Feature A description">
+      <Feature Id="Feature20A" Title="Feature A" Absent="allow" Level="1" Description="Feature A description">
         <ComponentRef Id="TARGETDIR" />
       </Feature>
 
-      <Feature Id="Feature_B" Title="Feature B" Absent="allow" Level="1" Description="Feature B description">
+      <Feature Id="Feature20B" Title="Feature B" Absent="allow" Level="1" Description="Feature B description">
         <MergeRef Id="MyMergeModule.msm" />
         <MergeRef Id="MyMergeModule1.msm" />
 

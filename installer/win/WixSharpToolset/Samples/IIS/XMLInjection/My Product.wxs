@@ -2,11 +2,11 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:iis="http://schemas.microsoft.com/wix/IIsExtension">
   <Product Id="6fe30b47-2577-43ad-9095-1861ca25889c" Name="My Product" Language="1033" Codepage="Windows-1252" Version="1.0.0.0" UpgradeCode="6fe30b47-2577-43ad-9095-1861ba25889b" Manufacturer="oleg.shilo">
     <Package InstallerVersion="200" Compressed="yes" SummaryCodepage="Windows-1252" Languages="1033" />
-    <Media Id="1" Cabinet="My_Product.cab" EmbedCab="yes" />
+    <Media Id="1" Cabinet="My20Product.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="ProgramFilesFolder">
-        <Directory Id="ProgramFilesFolder.MyCompany" Name="MyCompany">
+        <Directory Id="MyCompany" Name="MyCompany">
           <Directory Id="INSTALLDIR" Name="MyWebApp">
 
             <Component Id="Component.Default.aspx_784634900" Guid="6fe30b47-2577-43ad-9095-1861cf348e05">

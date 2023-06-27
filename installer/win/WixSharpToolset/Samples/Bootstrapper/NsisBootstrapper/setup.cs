@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using Microsoft.Deployment.WindowsInstaller;
 using WixSharp;
 using WixSharp.Nsis;
+using WixSharp.Nsis.WinVer;
 
 public static class Script
 {
@@ -44,7 +45,16 @@ public static class Script
 
             // JScript script sample
             BuildScriptSample(msiFile, @"Assets\script.js");
+            
+            // BAT script sample with not supported win versions
+            BuildScriptSampleWithOSValidationWin7(msiFile, @"Assets\script.bat");
+            
+            // Another BAT script sample with not supported win versions
+            BuildScriptSampleWithOsValidationMultiple(msiFile, @"Assets\script.bat");
 
+            // Sample of Compressor usage
+            BuildScriptWithCompressor(msiFile);
+            
             // Arguments sample
             BuildArgumentsSample(msiFile);
         }
@@ -96,6 +106,53 @@ public static class Script
             OutputFile = "MyProduct" + Path.GetExtension(prerequisiteFile) + ".exe"
         };
 
+        bootstrapper.Build();
+    }
+    
+    public static void BuildScriptSampleWithOsValidationMultiple(string msiFile, string prerequisiteFile)
+    {
+        var bootstrapper = new NsisBootstrapper
+        {
+            Prerequisite = {FileName = prerequisiteFile},
+            Primary = {FileName = msiFile},
+            OutputFile = "NotSupportedMultiple" + Path.GetExtension(prerequisiteFile) + ".exe"
+        };
+
+        bootstrapper.OSValidation.MinVersion = WindowsVersionNumber._7;
+        bootstrapper.OSValidation.UnsupportedVersions.Add(new WindowsVersion(WindowsVersionNumber._7, 1));
+        bootstrapper.OSValidation.UnsupportedVersions.Add(new WindowsVersion(WindowsVersionNumber._10));
+
+        bootstrapper.OSValidation.TerminateInstallation = false;
+        bootstrapper.OSValidation.ErrorMessage = "Hello from custom error message!";
+        
+        bootstrapper.Build();
+    }
+    
+    public static void BuildScriptSampleWithOSValidationWin7(string msiFile, string prerequisiteFile)
+    {
+        var bootstrapper = new NsisBootstrapper
+        {
+            Prerequisite = {FileName = prerequisiteFile},
+            Primary = {FileName = msiFile},
+            OutputFile = "NotSupported7" + Path.GetExtension(prerequisiteFile) + ".exe"
+        };
+
+        bootstrapper.OSValidation.UnsupportedVersions.Add(new WindowsVersion(WindowsVersionNumber._7));
+        
+        bootstrapper.Build();
+    }
+
+    public static void BuildScriptWithCompressor(string msiFile)
+    {
+        var bootstrapper = new NsisBootstrapper
+        {
+            Primary = {FileName = msiFile},
+            OutputFile = "BuildScriptWithCompressor.exe"
+        };
+        
+        // Uncomment following to see resulting NSIS script in console 
+        // bootstrapper.NsiSourceGenerated += builder => Console.WriteLine(builder);
+        bootstrapper.Compressor = new Compressor(Compressor.Method.Lzma, Compressor.Options.Final | Compressor.Options.Solid);
         bootstrapper.Build();
     }
 

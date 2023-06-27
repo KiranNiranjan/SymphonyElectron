@@ -28,11 +28,12 @@ class Script
                     AttributesDefinition = "Type=binary",
                     Permissions = new[] { new Permission { User = "usr", Read = true } }
                 },
-                // HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\My Company\My Product
+                // 'HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\My Company\My Product'
+                //if 'HKEY_LOCAL_MACHINE\SOFTWARE\My Company\My Product' is required set `RegValue(...){ Win64 = true }`
                 new RegKey(fullSetup, RegistryHive.LocalMachine, @"Software\My Company\My Product",
                     new RegValue("Message", "Hello"),
                     new RegValue("Count", 777),
-                    new RegValue("Index", "333") { AttributesDefinition = "Type=integer" }),
+                    new RegValue("Index", "333") { AttributesDefinition = "Type=integer", Win64 = true }),
                 new RegValue(fullSetup, RegistryHive.ClassesRoot, @"test\shell\open\command", "", "\"[INSTALLDIR]test.exe\" \"%1\""),
                 new RegValue(fullSetup, RegistryHive.ClassesRoot, @"test\shell\open\command2", "", "\"[CommonAppDataFolder]test.exe\" \"%1\""),
                 // new RemoveRegistryValue(fullSetup, @"Software\My Company\My Product"), // remove "My Product" value on install
@@ -51,6 +52,6 @@ class Script
         //                                                                    "User=[WIX_ACCOUNT_USERS]; GenericAll=yes; CreateSubkeys=yes")));
         //              };
         project.PreserveTempFiles = true;
-        project.BuildMsiCmd();
+        project.BuildMsi();
     }
 }
