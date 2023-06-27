@@ -29,6 +29,7 @@ class Script
 
         var userDataPathArgument = "--userDataPath=\"[USER_DATA_PATH]\"";
         AutoElements.DisableAutoKeyPath = true;
+        AutoElements.DisableAutoUserProfileRegistry = false;
 
         // Create a wixsharp project instance and assign the project name to it, and a hierarchy of all files to include
         // Files are taken from multiple locations, and not all files in each location should be included, which is why
