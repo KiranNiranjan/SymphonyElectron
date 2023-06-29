@@ -60,6 +60,7 @@ namespace Symphony
                 // Install for current user
                 Runtime.Session["MSIINSTALLPERUSER"] = "1"; // per-user
                 Runtime.Session["INSTALLDIR"] = System.Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\Programs\Symphony\" + Runtime.ProductName);
+                Runtime.Session["RegistryRoot"] = "HKCU";
             }
             else if (radioButtonAllUsers.Checked)
             {

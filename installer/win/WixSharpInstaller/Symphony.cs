@@ -222,7 +222,7 @@ class Script
         project.ValidateBackgroundImage = false;
 
         // Define our own installation flow, using a mix of custom dialogs (defined in their own files) and built-in dialogs
-        /* project.ManagedUI = new ManagedUI();
+        project.ManagedUI = new ManagedUI();
         project.ManagedUI.InstallDialogs.Add<Symphony.WelcomeDialog>()
                                         .Add<Symphony.CloseDialog>()
                                         .Add<Symphony.ProgressDialog>()
@@ -230,8 +230,7 @@ class Script
         project.ManagedUI.ModifyDialogs.Add<Symphony.MaintenanceDialog>()
                                        .Add<Symphony.CloseDialog>()
                                        .Add<Symphony.ProgressDialog>()
-                                       .Add<Symphony.ExitDialog>(); */
-        project.UI = WUI.WixUI_ProgressOnly;
+                                       .Add<Symphony.ExitDialog>();
 
         project.Load += project_Load;
 
