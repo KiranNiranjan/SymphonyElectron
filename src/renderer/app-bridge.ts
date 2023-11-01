@@ -191,6 +191,8 @@ export class AppBridge {
         ssf.closeScreenSharingIndicator(data.streamId as string);
         break;
       case apiCmds.getMediaSource:
+        // tslint:disable-next-line:no-console
+        console.error('app-bridge: getMediaSource');
         await ssf.getMediaSource(
           data as ICustomSourcesOptions,
           this.callbackHandlers.onMediaSourceCallback,
@@ -333,6 +335,8 @@ export class AppBridge {
     sourceError: IScreenSourceError | null,
     selectedSource: ICustomDesktopCapturerSource | undefined,
   ): void {
+    // tslint:disable-next-line:no-console
+    console.error('app-bridge: gotMedia callback invoked');
     if (sourceError) {
       const { requestId, ...error } = sourceError;
       this.broadcastMessage('media-source-callback', { requestId, error });

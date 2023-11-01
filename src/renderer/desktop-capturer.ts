@@ -61,7 +61,11 @@ export const getSource = async (
   let id;
   const sourcesOpts: string[] = [];
   const { requestId, ...updatedOptions } = options;
+  // tslint:disable-next-line:no-console
+  console.error('desktop-capturer: getSource');
   if (!isValid(options)) {
+    // tslint:disable-next-line:no-console
+    console.error('desktop-capturer: invalid options');
     callback({
       name: 'Invalid options',
       message: 'Invalid options',
@@ -101,6 +105,11 @@ export const getSource = async (
 
   // displays a dialog if media permissions are disable
   if (!isScreenShareEnabled) {
+    // tslint:disable-next-line:no-console
+    console.error(
+      'desktop-capturer: isScreenShareEnabled',
+      isScreenShareEnabled,
+    );
     await ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.showScreenSharePermissionDialog,
     });
@@ -113,6 +122,8 @@ export const getSource = async (
   }
 
   id = getNextId();
+  // tslint:disable-next-line:no-console
+  console.error('desktop-capturer: getSources invoked');
   const sources: DesktopCapturerSource[] = await ipcRenderer.invoke(
     apiName.symphonyApi,
     {
@@ -121,6 +132,8 @@ export const getSource = async (
       thumbnailSize: updatedOptions.thumbnailSize,
     },
   );
+  // tslint:disable-next-line:no-console
+  console.error('desktop-capturer: getSources results', sources);
   // Auto select screen source based on args for testing only
   if (screenShareArgv) {
     const title = screenShareArgv.substr(screenShareArgv.indexOf('=') + 1);
@@ -150,6 +163,8 @@ export const getSource = async (
       };
     });
 
+  // tslint:disable-next-line:no-console
+  console.error('desktop-capturer: open Screen picker window');
   ipcRenderer.send(apiName.symphonyApi, {
     cmd: apiCmds.openScreenPickerWindow,
     id,

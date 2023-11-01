@@ -214,19 +214,31 @@ export const createComponentWindow = (
       disableBlinkFeatures: AUX_CLICK,
     },
   };
-
+  logger.info(`window-utils:  creating component window`, componentName);
   const browserWindow: ICustomBrowserWindow = new BrowserWindow(
     options,
   ) as ICustomBrowserWindow;
   if (shouldFocus) {
     browserWindow.once('ready-to-show', () => {
+      logger.info(
+        `window-utils: component window ready to show`,
+        componentName,
+      );
       if (!browserWindow || !windowExists(browserWindow)) {
+        logger.info(
+          `window-utils: component window does not exists`,
+          componentName,
+        );
         return;
       }
       browserWindow.show();
     });
   }
   browserWindow.webContents.once('did-finish-load', () => {
+    logger.info(
+      `window-utils: component window finished loading`,
+      componentName,
+    );
     if (!browserWindow || !windowExists(browserWindow)) {
       return;
     }
