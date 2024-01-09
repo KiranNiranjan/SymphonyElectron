@@ -643,14 +643,17 @@ export class WindowHandler {
 
     // workaround for https://perzoinc.atlassian.net/browse/SDA-4251
     this.mainWindow?.on('focus', () => {
-      if (
-        this.mainWindow &&
-        windowExists(this.mainWindow) &&
-        this.mainWindow.isAlwaysOnTop()
-      ) {
-        this.mainWindow.setAlwaysOnTop(false);
-        this.mainWindow.setAlwaysOnTop(true);
-      }
+      setTimeout(() => {
+        if (
+          this.mainWindow &&
+          windowExists(this.mainWindow) &&
+          this.mainWindow.isAlwaysOnTop()
+        ) {
+          this.mainWindow.setAlwaysOnTop(false);
+          this.mainWindow.setAlwaysOnTop(true);
+          this.mainWindow.moveTop();
+        }
+      }, 0);
     });
 
     this.mainWebContents.on(
