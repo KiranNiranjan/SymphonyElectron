@@ -20,6 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { format, parse } from 'url';
 
+import { powerShellRelease } from 'systeminformation';
 import {
   apiName,
   ICallNotificationData,
@@ -2376,6 +2377,7 @@ export class WindowHandler {
     if (shouldRelaunch) {
       app.relaunch();
     }
+    powerShellRelease();
     await terminateC9Shell();
     app.exit();
   };
