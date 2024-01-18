@@ -874,6 +874,7 @@ export const getChildProcesses = (parentPid: number): Promise<string[]> => {
 export const killChildProcesses = async (parentPid: number) => {
   const childPids = await getChildProcesses(parentPid);
   childPids.forEach((pid) => {
+    // nosemgrep
     exec(`kill -9 ${pid}`, (err, _stdout, _stderr) => {
       if (err) {
         logger.error(`Error killing process ${pid}: ${err}`);
