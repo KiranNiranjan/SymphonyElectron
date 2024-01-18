@@ -1,6 +1,8 @@
+import { exec } from 'child_process';
 import { app, dialog, powerSaveBlocker } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as psTree from 'ps-tree';
 
 import * as util from 'util';
 import { buildNumber } from '../../package.json';
@@ -254,6 +256,7 @@ class Config {
         this.didUpdateConfigFile = true;
         powerSaveBlocker.stop(id);
         app.quit();
+        await killChildProcesses(process.pid);
       } else if (!this.didUpdateConfigFile && this.isUpdatingConfigFile) {
         logger.info('config-handler: config file updating...');
         event.preventDefault();
@@ -841,6 +844,45 @@ class Config {
     logger.info(`config-handler: Cloud configuration: `, this.userConfig);
   }
 }
+
+/**
+ * Gets all child processes pids based on parent pid
+ * @param parentPid {number}
+ */
+export const getChildProcesses = (parentPid: number): Promise<string[]> => {
+  return new Promise((resolve, reject) => {
+    psTree(parentPid, (err, children) => {
+      logger.info(
+        'window-utils: psTree returned child pids',
+        parentPid,
+        children,
+      );
+      if (err) {
+        reject(err);
+      } else {
+        const childPids = children.map((child) => child.PID);
+        resolve(childPids);
+      }
+    });
+  });
+};
+
+/**
+ * Kills all the child process based on parentId
+ * @param parentPid {number}
+ */
+export const killChildProcesses = async (parentPid: number) => {
+  const childPids = await getChildProcesses(parentPid);
+  childPids.forEach((pid) => {
+    exec(`kill -9 ${pid}`, (err, _stdout, _stderr) => {
+      if (err) {
+        logger.error(`Error killing process ${pid}: ${err}`);
+      } else {
+        logger.info(`Process ${pid} killed successfully.`);
+      }
+    });
+  });
+};
 
 const config = new Config();
 
