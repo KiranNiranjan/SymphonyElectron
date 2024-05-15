@@ -47,7 +47,8 @@
       "allowToChangeInstallationDirectory": false,
       "allowElevation": false,
       "include": "build/installer.nsh",
-      "uninstallDisplayName": "${productName}"
+      "uninstallDisplayName": "${productName}",
+      "deleteAppDataOnUninstall": true
     },
     "files": [
       "!.git${/*}",
