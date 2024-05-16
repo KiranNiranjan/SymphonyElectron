@@ -1,6 +1,4 @@
-import installExtension, {
-  REACT_DEVELOPER_TOOLS,
-} from 'electron-devtools-installer';
+import install, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 
 import { Logger } from '../common/loggerBase';
 import { getCommandLineArgs } from '../common/utils';
@@ -21,7 +19,7 @@ export const loadReactDevToolsExtension = async (logger: Logger) => {
   }
 
   try {
-    const name = await installExtension(REACT_DEVELOPER_TOOLS);
+    const name = await install(REACT_DEVELOPER_TOOLS);
     logger.info(`main: Added Extension:  ${name}`);
   } catch (error) {
     logger.error(`main: Error while loading ReactDevTool Extension:  ${error}`);
