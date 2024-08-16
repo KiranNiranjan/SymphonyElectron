@@ -1593,15 +1593,14 @@ export class WindowHandler {
             (display) => display.id.toString() === source.display_id.toString(),
           );
           if (sharedScreen) {
-            const left =
-              sharedScreen.bounds.x * (sharedScreen.scaleFactor || 1);
-            const top = sharedScreen.bounds.y * (sharedScreen.scaleFactor || 1);
-            const right =
-              left +
+            const left = sharedScreen.bounds.x;
+            const top = sharedScreen.bounds.y;
+            const width =
               sharedScreen.bounds.width * (sharedScreen.scaleFactor || 1);
-            const bottom =
-              top +
+            const height =
               sharedScreen.bounds.height * (sharedScreen.scaleFactor || 1);
+            const right = left + width;
+            const bottom = top + height;
             this.execCmd(this.screenShareIndicatorFrameUtil, [
               left.toString(),
               top.toString(),
