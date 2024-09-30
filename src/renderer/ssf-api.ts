@@ -91,8 +91,12 @@ const callNotificationActionCallbacks = new Map<
 
 const DEFAULT_THROTTLE = 1000;
 const NOTIFICATION_DELAY = 500;
+const CLOSE_NOTIFICATION_DELAY = 100;
 
 const notificationQueue = createSequentialFunctionQueue(NOTIFICATION_DELAY);
+const closeNotificationQueue = createSequentialFunctionQueue(
+  CLOSE_NOTIFICATION_DELAY,
+);
 
 // Throttle func
 const throttledSetBadgeCount = throttle((count) => {
@@ -745,9 +749,11 @@ export class SSFApi {
    * @param notificationId {number} Id of a notification
    */
   public closeNotification(notificationId: number): void {
-    ipcRenderer.send(apiName.symphonyApi, {
-      cmd: apiCmds.closeNotification,
-      notificationId,
+    closeNotificationQueue.enqueue(() => {
+      ipcRenderer.send(apiName.symphonyApi, {
+        cmd: apiCmds.closeNotification,
+        notificationId,
+      });
     });
   }
 
