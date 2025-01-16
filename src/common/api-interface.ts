@@ -1,176 +1,466 @@
+import { UUID } from 'crypto';
+import { NativeImage, Size, Tray } from 'electron';
+import { AutoUpdateTrigger } from '../app/auto-update-handler';
+
 export enum apiCmds {
-    isOnline = 'is-online',
-    getVersionInfo = 'get-version-info',
-    registerLogger = 'register-logger',
-    setBadgeCount = 'set-badge-count',
-    badgeDataUrl = 'badge-data-url',
-    activate = 'activate',
-    registerBoundsChange = 'register-bounds-change',
-    registerProtocolHandler = 'register-protocol-handler',
-    registerLogRetriever = 'register-log-retriever',
-    sendLogs = 'send-logs',
-    registerAnalyticsHandler = 'register-analytics-handler',
-    registerActivityDetection = 'register-activity-detection',
-    showNotificationSettings = 'show-notification-settings',
-    sanitize = 'sanitize',
-    bringToFront = 'bring-to-front',
-    openScreenPickerWindow = 'open-screen-picker-window',
-    popupMenu = 'popup-menu',
-    optimizeMemoryConsumption = 'optimize-memory-consumption',
-    optimizeMemoryRegister = 'optimize-memory-register',
-    setIsInMeeting = 'set-is-in-meeting',
-    setLocale = 'set-locale',
-    openScreenSnippet = 'open-screen-snippet',
-    closeScreenSnippet = 'close-screen-snippet',
-    keyPress = 'key-press',
-    closeWindow = 'close-window',
-    openScreenSharingIndicator = 'open-screen-sharing-indicator',
-    closeScreenSharingIndicator = 'close-screen-sharing-indicator',
-    downloadManagerAction = 'download-manager-action',
-    getMediaSource = 'get-media-source',
-    notification = 'notification',
-    closeNotification = 'close-notification',
-    isMisspelled = 'is-misspelled',
-    memoryInfo = 'memory-info',
-    swiftSearch = 'swift-search',
-    getConfigUrl = 'get-config-url',
-    registerRestartFloater = 'register-restart-floater',
-    setCloudConfig = 'set-cloud-config',
-    checkMediaPermission = 'check-media-permission',
+  isOnline = 'is-online',
+  getVersionInfo = 'get-version-info',
+  registerLogger = 'register-logger',
+  setBadgeCount = 'set-badge-count',
+  badgeDataUrl = 'badge-data-url',
+  activate = 'activate',
+  registerBoundsChange = 'register-bounds-change',
+  registerProtocolHandler = 'register-protocol-handler',
+  registerLogRetriever = 'register-log-retriever',
+  sendLogs = 'send-logs',
+  addLogs = 'add-logs',
+  registerAnalyticsHandler = 'register-analytics-handler',
+  registerWriteImageToClipboard = 'register-write-image-to-clipboard',
+  registerActivityDetection = 'register-activity-detection',
+  showNotificationSettings = 'show-notification-settings',
+  sanitize = 'sanitize',
+  bringToFront = 'bring-to-front',
+  openScreenPickerWindow = 'open-screen-picker-window',
+  popupMenu = 'popup-menu',
+  optimizeMemoryConsumption = 'optimize-memory-consumption',
+  optimizeMemoryRegister = 'optimize-memory-register',
+  setIsInMeeting = 'set-is-in-meeting',
+  setLocale = 'set-locale',
+  openScreenSnippet = 'open-screen-snippet',
+  closeScreenSnippet = 'close-screen-snippet',
+  keyPress = 'key-press',
+  closeWindow = 'close-window',
+  openScreenSharingIndicator = 'open-screen-sharing-indicator',
+  closeScreenSharingIndicator = 'close-screen-sharing-indicator',
+  downloadManagerAction = 'download-manager-action',
+  getMediaSource = 'get-media-source',
+  notification = 'notification',
+  closeNotification = 'close-notification',
+  closeCallNotification = 'close-call-notification',
+  memoryInfo = 'memory-info',
+  swiftSearch = 'swift-search',
+  getConfigUrl = 'get-config-url',
+  registerRestartFloater = 'register-restart-floater',
+  setCloudConfig = 'set-cloud-config',
+  getCPUUsage = 'get-cpu-usage',
+  checkMediaPermission = 'check-media-permission',
+  registerDownloadHandler = 'register-download-handler',
+  openDownloadedItem = 'open-downloaded-item',
+  showDownloadedItem = 'show-downloaded-item',
+  clearDownloadedItems = 'clear-downloaded-items',
+  restartApp = 'restart-app',
+  setIsMana = 'set-is-mana',
+  showNotification = 'show-notification',
+  showCallNotification = 'show-call-notification',
+  closeAllWrapperWindows = 'close-all-windows',
+  setZoomLevel = 'set-zoom-level',
+  aboutAppClipBoardData = 'about-app-clip-board-data',
+  closeMainWindow = 'close-main-window',
+  minimizeMainWindow = 'minimize-main-window',
+  maximizeMainWindow = 'maximize-main-window',
+  unmaximizeMainWindow = 'unmaximize-main-window',
+  getCurrentOriginUrl = 'get-current-origin-url',
+  isAeroGlassEnabled = 'is-aero-glass-enabled',
+  showScreenSharePermissionDialog = 'show-screen-share-permission-dialog',
+  getMediaAccessStatus = 'get-media-access-status',
+  setBroadcastMessage = 'set-broadcast-message',
+  handleSwiftSearchMessageEvents = 'handle-shift-search-message-events',
+  onSwiftSearchMessage = 'on-shift-search-message',
+  getNativeWindowHandle = 'get-native-window-handle',
+  getSources = 'getSources',
+  launchCloud9 = 'launch-cloud9',
+  terminateCloud9 = 'terminate-cloud9',
+  connectCloud9Pipe = 'connect-cloud9-pipe',
+  writeCloud9Pipe = 'write-cloud9-pipe',
+  closeCloud9Pipe = 'close-cloud9-pipe',
+  updateAndRestart = 'update-and-restart',
+  downloadUpdate = 'download-update',
+  checkForUpdates = 'check-for-updates',
+  browserLogin = 'browser-login',
+  updateMyPresence = 'update-my-presence',
+  getMyPresence = 'get-my-presence',
+  updateSymphonyTray = 'update-system-tray',
+  registerPhoneNumberServices = 'register-phone-numbers-services',
+  unregisterPhoneNumberServices = 'unregister-phone-numbers-services',
+  getHelpInfo = 'get-help-info',
+  // Openfin API commands
+  openfinConnect = 'openfin-connect',
+  openfinFireIntent = 'openfin-fire-intent',
+  openfinRegisterIntentHandler = 'openfin-register-intent-handler',
+  openfinUnregisterIntentHandler = 'openfin-unregister-intent-handler',
+  openfinGetConnectionStatus = 'openfin-get-connection-status',
+  openfinGetInfo = 'openfin-get-info',
+  openfinJoinContextGroup = 'openfin-join-context-group',
+  openfinGetContextGroups = 'openfin-get-context-groups',
+  openfinGetAllClientsInContextGroup = 'openfin-get-all-clients-in-context-group',
 }
 
 export enum apiName {
-    symphonyApi = 'symphony-api',
-    mainWindowName = 'main',
-    notificationWindowName = 'notification-window',
+  symphonyApi = 'symphony-api',
+  mainWindowName = 'main',
+  notificationWindowName = 'notification-window',
+  welcomeScreenName = 'welcome-screen',
+  snippingToolWindowName = 'snipping-tool-window',
+}
+
+export const NOTIFICATION_WINDOW_TITLE = 'Notification - Symphony';
+
+enum ScreenTypes {
+  Screen = 'screen',
+  Window = 'window',
 }
 
 export interface IApiArgs {
-    memoryInfo: Electron.ProcessMemoryInfo;
-    word: string;
-    cmd: apiCmds;
-    isOnline: boolean;
-    count: number;
-    dataUrl: string;
-    windowName: string;
-    period: number;
-    reason: string;
-    sources: Electron.DesktopCapturerSource[];
-    id: number;
-    cpuUsage: Electron.CPUUsage;
-    isInMeeting: boolean;
-    locale: string;
-    keyCode: number;
-    windowType: WindowTypes;
-    winKey: string;
-    streamId: string;
-    displayId: string;
-    path: string;
-    type: string;
-    logName: string;
-    logs: ILogs;
-    cloudConfig: object;
+  memoryInfo: Electron.ProcessMemoryInfo;
+  word: string;
+  cmd: apiCmds;
+  isOnline: boolean;
+  count: number;
+  dataUrl: string;
+  windowName: string;
+  period: number;
+  reason: string;
+  sources: Electron.DesktopCapturerSource[];
+  id: number;
+  cpuUsage: Electron.CPUUsage;
+  isInMeeting: boolean;
+  locale: string;
+  keyCode: number;
+  windowType: WindowTypes;
+  winKey: string;
+  streamId: string;
+  displayId: string;
+  path: string;
+  type: string;
+  logName: string;
+  logs: ILogs;
+  cloudConfig: object;
+  isMana: boolean;
+  notificationOpts: object;
+  notificationId: number;
+  theme: Themes;
+  zoomLevel: number;
+  filename: string;
+  clipboard: string;
+  clipboardType: 'clipboard' | 'selection';
+  requestId: number;
+  mediaStatus: IMediaPermission;
+  newPodUrl: string;
+  startUrl: string;
+  isPodConfigured: boolean;
+  isBrowserLoginEnabled: boolean;
+  browserLoginAutoConnect: boolean;
+  swiftSearchData: any;
+  types: ScreenTypes[];
+  thumbnailSize: Size;
+  pipe: string;
+  data: Uint8Array;
+  autoUpdateTrigger: AutoUpdateTrigger;
+  hideOnCapture: boolean;
+  status: IPresenceStatus;
+  protocols: PhoneNumberProtocol[];
+  menu?: any;
+  handler: any;
+  uuid: UUID;
+  intent: any;
+  intentHandler: any;
+  intentName: any;
+  infoForIntentOptions: any;
+  context: any;
+  sessionContextGroupId: any;
+  contextForIntent: any;
+  contextType: any;
+  contextGroupId: string;
+  target: any;
 }
 
-export type WindowTypes = 'screen-picker' | 'screen-sharing-indicator' | 'notification-settings';
+export type Themes = 'light' | 'dark';
+
+export type WindowTypes =
+  | 'screen-picker'
+  | 'screen-sharing-indicator'
+  | 'notification-settings';
 
 export interface IBadgeCount {
-    count: number;
+  count: number;
 }
 
 /**
  * Screen snippet
  */
-export type ScreenSnippetDataType = 'ERROR' | 'image/png;base64';
+export type ScreenSnippetDataType = 'ERROR' | 'image/png;base64' | 'HIDE_SDA';
 export interface IScreenSnippet {
-    data?: string;
-    message?: string;
-    type: ScreenSnippetDataType;
+  data?: string;
+  message?: string;
+  type: ScreenSnippetDataType;
 }
 
 export interface IBoundsChange extends Electron.Rectangle {
-    windowName: string;
+  windowName: string;
+}
+
+// Presence Status
+export interface IThumbarButton {
+  icon: NativeImage;
+  click: () => void;
+  tooltip?: string;
+  flags?: Array<
+    | 'enabled'
+    | 'disabled'
+    | 'dismissonclick'
+    | 'nobackground'
+    | 'hidden'
+    | 'noninteractive'
+  >;
+}
+
+export interface IStatusBadge extends IBadgeCount {
+  statusCategory: EPresenceStatusCategory;
+  statusGroup: EPresenceStatusGroup;
+}
+
+export interface ITray {
+  current: Tray | null;
+}
+
+export interface IPresenceStore {
+  statusBadge: IStatusBadge;
+  presenceStatus: IPresenceStatus;
+}
+
+export enum EPresenceStatusCategory {
+  'ONLINE' = 'ONLINE',
+  'OFFLINE' = 'OFFLINE',
+  'AWAY' = 'AWAY',
+  'DO_NOT_DISTURB' = 'DO_NOT_DISTURB',
+  'BUSY' = 'BUSY',
+  'ON_THE_PHONE' = 'ON_THE_PHONE',
+  'AVAILABLE' = 'AVAILABLE',
+  'OUT_OF_OFFICE' = 'OUT_OF_OFFICE',
+  'IN_A_MEETING' = 'IN_A_MEETING',
+  'BE_RIGHT_BACK' = 'BE_RIGHT_BACK',
+  'OFF_WORK' = 'OFF_WORK',
+  'NO_PRESENCE' = 'NO_PRESENCE',
+}
+
+export enum EPresenceStatusGroup {
+  ONLINE = 'online',
+  BUSY = 'busy',
+  IDLE = 'idle',
+  OFFLINE = 'offline',
+  ABSENT = 'absent',
+  MEETING = 'meeting',
+  HIDE_PRESENCE = 'hide',
+}
+
+export interface IPresenceStatus {
+  statusCategory: EPresenceStatusCategory;
+  statusGroup: EPresenceStatusGroup;
+  timestamp: number;
 }
 
 /**
  * Screen sharing indicator
  */
 export interface IScreenSharingIndicator {
-    type: string;
-    requestId: number;
-    reason?: string;
+  type: string;
+  requestId: number;
+  reason?: string;
 }
 
 export enum KeyCodes {
-    Esc = 27,
-    Alt = 18,
+  Esc = 27,
+  Alt = 18,
 }
+
+type Theme = '' | 'light' | 'dark';
+type CallType = 'IM' | 'ROOM' | 'OTHER';
 
 /**
  * Notification
  */
 export interface INotificationData {
-    id: number;
-    title: string;
-    text: string;
-    image: string;
-    flash: boolean;
-    color: string;
-    tag: string;
-    sticky: boolean;
-    company: string;
-    displayTime: number;
+  id: number;
+  title: string;
+  body: string;
+  image: string;
+  icon?: string;
+  flash: boolean;
+  color: string;
+  tag: string;
+  sticky: boolean;
+  company: string;
+  displayTime: number;
+  isExternal: boolean;
+  isUpdated: boolean;
+  theme: Theme;
+  isElectronNotification?: boolean;
+  callback?: () => void;
+  hasIgnore?: boolean;
+  hasReply?: boolean;
+  hasMention?: boolean;
+  isFederatedEnabled?: boolean;
+  zoomFactor: number;
+}
+
+/**
+ * Notification
+ */
+export interface ICallNotificationData {
+  id: number;
+  title: string;
+  image: string;
+  icon?: string;
+  color: string;
+  company: string;
+  isExternal: boolean;
+  theme: Theme;
+  primaryText: string;
+  callback?: () => void;
+  secondaryText?: string;
+  companyIconUrl?: string;
+  profilePlaceHolderText: string;
+  actionIconUrl?: string;
+  callType: CallType;
+  shouldDisplayBadge: boolean;
+  acceptButtonText: string;
+  rejectButtonText: string;
+  zoomFactor: number;
 }
 
 export enum NotificationActions {
-    notificationClicked = 'notification-clicked',
-    notificationClosed = 'notification-closed',
+  notificationClicked = 'notification-clicked',
+  notificationClosed = 'notification-closed',
+  notificationReply = 'notification-reply',
+  notificationIgnore = 'notification-ignore',
+  notificationAccept = 'notification-accept',
+  notificationReject = 'notification-reject',
 }
 
 /**
  * Screen sharing Indicator
  */
 export interface IScreenSharingIndicatorOptions {
-    displayId: string;
-    requestId: number;
-    streamId: string;
-    stream?: MediaStream;
+  // id of the display that is being shared
+  displayId: string;
+
+  requestId: number;
+
+  streamId: string;
 }
 
 export interface IVersionInfo {
-    containerIdentifier: string;
-    containerVer: string;
-    buildNumber: string;
-    apiVer: string;
-    searchApiVer: string;
+  containerIdentifier: string;
+  containerVer: string;
+  buildNumber: string;
+  apiVer: string;
+  searchApiVer: string;
+}
+
+export interface ICPUUsage {
+  percentCPUUsage: number;
+  idleWakeupsPerSecond: number;
+}
+
+export interface IDownloadManager {
+  _id: string;
+  fileName: string;
+  fileDisplayName: string;
+  savedPath: string;
+  total: number;
+  flashing?: boolean;
+  count?: number;
 }
 
 export interface IMediaPermission {
-    camera: string;
-    microphone: string;
-    screen: string;
+  camera: 'not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown';
+  microphone:
+    | 'not-determined'
+    | 'granted'
+    | 'denied'
+    | 'restricted'
+    | 'unknown';
+  screen: 'not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown';
 }
 
 export interface ILogMsg {
-    level: LogLevel;
-    details: any;
-    showInConsole: boolean;
-    startTime: number;
+  level: LogLevel;
+  details: any;
+  showInConsole: boolean;
+  startTime: number;
 }
 
-export type LogLevel = 'error' | 'warn' | 'info' | 'verbose' | 'debug' | 'silly';
+export type LogLevel =
+  | 'error'
+  | 'warn'
+  | 'info'
+  | 'verbose'
+  | 'debug'
+  | 'silly';
 
 export interface ILogFile {
-    filename: string;
-    contents: string;
+  filename: string;
+  contents: string;
 }
 
 export interface ILogs {
-    logName: string;
-    logFiles: ILogFile[];
+  logName: string;
+  logFiles: ILogFile[];
+  shouldExportLogs?: boolean;
 }
 
 export interface IRestartFloaterData {
-    windowName: string;
-    bounds: Electron.Rectangle;
+  windowName: string;
+  bounds: Electron.Rectangle;
+}
+
+export type Reply = string;
+export type ElectronNotificationData = Reply | object;
+export type NotificationActionCallback = (
+  event: NotificationActions,
+  data: INotificationData,
+) => void;
+
+export type ConfigUpdateType = 'restart' | 'reload';
+
+export interface ICloud9Pipe {
+  /**
+   * Ability to write in C9 named pipe
+   */
+  write(data: Uint8Array): void;
+
+  /**
+   * Ability to close named pipe
+   */
+  close(): void;
+}
+
+export type AuthType = 'password' | 'sso';
+
+export interface IAuthResponse {
+  status: string;
+  podVersion: string;
+  authenticationType: AuthType;
+  ssoDisabledForMobile: boolean;
+  keymanagerUrl: string;
+}
+
+export enum PhoneNumberProtocol {
+  Tel = 'tel',
+  Sms = 'sms',
+}
+
+export interface IPodSettingsClientSpecificSupportLink {
+  /**
+   * Whether the custom link feature is activated.
+   */
+  enabled: boolean;
+  /**
+   * The URL which points to the internal support documentation.
+   */
+  linkAddress: string;
+  /**
+   * The label for the link that will be displayed to the users.
+   */
+  linkText: string;
 }

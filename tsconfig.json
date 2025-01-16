@@ -7,10 +7,7 @@
     "jsx": "react",
     "outDir": "lib",
     "rootDir": ".",
-    "lib": [
-      "es2016",
-      "dom"
-    ],
+    "lib": ["es2016", "dom"],
     "moduleResolution": "node",
     "strict": true,
     "removeComments": false,
@@ -23,15 +20,13 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noImplicitThis": true,
+    "skipLibCheck": true,
     "noUnusedParameters": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "typeRoots": ["node_modules/@types"]
   },
-  "exclude": [
-    "node_modules",
-    "lib",
-    "tests",
-    "spec"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "lib", "tests", "spec"],
+  "exports": {
+    "src/renderer/components/about-app": "./lib/about-app/index.js"
+  }
 }

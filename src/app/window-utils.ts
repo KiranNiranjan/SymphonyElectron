@@ -1,46 +1,98 @@
-import * as electron from 'electron';
-import { app, BrowserWindow, nativeImage } from 'electron';
+import {
+  app,
+  BrowserView,
+  BrowserWindow,
+  dialog,
+  Menu,
+  nativeImage,
+  nativeTheme,
+  Rectangle,
+  screen,
+  shell,
+  Tray,
+  WebContents,
+} from 'electron';
+import electron = require('electron');
 import fetch from 'electron-fetch';
-import * as filesize from 'filesize';
+import { filesize } from 'filesize';
 import * as fs from 'fs';
 import * as path from 'path';
 import { format, parse } from 'url';
-import { apiName } from '../common/api-interface';
+import { productDisplayName } from '../../package.json';
+import { apiName, EPresenceStatusGroup } from '../common/api-interface';
 
-import { isDevEnv, isLinux, isMac, isNodeEnv } from '../common/env';
+import { isDevEnv, isLinux, isMac, isWindowsOS } from '../common/env';
 import { i18n, LocaleType } from '../common/i18n';
 import { logger } from '../common/logger';
-import { getGuid } from '../common/utils';
+import { getDifferenceInDays, getGuid, getRandomTime } from '../common/utils';
 import { whitelistHandler } from '../common/whitelist-handler';
-import { autoLaunchInstance } from './auto-launch-controller';
-import { CloudConfigDataTypes, config, IConfig, ICustomRectangle } from './config-handler';
+import {
+  CloudConfigDataTypes,
+  config,
+  ConfigFieldsToRestart,
+  ICloudConfig,
+  IConfig,
+  ICustomRectangle,
+} from './config-handler';
+import { downloadHandler, IDownloadItem } from './download-handler';
 import { memoryMonitor } from './memory-monitor';
 import { screenSnippet } from './screen-snippet-handler';
 import { updateAlwaysOnTop } from './window-actions';
-import { ICustomBrowserWindow, windowHandler } from './window-handler';
+import {
+  AUX_CLICK,
+  DEFAULT_HEIGHT,
+  DEFAULT_WIDTH,
+  ICustomBrowserView,
+  ICustomBrowserWindow,
+  IS_NODE_INTEGRATION_ENABLED,
+  IS_SAND_BOXED,
+  TITLE_BAR_HEIGHT,
+  windowHandler,
+} from './window-handler';
 
+import * as debounce from 'lodash.debounce';
+import { notification } from '../renderer/notification';
+import { autoLaunchInstance } from './auto-launch-controller';
+import { autoUpdate, AutoUpdateTrigger } from './auto-update-handler';
+import { mainEvents } from './main-event-handler';
+import { openfinHandler } from './openfin-handler';
+import { presenceStatus } from './presence-status-handler';
+import { presenceStatusStore } from './stores';
 interface IStyles {
-    name: styleNames;
-    content: string;
+  name: styleNames;
+  content: string;
 }
 
 enum styleNames {
-    titleBar = 'title-bar',
-    snackBar = 'snack-bar',
-    messageBanner = 'message-banner',
+  titleBar = 'title-bar',
+  snackBar = 'snack-bar',
+  messageBanner = 'message-banner',
 }
 
 const checkValidWindow = true;
-const { url: configUrl } = config.getGlobalConfigFields([ 'url' ]);
-const { ctWhitelist } = config.getConfigFields([ 'ctWhitelist' ]);
+const { ctWhitelist } = config.getConfigFields(['ctWhitelist']);
 
 // Network status check variables
 const networkStatusCheckInterval = 10 * 1000;
 let networkStatusCheckIntervalId;
+
+const MAX_AUTO_UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4hrs
+const MIN_AUTO_UPDATE_CHECK_INTERVAL = 2 * 60 * 60 * 1000; // 2hrs
+let autoUpdateIntervalId;
+
 let isNetworkMonitorInitialized = false;
 
 const styles: IStyles[] = [];
 const DOWNLOAD_MANAGER_NAMESPACE = 'DownloadManager';
+
+const TITLE_BAR_EVENTS = [
+  'maximize',
+  'unmaximize',
+  'move',
+  'enter-full-screen',
+  'leave-full-screen',
+];
+export const ZOOM_FACTOR_CHANGE = 'zoom-factor-change';
 
 /**
  * Checks if window is valid and exists
@@ -48,7 +100,19 @@ const DOWNLOAD_MANAGER_NAMESPACE = 'DownloadManager';
  * @param window {BrowserWindow}
  * @return boolean
  */
-export const windowExists = (window: BrowserWindow): boolean => !!window && typeof window.isDestroyed === 'function' && !window.isDestroyed();
+export const windowExists = (window: BrowserWindow): boolean =>
+  !!window && typeof window.isDestroyed === 'function' && !window.isDestroyed();
+
+/**
+ * Checks if view is valid and exists
+ *
+ * @param view {BrowserView}
+ * @return boolean
+ */
+export const viewExists = (view: BrowserView): boolean =>
+  !!view &&
+  typeof view.webContents.isDestroyed === 'function' &&
+  !view.webContents.isDestroyed();
 
 /**
  * Prevents window from navigating
@@ -56,47 +120,72 @@ export const windowExists = (window: BrowserWindow): boolean => !!window && type
  * @param browserWindow
  * @param isPopOutWindow
  */
-export const preventWindowNavigation = (browserWindow: BrowserWindow, isPopOutWindow: boolean = false): void => {
-    if (!browserWindow || !windowExists(browserWindow)) {
-        return;
+export const preventWindowNavigation = (
+  browserWindow: BrowserWindow,
+  isPopOutWindow: boolean = false,
+): void => {
+  if (!browserWindow || !windowExists(browserWindow)) {
+    return;
+  }
+  logger.info(
+    `window-utils: preventing window from navigating!`,
+    isPopOutWindow,
+  );
+
+  const listener = async (e: Electron.Event, winUrl: string) => {
+    if (!winUrl.startsWith('https')) {
+      logger.error(
+        `window-utils: ${winUrl} doesn't start with https, so, not navigating!`,
+      );
+      e.preventDefault();
+      return;
     }
-    logger.info(`window-utils: preventing window from navigating!`, isPopOutWindow);
 
-    const listener = async (e: Electron.Event, winUrl: string) => {
-        if (!winUrl.startsWith('http' || 'https')) {
-            logger.error(`window-utils: ${winUrl} doesn't start with http or https, so, not navigating!`);
-            e.preventDefault();
-            return;
+    if (!isPopOutWindow) {
+      const isValid = whitelistHandler.isWhitelisted(winUrl);
+      if (!isValid) {
+        e.preventDefault();
+        if (browserWindow && windowExists(browserWindow)) {
+          const response = await dialog.showMessageBox(browserWindow, {
+            type: 'warning',
+            buttons: ['OK'],
+            title: i18n.t('Not Allowed')(),
+            message: `${i18n.t(
+              `Sorry, you are not allowed to access this website`,
+            )()} (${winUrl}), ${i18n.t(
+              'please contact your administrator for more details',
+            )()}`,
+          });
+          logger.info(
+            `window-utils: received ${response} response from dialog`,
+          );
         }
+      }
 
-        if (!isPopOutWindow) {
-            const isValid = whitelistHandler.isWhitelisted(winUrl);
-            if (!isValid) {
-                e.preventDefault();
-                if (browserWindow && windowExists(browserWindow)) {
-                    const response = await electron.dialog.showMessageBox(browserWindow, {
-                        type: 'warning',
-                        buttons: [ 'OK' ],
-                        title: i18n.t('Not Allowed')(),
-                        message: `${i18n.t(`Sorry, you are not allowed to access this website`)()} (${winUrl}), ${i18n.t('please contact your administrator for more details')()}`,
-                    });
-                    logger.info(`window-utils: received ${response} response from dialog`);
-                }
-            }
-        }
+      windowHandler.closeScreenSharingIndicator();
+    }
 
-        if (browserWindow.isDestroyed()
-            || browserWindow.webContents.isDestroyed()
-            || winUrl === browserWindow.webContents.getURL()) {
-            return;
-        }
-    };
+    if (
+      browserWindow.isDestroyed() ||
+      browserWindow.webContents.isDestroyed() ||
+      winUrl === browserWindow.webContents.getURL()
+    ) {
+      return;
+    }
+  };
 
+  if (isPopOutWindow) {
     browserWindow.webContents.on('will-navigate', listener);
+  } else {
+    const mainWebContents = windowHandler.getMainWebContents();
+    if (mainWebContents && !mainWebContents.isDestroyed()) {
+      mainWebContents.on('will-navigate', listener);
+    }
+  }
 
-    browserWindow.once('close', () => {
-        browserWindow.webContents.removeListener('will-navigate', listener);
-    });
+  browserWindow.once('close', () => {
+    browserWindow.webContents.removeListener('will-navigate', listener);
+  });
 };
 
 /**
@@ -107,58 +196,63 @@ export const preventWindowNavigation = (browserWindow: BrowserWindow, isPopOutWi
  * @param shouldFocus {boolean}
  */
 export const createComponentWindow = (
-    componentName: string,
-    opts?: Electron.BrowserWindowConstructorOptions,
-    shouldFocus: boolean = true,
+  componentName: string,
+  opts?: Electron.BrowserWindowConstructorOptions,
+  shouldFocus: boolean = true,
 ): BrowserWindow => {
+  const options: Electron.BrowserWindowConstructorOptions = {
+    center: true,
+    height: 300,
+    maximizable: false,
+    minimizable: false,
+    resizable: false,
+    show: false,
+    width: 300,
+    ...opts,
+    webPreferences: {
+      sandbox: IS_SAND_BOXED,
+      nodeIntegration: IS_NODE_INTEGRATION_ENABLED,
+      preload: path.join(__dirname, '../renderer/_preload-component.js'),
+      devTools: isDevEnv,
+      disableBlinkFeatures: AUX_CLICK,
+    },
+  };
 
-    const options: Electron.BrowserWindowConstructorOptions = {
-        center: true,
-        height: 300,
-        maximizable: false,
-        minimizable: false,
-        resizable: false,
-        show: false,
-        width: 300,
-        ...opts,
-        webPreferences: {
-            sandbox: !isNodeEnv,
-            nodeIntegration: isNodeEnv,
-            preload: path.join(__dirname, '../renderer/_preload-component.js'),
-            devTools: false,
-        },
-    };
-
-    const browserWindow: ICustomBrowserWindow = new BrowserWindow(options) as ICustomBrowserWindow;
-    if (shouldFocus) {
-        browserWindow.once('ready-to-show', () => {
-            if (!browserWindow || !windowExists(browserWindow)) {
-                return;
-            }
-            browserWindow.show();
-        });
+  const browserWindow: ICustomBrowserWindow = new BrowserWindow(
+    options,
+  ) as ICustomBrowserWindow;
+  if (shouldFocus) {
+    browserWindow.once('ready-to-show', () => {
+      if (!browserWindow || !windowExists(browserWindow)) {
+        return;
+      }
+      browserWindow.show();
+    });
+  }
+  browserWindow.webContents.once('did-finish-load', () => {
+    if (!browserWindow || !windowExists(browserWindow)) {
+      return;
     }
-    browserWindow.webContents.once('did-finish-load', () => {
-        if (!browserWindow || !windowExists(browserWindow)) {
-            return;
-        }
-        browserWindow.webContents.send('page-load', { locale: i18n.getLocale(), resource: i18n.loadedResources });
+    browserWindow.webContents.send('page-load', {
+      locale: i18n.getLocale(),
+      resource: i18n.loadedResources,
     });
-    browserWindow.setMenu(null as any);
+  });
+  browserWindow.setMenu(null as any);
 
-    const targetUrl = format({
-        pathname: require.resolve('../renderer/react-window.html'),
-        protocol: 'file',
-        query: {
-            componentName,
-            locale: i18n.getLocale(),
-        },
-        slashes: true,
-    });
+  const targetUrl = format({
+    pathname: require.resolve(`../renderer/${componentName}.html`),
+    protocol: 'file',
+    query: {
+      componentName,
+      locale: i18n.getLocale(),
+    },
+    slashes: true,
+  });
 
-    browserWindow.loadURL(targetUrl);
-    preventWindowNavigation(browserWindow);
-    return browserWindow;
+  browserWindow.loadURL(targetUrl);
+  preventWindowNavigation(browserWindow);
+  return browserWindow;
 };
 
 /**
@@ -167,34 +261,73 @@ export const createComponentWindow = (
  * @param count {number}
  */
 export const showBadgeCount = (count: number): void => {
-    if (typeof count !== 'number') {
-        logger.warn(`window-utils: badgeCount: invalid func arg, must be a number: ${count}`);
-        return;
+  if (typeof count !== 'number') {
+    logger.warn(
+      `window-utils: badgeCount: invalid func arg, must be a number: ${count}`,
+    );
+    return;
+  }
+
+  logger.info(`window-utils: updating badge count to ${count}!`);
+
+  if (isMac || isLinux) {
+    // too big of a number here and setBadgeCount crashes
+    app.setBadgeCount(Math.min(1e8, count));
+    return;
+  }
+
+  // handle ms windows...
+  const mainWebContents = windowHandler.getMainWebContents();
+  if (!mainWebContents || mainWebContents.isDestroyed()) {
+    return;
+  }
+
+  // get badge img from renderer process, will return
+  // img dataUrl in setDataUrl func.
+  const status = presenceStatusStore.getPresence();
+  if (count > 0 && status.statusGroup !== EPresenceStatusGroup.OFFLINE) {
+    mainWebContents.send('create-badge-data-url', { count });
+    return;
+  } else {
+    const backgroundImage = presenceStatusStore.generateImagePath(
+      status.statusGroup,
+      'taskbar',
+    );
+
+    if (backgroundImage) {
+      setStatusBadge(backgroundImage, status.statusGroup);
     }
+  }
+};
 
-    logger.info(`window-utils: updating badge count to ${count}!`);
-
-    if (isMac || isLinux) {
-        // too big of a number here and setBadgeCount crashes
-        app.setBadgeCount(Math.min(1e8, count));
-        return;
-    }
-
-    // handle ms windows...
-    const mainWindow = windowHandler.getMainWindow();
-    if (!mainWindow || !windowExists(mainWindow)) {
-        return;
-    }
-
-    // get badge img from renderer process, will return
-    // img dataUrl in setDataUrl func.
-    if (count > 0) {
-        mainWindow.webContents.send('create-badge-data-url', { count });
-        return;
-    }
-
-    // clear badge count icon
-    mainWindow.setOverlayIcon(null, '');
+/**
+ * Creates sys tray
+ */
+export const initSysTray = () => {
+  const defaultSysTrayIcon = 'no-status-tray';
+  const defaultSysTrayIconExtension = isWindowsOS ? 'ico' : 'png';
+  const os = isWindowsOS ? 'windows' : isMac ? 'macOS' : 'linux';
+  const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+  logger.info('theme: ', theme, nativeTheme.themeSource);
+  const assetsPath = isMac
+    ? `renderer/assets/presence-status/${os}`
+    : `renderer/assets/presence-status/${os}/${theme}`;
+  const defaultSysTrayIconPath = path.join(
+    __dirname,
+    `../${assetsPath}/${defaultSysTrayIcon}.${defaultSysTrayIconExtension}`,
+  );
+  const backgroundImage = nativeImage.createFromPath(defaultSysTrayIconPath);
+  const tray = new Tray(backgroundImage);
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: i18n.t('Quit Symphony Messaging')(),
+      click: () => app.quit(),
+    },
+  ]);
+  tray.setContextMenu(contextMenu);
+  tray.setToolTip(productDisplayName);
+  presenceStatusStore.setCurrentTray(tray);
+  return tray;
 };
 
 /**
@@ -203,14 +336,31 @@ export const showBadgeCount = (count: number): void => {
  * @param dataUrl
  * @param count
  */
+export const setStatusBadge = (
+  path: string,
+  statusGroup?: EPresenceStatusGroup,
+): void => {
+  const mainWindow = windowHandler.getMainWindow();
+  if (mainWindow && path && statusGroup) {
+    const img = nativeImage.createFromPath(path);
+    // for accessibility screen readers
+    const desc = `Your current status group is ${i18n.t(
+      statusGroup,
+      'PresenceStatus',
+    )()}`;
+    mainWindow.setOverlayIcon(img, desc);
+    logger.info('window-utils: Taskbar Presence Updated');
+  }
+};
+
 export const setDataUrl = (dataUrl: string, count: number): void => {
-    const mainWindow = windowHandler.getMainWindow();
-    if (mainWindow && dataUrl && count) {
-        const img = nativeImage.createFromDataURL(dataUrl);
-        // for accessibility screen readers
-        const desc = 'Symphony has ' + count + ' unread messages';
-        mainWindow.setOverlayIcon(img, desc);
-    }
+  const mainWindow = windowHandler.getMainWindow();
+  if (mainWindow && dataUrl && count) {
+    const img = nativeImage.createFromDataURL(dataUrl);
+    // for accessibility screen readers
+    const desc = 'Symphony has ' + count + ' unread messages';
+    mainWindow.setOverlayIcon(img, desc);
+  }
 };
 
 /**
@@ -219,22 +369,48 @@ export const setDataUrl = (dataUrl: string, count: number): void => {
  * @param  {BrowserWindow} browserWin  node emitter event to be tested
  * @return {Boolean} returns true if exists otherwise false
  */
-export const isValidWindow = (browserWin: Electron.BrowserWindow | null): boolean => {
-    if (!checkValidWindow) {
-        return true;
-    }
-    let result: boolean = false;
-    if (browserWin && !browserWin.isDestroyed()) {
-        // @ts-ignore
-        const winKey = browserWin.webContents.browserWindowOptions && browserWin.webContents.browserWindowOptions.winKey;
-        result = windowHandler.hasWindow(winKey, browserWin);
-    }
+export const isValidWindow = (
+  browserWin: Electron.BrowserWindow | null,
+): boolean => {
+  if (!checkValidWindow) {
+    return true;
+  }
+  let result: boolean = false;
+  if (browserWin && !browserWin.isDestroyed()) {
+    result = windowHandler.hasWindow(browserWin);
+  }
 
-    if (!result) {
-        logger.warn(`window-utils: invalid window try to perform action, ignoring action`);
-    }
+  if (!result) {
+    logger.warn(
+      `window-utils: invalid window try to perform action, ignoring action`,
+    );
+  }
 
-    return result;
+  return result;
+};
+
+/**
+ * Ensure events comes from a view that we have created.
+ *
+ * @return {Boolean} returns true if exists otherwise false
+ * @param webContents
+ */
+export const isValidView = (webContents: WebContents): boolean => {
+  if (!checkValidWindow) {
+    return true;
+  }
+  let result: boolean = false;
+  if (webContents && !webContents.isDestroyed()) {
+    result = windowHandler.hasView(webContents);
+  }
+
+  if (!result) {
+    logger.warn(
+      `window-utils: invalid window try to perform action, ignoring action`,
+    );
+  }
+
+  return result;
 };
 
 /**
@@ -243,35 +419,46 @@ export const isValidWindow = (browserWin: Electron.BrowserWindow | null): boolea
  * @param locale {LocaleType}
  */
 export const updateLocale = async (locale: LocaleType): Promise<void> => {
-    logger.info(`window-utils: updating locale to ${locale}!`);
-    // sets the new locale
-    i18n.setLocale(locale);
-    const appMenu = windowHandler.appMenu;
-    if (appMenu) {
-        logger.info(`window-utils: updating app menu with locale ${locale}!`);
-        appMenu.update(locale);
-    }
+  logger.info(`window-utils: updating locale to ${locale}!`);
+  // sets the new locale
+  i18n.setLocale(locale);
+  const appMenu = windowHandler.appMenu;
+  if (appMenu) {
+    logger.info(`window-utils: updating app menu with locale ${locale}!`);
+    appMenu.update(locale);
+  }
 
-    if (i18n.isValidLocale(locale)) {
-        // Update user config file with latest locale changes
-        await config.updateUserConfig({ locale });
-    }
+  // Update notification after new locale
+  notification.cleanUpInactiveNotification();
+
+  if (i18n.isValidLocale(locale)) {
+    // Update user config file with latest locale changes
+    await config.updateUserConfig({ locale });
+  }
 };
 
 /**
  * Displays a popup menu
  */
 export const showPopupMenu = (opts: Electron.PopupOptions): void => {
-    const mainWindow = windowHandler.getMainWindow();
-    if (mainWindow && windowExists(mainWindow) && isValidWindow(mainWindow)) {
-        const coordinates = windowHandler.isCustomTitleBar ? { x: 20, y: 15 } : { x: 10, y: -20 };
-        const { x, y } = mainWindow.isFullScreen() ? { x: 0, y: 0 } : coordinates;
-        const popupOpts = { window: mainWindow, x, y };
-        const appMenu = windowHandler.appMenu;
-        if (appMenu) {
-            appMenu.popupMenu({ ...popupOpts, ...opts });
-        }
+  const browserWindow = windowHandler.getMainWindow();
+  if (
+    browserWindow &&
+    windowExists(browserWindow) &&
+    isValidWindow(browserWindow)
+  ) {
+    const coordinates = windowHandler.isCustomTitleBar
+      ? { x: 20, y: 15 }
+      : { x: 10, y: -20 };
+    const { x, y } = browserWindow.isFullScreen()
+      ? { x: 0, y: 0 }
+      : coordinates;
+    const popupOpts = { window: browserWindow, x, y };
+    const appMenu = windowHandler.appMenu;
+    if (appMenu) {
+      appMenu.popupMenu({ ...popupOpts, ...opts });
     }
+  }
 };
 
 /**
@@ -280,20 +467,25 @@ export const showPopupMenu = (opts: Electron.PopupOptions): void => {
  *
  * @param windowName {string}
  */
-export const sanitize = async (windowName: string): Promise<void> => {
-    // To make sure the reload event is from the main window
-    const mainWindow = windowHandler.getMainWindow();
-    if (mainWindow && windowName === mainWindow.winName) {
-        // reset the badge count whenever an user refreshes the electron client
-        showBadgeCount(0);
-
-        // Terminates the screen snippet process on reload
-        if (!isMac || !isLinux) {
-            screenSnippet.killChildProcess();
-        }
-        // Closes all the child windows
-        await windowHandler.closeAllWindow();
+export const sanitize = (windowName: string): void => {
+  // To make sure the reload event is from the main window
+  const mainWindow = windowHandler.getMainWindow();
+  if (mainWindow && windowName === mainWindow.winName) {
+    // reset the badge count whenever an user refreshes the electron client
+    showBadgeCount(0);
+    // Clear all openfin subscriptions
+    openfinHandler.clearSubscriptions();
+    // Terminates the screen snippet process and screen share indicator frame on reload
+    if (!isMac || !isLinux) {
+      logger.info(
+        'window-utils: Terminating screen snippet and screen share indicator frame utils',
+      );
+      screenSnippet.killChildProcess();
+      windowHandler.execCmd(windowHandler.screenShareIndicatorFrameUtil, []);
     }
+    // Closes all the child windows
+    windowHandler.closeAllWindows();
+  }
 };
 
 /**
@@ -306,47 +498,56 @@ export const sanitize = async (windowName: string): Promise<void> => {
  * @param defaultHeight
  * @return {x?: Number, y?: Number, width: Number, height: Number}
  */
-export const getBounds = (winPos: ICustomRectangle | Electron.Rectangle | undefined, defaultWidth: number, defaultHeight: number): Partial<Electron.Rectangle> => {
-    logger.info('window-utils: getBounds, winPos: ' + JSON.stringify(winPos));
+export const getBounds = (
+  winPos: ICustomRectangle | Electron.Rectangle | undefined,
+  defaultWidth: number,
+  defaultHeight: number,
+): Partial<Electron.Rectangle> => {
+  logger.info('window-utils: getBounds, winPos: ' + JSON.stringify(winPos));
 
-    if (!winPos || !winPos.x || !winPos.y || !winPos.width || !winPos.height) {
-        return { width: defaultWidth, height: defaultHeight };
-    }
-    const displays = electron.screen.getAllDisplays();
-
-    for (let i = 0, len = displays.length; i < len; i++) {
-        const bounds = displays[ i ].bounds;
-        logger.info('window-utils: getBounds, bounds: ' + JSON.stringify(bounds));
-        if (winPos.x >= bounds.x && winPos.y >= bounds.y &&
-            ((winPos.x + winPos.width) <= (bounds.x + bounds.width)) &&
-            ((winPos.y + winPos.height) <= (bounds.y + bounds.height))) {
-            return winPos;
-        }
-    }
-
-    // Fit in the middle of immediate display
-    const display = electron.screen.getDisplayMatching(winPos as electron.Rectangle);
-
-    if (display) {
-        // Check that defaultWidth fits
-        let windowWidth = defaultWidth;
-        if (display.workArea.width < defaultWidth) {
-            windowWidth = display.workArea.width;
-        }
-
-        // Check that defaultHeight fits
-        let windowHeight = defaultHeight;
-        if (display.workArea.height < defaultHeight) {
-            windowHeight = display.workArea.height;
-        }
-
-        const windowX = display.workArea.x + display.workArea.width / 2 - windowWidth / 2;
-        const windowY = display.workArea.y + display.workArea.height / 2 - windowHeight / 2;
-
-        return { x: windowX, y: windowY, width: windowWidth, height: windowHeight };
-    }
-
+  if (!winPos || !winPos.x || !winPos.y || !winPos.width || !winPos.height) {
     return { width: defaultWidth, height: defaultHeight };
+  }
+  const displays = screen.getAllDisplays();
+
+  for (let i = 0, len = displays.length; i < len; i++) {
+    const bounds = displays[i].bounds;
+    logger.info('window-utils: getBounds, bounds: ' + JSON.stringify(bounds));
+    if (
+      winPos.x >= bounds.x &&
+      winPos.y >= bounds.y &&
+      winPos.x + winPos.width <= bounds.x + bounds.width &&
+      winPos.y + winPos.height <= bounds.y + bounds.height
+    ) {
+      return winPos;
+    }
+  }
+
+  // Fit in the middle of immediate display
+  const display = screen.getDisplayMatching(winPos as electron.Rectangle);
+
+  if (display) {
+    // Check that defaultWidth fits
+    let windowWidth = defaultWidth;
+    if (display.workArea.width < defaultWidth) {
+      windowWidth = display.workArea.width;
+    }
+
+    // Check that defaultHeight fits
+    let windowHeight = defaultHeight;
+    if (display.workArea.height < defaultHeight) {
+      windowHeight = display.workArea.height;
+    }
+
+    const windowX =
+      display.workArea.x + display.workArea.width / 2 - windowWidth / 2;
+    const windowY =
+      display.workArea.y + display.workArea.height / 2 - windowHeight / 2;
+
+    return { x: windowX, y: windowY, width: windowWidth, height: windowHeight };
+  }
+
+  return { width: defaultWidth, height: defaultHeight };
 };
 
 /**
@@ -354,38 +555,46 @@ export const getBounds = (winPos: ICustomRectangle | Electron.Rectangle | undefi
  * @param type
  * @param filePath
  */
-export const downloadManagerAction = (type, filePath): void => {
-    const focusedWindow = electron.BrowserWindow.getFocusedWindow();
-    const message = i18n.t('The file you are trying to open cannot be found in the specified path.', DOWNLOAD_MANAGER_NAMESPACE)();
-    const title = i18n.t('File not Found', DOWNLOAD_MANAGER_NAMESPACE)();
+export const downloadManagerAction = async (type, filePath): Promise<void> => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const message = i18n.t(
+    'The file you are trying to open cannot be found in the specified path.',
+    DOWNLOAD_MANAGER_NAMESPACE,
+  )();
+  const title = i18n.t('File not Found', DOWNLOAD_MANAGER_NAMESPACE)();
 
-    if (!focusedWindow || !windowExists(focusedWindow)) {
-        return;
-    }
+  if (!focusedWindow || !windowExists(focusedWindow)) {
+    return;
+  }
 
-    if (type === 'open') {
-        let openResponse = fs.existsSync(`${filePath}`);
-        if (openResponse) {
-            openResponse = electron.shell.openItem(`${filePath}`);
-        }
-        if (!openResponse && focusedWindow && !focusedWindow.isDestroyed()) {
-            electron.dialog.showMessageBox(focusedWindow, {
-                message,
-                title,
-                type: 'error',
-            });
-        }
-        return;
+  if (type === 'open') {
+    const fileExists = fs.existsSync(`${filePath}`);
+    let openFileResponse;
+    if (fileExists) {
+      openFileResponse = await shell.openPath(filePath);
     }
-    if (fs.existsSync(filePath)) {
-        electron.shell.showItemInFolder(filePath);
-    } else {
-        electron.dialog.showMessageBox(focusedWindow, {
-            message,
-            title,
-            type: 'error',
-        });
+    if (
+      openFileResponse !== '' &&
+      focusedWindow &&
+      !focusedWindow.isDestroyed()
+    ) {
+      dialog.showMessageBox(focusedWindow, {
+        message,
+        title,
+        type: 'error',
+      });
     }
+    return;
+  }
+  if (fs.existsSync(filePath)) {
+    shell.showItemInFolder(filePath);
+  } else {
+    dialog.showMessageBox(focusedWindow, {
+      message,
+      title,
+      type: 'error',
+    });
+  }
 };
 
 /**
@@ -394,78 +603,131 @@ export const downloadManagerAction = (type, filePath): void => {
  *
  * @param _event
  * @param item {Electron.DownloadItem}
- * @param webContents {Electron.WebContents}
+ * @param webContents {WeContents}
  */
-export const handleDownloadManager = (_event, item: Electron.DownloadItem, webContents: Electron.WebContents) => {
-    // Send file path when download is complete
-    item.once('done', (_e, state) => {
-        if (state === 'completed') {
-            const data = {
-                _id: getGuid(),
-                savedPath: item.getSavePath() || '',
-                total: filesize(item.getTotalBytes() || 0),
-                fileName: item.getFilename() || 'No name',
-            };
-            webContents.send('downloadCompleted', data);
-        }
-    });
+export const handleDownloadManager = (
+  _event,
+  item: Electron.DownloadItem,
+  webContents: WebContents,
+) => {
+  // Send file path when download is complete
+  item.once('done', (_e, state) => {
+    if (state === 'completed') {
+      const savePathSplit = item.getSavePath()?.split(path.sep);
+      const downloadedItemTotalBytes: number = item.getTotalBytes() || 0;
+      const data: IDownloadItem = {
+        _id: getGuid(),
+        savedPath: item.getSavePath() || '',
+        total: filesize(downloadedItemTotalBytes, {
+          output: 'string',
+        }) as string,
+        fileName: savePathSplit[savePathSplit.length - 1] || 'No name',
+      };
+      logger.info(
+        'window-utils: Download completed, informing download manager',
+      );
+      webContents.send('downloadCompleted', data);
+      downloadHandler.onDownloadSuccess(data);
+    } else {
+      logger.info('window-utils: Download failed, informing download manager');
+      downloadHandler.onDownloadFailed();
+    }
+  });
+
+  item.on('updated', (_e, state) => {
+    if (state === 'interrupted') {
+      logger.info('window-utils: Download is interrupted but can be resumed');
+    } else if (state === 'progressing') {
+      if (item.isPaused()) {
+        logger.info('window-utils: Download is paused');
+      } else {
+        logger.info(`window-utils: Received bytes: ${item.getReceivedBytes()}`);
+      }
+    }
+  });
 };
 
 /**
  * Inserts css in to the window
  *
- * @param window {BrowserWindow}
+ * @param mainWebContents {WebContents}
  */
-const readAndInsertCSS = async (window): Promise<IStyles[] | void> => {
-    if (window && windowExists(window)) {
-        return styles.map(({ content }) => window.webContents.insertCSS(content));
-    }
+const readAndInsertCSS = async (mainWebContents): Promise<IStyles[] | void> => {
+  if (mainWebContents && !mainWebContents.isDestroyed()) {
+    return styles.map(({ content }) => mainWebContents.insertCSS(content));
+  }
 };
 
 /**
  * Inserts all the required css on to the specified windows
  *
- * @param mainWindow {BrowserWindow}
+ * @param mainView {WebContents}
  * @param isCustomTitleBar {boolean} - whether custom title bar enabled
  */
-export const injectStyles = async (mainWindow: BrowserWindow, isCustomTitleBar: boolean): Promise<IStyles[] | void> => {
-    if (isCustomTitleBar) {
-        const index = styles.findIndex(({ name }) => name === styleNames.titleBar);
-        if (index === -1) {
-            let titleBarStylesPath;
-            const stylesFileName = path.join('config', 'titleBarStyles.css');
-            if (isDevEnv) {
-                titleBarStylesPath = path.join(app.getAppPath(), stylesFileName);
-            } else {
-                const execPath = path.dirname(app.getPath('exe'));
-                titleBarStylesPath = path.join(execPath, stylesFileName);
-            }
-            // Window custom title bar styles
-            if (fs.existsSync(titleBarStylesPath)) {
-                styles.push({ name: styleNames.titleBar, content: fs.readFileSync(titleBarStylesPath, 'utf8').toString() });
-            } else {
-                const stylePath = path.join(__dirname, '..', '/renderer/styles/title-bar.css');
-                styles.push({ name: styleNames.titleBar, content: fs.readFileSync(stylePath, 'utf8').toString() });
-            }
-        }
-    }
-    // Snack bar styles
-    if (styles.findIndex(({ name }) => name === styleNames.snackBar) === -1) {
+export const injectStyles = async (
+  mainView: WebContents,
+  isCustomTitleBar: boolean,
+): Promise<IStyles[] | void> => {
+  if (isCustomTitleBar) {
+    const index = styles.findIndex(({ name }) => name === styleNames.titleBar);
+    if (index === -1) {
+      let titleBarStylesPath;
+      const stylesFileName = path.join('config', 'titleBarStyles.css');
+      if (isDevEnv) {
+        titleBarStylesPath = path.join(app.getAppPath(), stylesFileName);
+      } else {
+        const execPath = path.dirname(app.getPath('exe'));
+        titleBarStylesPath = path.join(execPath, stylesFileName);
+      }
+      // Window custom title bar styles
+      if (fs.existsSync(titleBarStylesPath)) {
         styles.push({
-            name: styleNames.snackBar,
-            content: fs.readFileSync(path.join(__dirname, '..', '/renderer/styles/snack-bar.css'), 'utf8').toString(),
+          name: styleNames.titleBar,
+          content: fs.readFileSync(titleBarStylesPath, 'utf8').toString(),
         });
-    }
-
-    // Banner styles
-    if (styles.findIndex(({ name }) => name === styleNames.messageBanner) === -1) {
+      } else {
+        const stylePath = path.join(
+          __dirname,
+          '..',
+          '/renderer/styles/title-bar.css',
+        );
         styles.push({
-            name: styleNames.messageBanner,
-            content: fs.readFileSync(path.join(__dirname, '..', '/renderer/styles/message-banner.css'), 'utf8').toString(),
+          name: styleNames.titleBar,
+          content: fs.readFileSync(stylePath, 'utf8').toString(),
         });
+      }
     }
+  }
+  // Snack bar styles
+  if (styles.findIndex(({ name }) => name === styleNames.snackBar) === -1) {
+    styles.push({
+      name: styleNames.snackBar,
+      content: fs
+        .readFileSync(
+          path.join(__dirname, '..', '/renderer/styles/snack-bar.css'),
+          'utf8',
+        )
+        .toString(),
+    });
+  }
 
-    return await readAndInsertCSS(mainWindow);
+  // Banner styles
+  if (
+    styles.findIndex(({ name }) => name === styleNames.messageBanner) === -1
+  ) {
+    styles.push({
+      name: styleNames.messageBanner,
+      content: fs
+        .readFileSync(
+          path.join(__dirname, '..', '/renderer/styles/message-banner.css'),
+          'utf8',
+        )
+        .toString(),
+    });
+  }
+
+  await readAndInsertCSS(mainView);
+  return;
 };
 
 /**
@@ -475,23 +737,28 @@ export const injectStyles = async (mainWindow: BrowserWindow, isCustomTitleBar: 
  * @param callback {(verificationResult: number) => void}
  */
 export const handleCertificateProxyVerification = (
-    request: any,
-    callback: (verificationResult: number) => void,
+  request: any,
+  callback: (verificationResult: number) => void,
 ): void => {
-    const { hostname: hostUrl, errorCode } = request;
+  const { hostname: hostUrl, errorCode } = request;
 
-    if (errorCode === 0) {
-        return callback(0);
-    }
+  if (errorCode === 0) {
+    return callback(0);
+  }
 
-    const { tld, domain } = whitelistHandler.parseDomain(hostUrl);
-    const host = domain + tld;
+  const { tld, domain } = whitelistHandler.parseDomain(hostUrl);
+  const host = domain + tld;
 
-    if (ctWhitelist && Array.isArray(ctWhitelist) && ctWhitelist.length > 0 && ctWhitelist.indexOf(host) > -1) {
-        return callback(0);
-    }
-
-    return callback(-2);
+  if (
+    ctWhitelist &&
+    Array.isArray(ctWhitelist) &&
+    ctWhitelist.length > 0 &&
+    ctWhitelist.indexOf(host) > -1
+  ) {
+    return callback(0);
+  }
+  // We let chromium handle the verification result. In case chromium detects a certificate error, then 'certificate-error' event will be triggered.
+  return callback(-3);
 };
 
 /**
@@ -499,36 +766,48 @@ export const handleCertificateProxyVerification = (
  * every 10sec, on active reloads the given window
  *
  * @param window {ICustomBrowserWindow}
+ * @param url Pod URL to load
  */
-export const isSymphonyReachable = (window: ICustomBrowserWindow | null) => {
-    if (networkStatusCheckIntervalId) {
-        return;
+export const isSymphonyReachable = (
+  window: ICustomBrowserWindow | null,
+  url: string,
+) => {
+  if (networkStatusCheckIntervalId) {
+    return;
+  }
+  if (!window || !windowExists(window)) {
+    return;
+  }
+  networkStatusCheckIntervalId = setInterval(() => {
+    const { hostname, protocol } = parse(url);
+    if (!hostname || !protocol) {
+      return;
     }
-    if (!window || !windowExists(window)) {
-        return;
-    }
-    networkStatusCheckIntervalId = setInterval(() => {
-        const { hostname, protocol } = parse(configUrl);
-        if (!hostname || !protocol) {
-            return;
+    const podUrl = `${protocol}//${hostname}/apps/client2/version`;
+    logger.info(`window-utils: checking to see if pod ${podUrl} is reachable!`);
+    fetch(podUrl, { method: 'GET' })
+      .then(async (rsp) => {
+        if (rsp.status === 200 && windowHandler.isOnline) {
+          logger.info(
+            `window-utils: pod ${podUrl} is reachable, loading main window!`,
+          );
+          await windowHandler.reloadSymphony();
+          if (networkStatusCheckIntervalId) {
+            clearInterval(networkStatusCheckIntervalId);
+            networkStatusCheckIntervalId = null;
+          }
+          return;
         }
-        const podUrl = `${protocol}//${hostname}`;
-        logger.info(`window-utils: checking to see if pod ${podUrl} is reachable!`);
-        fetch(podUrl, { method: 'GET' }).then((rsp) => {
-            if (rsp.status === 200 && windowHandler.isOnline) {
-                logger.info(`window-utils: pod ${podUrl} is reachable, loading main window!`);
-                window.loadURL(configUrl);
-                if (networkStatusCheckIntervalId) {
-                    clearInterval(networkStatusCheckIntervalId);
-                    networkStatusCheckIntervalId = null;
-                }
-                return;
-            }
-            logger.warn(`window-utils: POD is down! statusCode: ${rsp.status}, is online: ${windowHandler.isOnline}`);
-        }).catch((error) => {
-            logger.error(`window-utils: Network status check: No active network connection ${error}`);
-        });
-    }, networkStatusCheckInterval);
+        logger.warn(
+          `window-utils: POD is down! statusCode: ${rsp.status}, is online: ${windowHandler.isOnline}`,
+        );
+      })
+      .catch((error) => {
+        logger.error(
+          `window-utils: Network status check: No active network connection ${error}`,
+        );
+      });
+  }, networkStatusCheckInterval);
 };
 
 /**
@@ -537,27 +816,276 @@ export const isSymphonyReachable = (window: ICustomBrowserWindow | null) => {
  * @param browserWindow {ICustomBrowserWindow}
  */
 export const reloadWindow = (browserWindow: ICustomBrowserWindow) => {
-    if (!browserWindow || !windowExists(browserWindow)) {
-        return;
-    }
+  if (!browserWindow || !windowExists(browserWindow)) {
+    return;
+  }
 
-    const windowName = browserWindow.winName;
-    const mainWindow = windowHandler.getMainWindow();
-    // reload the main window
-    if (windowName === apiName.mainWindowName) {
-        logger.info(`window-utils: reloading the main window`);
-        browserWindow.reload();
+  const windowName = browserWindow.winName;
+  const mainWebContents = windowHandler.getMainWebContents();
+  const main = windowHandler.getMainWindow();
+  // reload the main window
+  if (
+    windowName === apiName.mainWindowName &&
+    mainWebContents &&
+    !mainWebContents.isDestroyed()
+  ) {
+    logger.info(`window-utils: reloading the main window`);
+    windowHandler.reloadSymphony();
 
-        windowHandler.execCmd(windowHandler.screenShareIndicatorFrameUtil, []);
+    windowHandler.closeAllWindows();
+    main?.setThumbarButtons([]);
+    presenceStatus.onSignOut();
 
-        return;
+    windowHandler.closeScreenSharingIndicator();
+
+    return;
+  }
+
+  // Send an event to SFE that restarts the pop-out window
+  if (mainWebContents && !mainWebContents.isDestroyed()) {
+    logger.info(`window-handler: reloading the window`, { windowName });
+    const bounds = browserWindow.getBounds();
+    mainWebContents.send('restart-floater', { windowName, bounds });
+  }
+};
+
+/**
+ * Restrict the zoom in in 2.0
+ * @returns void
+ */
+export const zoomIn = () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  if (!focusedWindow || !windowExists(focusedWindow)) {
+    return;
+  }
+
+  if (
+    focusedWindow.getTitle() === 'Screen Sharing Indicator - Symphony' ||
+    focusedWindow.getTitle() === 'About Symphony Messaging'
+  ) {
+    return;
+  }
+
+  if (
+    (focusedWindow as ICustomBrowserWindow).winName ===
+    apiName.notificationWindowName
+  ) {
+    return;
+  }
+
+  let { webContents } = focusedWindow;
+
+  // If the focused window is mainWindow we should use mainWebContents
+  if (
+    (focusedWindow as ICustomBrowserWindow).winName === apiName.mainWindowName
+  ) {
+    const mainWebContents = windowHandler.getMainWebContents();
+    if (mainWebContents && !mainWebContents.isDestroyed()) {
+      webContents = mainWebContents;
     }
-    // Send an event to SFE that restarts the pop-out window
-    if (mainWindow && windowExists(mainWindow)) {
-        logger.info(`window-handler: reloading the window`, { windowName });
-        const bounds = browserWindow.getBounds();
-        mainWindow.webContents.send('restart-floater', { windowName, bounds });
+  }
+
+  const setZoomFactor = (
+    webContents: WebContents,
+    notificationWebContents: any = {},
+    isNotificationWindow = false,
+  ) => {
+    const zoomFactor = webContents.getZoomFactor();
+    if (windowHandler.isMana) {
+      if (zoomFactor < 1.5) {
+        if (zoomFactor < 0.7) {
+          isNotificationWindow
+            ? notificationWebContents.send(ZOOM_FACTOR_CHANGE, 0.7)
+            : webContents.setZoomFactor(0.7);
+        } else if (zoomFactor >= 0.7 && zoomFactor < 0.8) {
+          isNotificationWindow
+            ? notificationWebContents.send(ZOOM_FACTOR_CHANGE, 0.8)
+            : webContents.setZoomFactor(0.8);
+        } else if (zoomFactor >= 0.8 && zoomFactor < 0.9) {
+          isNotificationWindow
+            ? notificationWebContents.send(ZOOM_FACTOR_CHANGE, 0.9)
+            : webContents.setZoomFactor(0.9);
+        } else if (zoomFactor >= 0.9 && zoomFactor < 1.0) {
+          isNotificationWindow
+            ? notificationWebContents.send(ZOOM_FACTOR_CHANGE, 1.0)
+            : webContents.setZoomFactor(1.0);
+        } else if (zoomFactor >= 1.0 && zoomFactor < 1.1) {
+          isNotificationWindow
+            ? notificationWebContents.send(ZOOM_FACTOR_CHANGE, 1.1)
+            : webContents.setZoomFactor(1.1);
+        } else if (zoomFactor >= 1.1 && zoomFactor < 1.25) {
+          isNotificationWindow
+            ? notificationWebContents.send(ZOOM_FACTOR_CHANGE, 1.25)
+            : webContents.setZoomFactor(1.25);
+        } else if (zoomFactor >= 1.25 && zoomFactor < 1.5) {
+          isNotificationWindow
+            ? notificationWebContents.send(ZOOM_FACTOR_CHANGE, 1.5)
+            : webContents.setZoomFactor(1.5);
+        }
+      }
+    } else {
+      const currentZoomLevel = webContents.getZoomLevel();
+      isNotificationWindow
+        ? notificationWebContents.send(ZOOM_FACTOR_CHANGE, zoomFactor)
+        : webContents.setZoomLevel(currentZoomLevel + 0.5);
     }
+  };
+
+  const notificationWindows = BrowserWindow.getAllWindows().filter(
+    (win) =>
+      (win as ICustomBrowserWindow).winName &&
+      (win as ICustomBrowserWindow).winName === apiName.notificationWindowName,
+  );
+
+  notificationWindows.map((notificationWindow) => {
+    const notificationWebContents = notificationWindow?.webContents;
+    if (!notificationWindow || !windowExists(notificationWindow)) {
+      return;
+    }
+    setZoomFactor(webContents, notificationWebContents, true);
+  });
+  setZoomFactor(webContents);
+};
+
+/**
+ * Restrict the zoom out in 2.0
+ * @returns void
+ */
+export const zoomOut = () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  if (!focusedWindow || !windowExists(focusedWindow)) {
+    return;
+  }
+
+  if (
+    focusedWindow.getTitle() === 'Screen Sharing Indicator - Symphony' ||
+    focusedWindow.getTitle() === 'About Symphony Messaging'
+  ) {
+    return;
+  }
+
+  if (
+    (focusedWindow as ICustomBrowserWindow).winName ===
+    apiName.notificationWindowName
+  ) {
+    return;
+  }
+
+  let { webContents } = focusedWindow;
+
+  // If the focused window is mainWindow we should use mainWebContents
+  if (
+    (focusedWindow as ICustomBrowserWindow).winName === apiName.mainWindowName
+  ) {
+    const mainWebContents = windowHandler.getMainWebContents();
+    if (mainWebContents && !mainWebContents.isDestroyed()) {
+      webContents = mainWebContents;
+    }
+  }
+
+  const setZoomFactor = (
+    webContents: WebContents,
+    notificationWebContents: any = {},
+    isNotificationWindow = false,
+  ) => {
+    const zoomFactor = webContents.getZoomFactor();
+    if (windowHandler.isMana) {
+      const zoomFactor = webContents.getZoomFactor();
+      if (zoomFactor > 0.7) {
+        if (zoomFactor > 1.5) {
+          isNotificationWindow
+            ? notificationWebContents?.send(ZOOM_FACTOR_CHANGE, 1.5)
+            : webContents.setZoomFactor(1.5);
+        } else if (zoomFactor > 1.25 && zoomFactor <= 1.5) {
+          isNotificationWindow
+            ? notificationWebContents?.send(ZOOM_FACTOR_CHANGE, 1.25)
+            : webContents.setZoomFactor(1.25);
+        } else if (zoomFactor > 1.1 && zoomFactor <= 1.25) {
+          isNotificationWindow
+            ? notificationWebContents?.send(ZOOM_FACTOR_CHANGE, 1.1)
+            : webContents.setZoomFactor(1.1);
+        } else if (zoomFactor > 1.0 && zoomFactor <= 1.1) {
+          isNotificationWindow
+            ? notificationWebContents?.send(ZOOM_FACTOR_CHANGE, 1.0)
+            : webContents.setZoomFactor(1.0);
+        } else if (zoomFactor > 0.9 && zoomFactor <= 1.0) {
+          isNotificationWindow
+            ? notificationWebContents?.send(ZOOM_FACTOR_CHANGE, 0.9)
+            : webContents.setZoomFactor(0.9);
+        } else if (zoomFactor > 0.8 && zoomFactor <= 0.9) {
+          isNotificationWindow
+            ? notificationWebContents?.send(ZOOM_FACTOR_CHANGE, 0.8)
+            : webContents.setZoomFactor(0.8);
+        } else if (zoomFactor > 0.7 && zoomFactor <= 0.8) {
+          isNotificationWindow
+            ? notificationWebContents?.send(ZOOM_FACTOR_CHANGE, 0.7)
+            : webContents.setZoomFactor(0.7);
+        }
+      }
+    } else {
+      const currentZoomLevel = webContents.getZoomLevel();
+      isNotificationWindow
+        ? notificationWebContents?.send(ZOOM_FACTOR_CHANGE, zoomFactor)
+        : webContents.setZoomLevel(currentZoomLevel - 0.5);
+    }
+  };
+
+  const notificationWindows = BrowserWindow.getAllWindows().filter(
+    (win) =>
+      (win as ICustomBrowserWindow).winName &&
+      (win as ICustomBrowserWindow).winName === apiName.notificationWindowName,
+  );
+
+  notificationWindows.map((notificationWindow) => {
+    const notificationWebContents = notificationWindow?.webContents;
+    if (!notificationWindow || !windowExists(notificationWindow)) {
+      return;
+    }
+    setZoomFactor(webContents, notificationWebContents, true);
+  });
+
+  setZoomFactor(webContents);
+};
+
+/**
+ * Reset zoom level.
+ * @returns void
+ */
+export const resetZoomLevel = () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  if (!focusedWindow || !windowExists(focusedWindow)) {
+    return;
+  }
+  if (
+    (focusedWindow as ICustomBrowserWindow).winName ===
+    apiName.notificationWindowName
+  ) {
+    return;
+  }
+  let { webContents } = focusedWindow;
+  // If the focused window is mainWindow we should use mainWebContents
+  if (
+    (focusedWindow as ICustomBrowserWindow).winName === apiName.mainWindowName
+  ) {
+    const mainWebContents = windowHandler.getMainWebContents();
+    if (mainWebContents && !mainWebContents.isDestroyed()) {
+      webContents = mainWebContents;
+    }
+  }
+  const notificationWebContents = BrowserWindow.getAllWindows().filter(
+    (win) =>
+      (win as ICustomBrowserWindow).winName &&
+      (win as ICustomBrowserWindow).winName === apiName.notificationWindowName,
+  );
+
+  notificationWebContents.map((notificationWindow) => {
+    const notificationWebContents = notificationWindow.webContents;
+    if (!notificationWindow || !windowExists(notificationWindow)) {
+      return;
+    }
+    notificationWebContents.send(ZOOM_FACTOR_CHANGE, 1);
+  });
+  webContents.setZoomLevel(0);
 };
 
 /**
@@ -565,15 +1093,20 @@ export const reloadWindow = (browserWindow: ICustomBrowserWindow) => {
  *
  * @param browserWindow {ICustomBrowserWindow}
  */
-export const didVerifyAndRestoreWindow = (browserWindow: BrowserWindow | null): boolean => {
-    if (!browserWindow || !windowExists(browserWindow)) {
-        return false;
-    }
-    if (browserWindow.isMinimized()) {
-        browserWindow.restore();
-    }
-    browserWindow.focus();
-    return true;
+export const didVerifyAndRestoreWindow = (
+  browserWindow: BrowserWindow | null,
+): boolean => {
+  if (!browserWindow || !windowExists(browserWindow)) {
+    return false;
+  }
+  if (browserWindow.isMinimized()) {
+    browserWindow.restore();
+  }
+  if (!browserWindow.isVisible()) {
+    browserWindow.show();
+  }
+  browserWindow.focus();
+  return true;
 };
 
 /**
@@ -581,80 +1114,490 @@ export const didVerifyAndRestoreWindow = (browserWindow: BrowserWindow | null): 
  *
  * @param windowName {String}
  */
-export const getWindowByName = (windowName: string): BrowserWindow | undefined => {
-    const allWindows = BrowserWindow.getAllWindows();
-    return allWindows.find((window) => {
-        return (window as ICustomBrowserWindow).winName === windowName;
-    });
+export const getWindowByName = (
+  windowName: string,
+): BrowserWindow | undefined => {
+  const allWindows = BrowserWindow.getAllWindows();
+  return allWindows.find((window) => {
+    return (window as ICustomBrowserWindow).winName === windowName;
+  });
 };
 
-export const updateFeaturesForCloudConfig = async (): Promise<void> => {
-    const {
-        alwaysOnTop: isAlwaysOnTop,
-        launchOnStartup,
-        memoryRefresh,
+export const updateFeaturesForCloudConfig = async (
+  cloudConfig: ICloudConfig,
+): Promise<void> => {
+  const {
+    podLevelEntitlements,
+    acpFeatureLevelEntitlements,
+    pmpEntitlements,
+    ...rest
+  } = cloudConfig as ICloudConfig;
+  if (
+    podLevelEntitlements &&
+    podLevelEntitlements.autoLaunchPath &&
+    podLevelEntitlements.autoLaunchPath.match(/\\\\/g)
+  ) {
+    podLevelEntitlements.autoLaunchPath =
+      podLevelEntitlements.autoLaunchPath.replace(/\\+/g, '\\');
+  }
+  if (
+    podLevelEntitlements &&
+    podLevelEntitlements.userDataPath &&
+    podLevelEntitlements.userDataPath.match(/\\\\/g)
+  ) {
+    podLevelEntitlements.userDataPath =
+      podLevelEntitlements.userDataPath.replace(/\\+/g, '\\');
+  }
+
+  logger.info(
+    'window-utils: filtered SDA cloudConfig',
+    config.getMergedConfig(config.cloudConfig as ICloudConfig) as IConfig,
+  );
+  logger.info(
+    'window-utils: filtered SFE cloud config',
+    config.getMergedConfig({
+      podLevelEntitlements,
+      acpFeatureLevelEntitlements,
+      pmpEntitlements,
+    }) as IConfig,
+  );
+  const updatedCloudConfigFields = config.compareCloudConfig(
+    config.getMergedConfig(config.cloudConfig as ICloudConfig) as IConfig,
+    config.getMergedConfig({
+      podLevelEntitlements,
+      acpFeatureLevelEntitlements,
+      pmpEntitlements,
+    }) as IConfig,
+  );
+
+  logger.info('window-utils: ignored other values from SFE', rest);
+  await config.updateCloudConfig({
+    podLevelEntitlements,
+    acpFeatureLevelEntitlements,
+    pmpEntitlements,
+  });
+
+  const {
+    alwaysOnTop: isAlwaysOnTop,
+    launchOnStartup,
+    memoryRefresh,
+    memoryThreshold,
+    isAutoUpdateEnabled,
+    autoUpdateCheckInterval,
+    forceAutoUpdate,
+    betaAutoUpdateChannelEnabled,
+    latestAutoUpdateChannelEnabled,
+  } = config.getConfigFields([
+    'launchOnStartup',
+    'alwaysOnTop',
+    'memoryRefresh',
+    'memoryThreshold',
+    'isAutoUpdateEnabled',
+    'autoUpdateCheckInterval',
+    'forceAutoUpdate',
+    'betaAutoUpdateChannelEnabled',
+    'latestAutoUpdateChannelEnabled',
+  ]) as IConfig;
+
+  const mainWebContents = windowHandler.getMainWebContents();
+
+  // Update Always on top feature
+  await updateAlwaysOnTop(
+    isAlwaysOnTop === CloudConfigDataTypes.ENABLED,
+    false,
+    false,
+  );
+
+  // Update launch on start up
+  launchOnStartup === CloudConfigDataTypes.ENABLED
+    ? autoLaunchInstance.enableAutoLaunch()
+    : autoLaunchInstance.disableAutoLaunch();
+
+  if (mainWebContents && !mainWebContents.isDestroyed()) {
+    if (memoryRefresh && memoryRefresh === CloudConfigDataTypes.ENABLED) {
+      logger.info(
+        `window-utils: updating the memory threshold`,
         memoryThreshold,
-    } = config.getConfigFields([
-        'launchOnStartup',
-        'alwaysOnTop',
-        'memoryRefresh',
-        'memoryThreshold',
-    ]) as IConfig;
-
-    const mainWindow = windowHandler.getMainWindow();
-
-    // Update Always on top feature
-    await updateAlwaysOnTop(isAlwaysOnTop === CloudConfigDataTypes.ENABLED, false, false);
-
-    // Update launch on start up
-    launchOnStartup === CloudConfigDataTypes.ENABLED ? autoLaunchInstance.enableAutoLaunch() : autoLaunchInstance.disableAutoLaunch();
-
-    if (mainWindow && windowExists(mainWindow)) {
-        if (memoryRefresh) {
-            logger.info(`window-utils: updating the memory threshold`, memoryThreshold);
-            memoryMonitor.setMemoryThreshold(parseInt(memoryThreshold, 10));
-            mainWindow.webContents.send('initialize-memory-refresh');
-        }
+      );
+      memoryMonitor.setMemoryThreshold(parseInt(memoryThreshold, 10));
+      mainWebContents.send('initialize-memory-refresh');
     }
+  }
+
+  logger.info(
+    `window-utils: Updated cloud config fields`,
+    updatedCloudConfigFields,
+  );
+  if (updatedCloudConfigFields && updatedCloudConfigFields.length) {
+    if (mainWebContents && !mainWebContents.isDestroyed()) {
+      const shouldRestart = updatedCloudConfigFields.some((field) =>
+        ConfigFieldsToRestart.has(field),
+      );
+      logger.info(
+        `window-utils: should restart for updated cloud config field?`,
+        shouldRestart,
+      );
+      if (shouldRestart) {
+        mainWebContents.send('display-client-banner', {
+          reason: 'cloudConfig',
+          action: 'restart',
+        });
+      }
+    }
+  }
+
+  // SDA auto updater
+  logger.info(`window-utils: initiate auto update?`, isAutoUpdateEnabled);
+  if (
+    (forceAutoUpdate || isAutoUpdateEnabled) &&
+    (betaAutoUpdateChannelEnabled || latestAutoUpdateChannelEnabled)
+  ) {
+    if (!autoUpdateIntervalId) {
+      // randomised to avoid having all users getting SDA update at the same time
+      autoUpdateIntervalId = setInterval(async () => {
+        const { lastAutoUpdateCheckDate } = config.getUserConfigFields([
+          'lastAutoUpdateCheckDate',
+        ]);
+        if (!lastAutoUpdateCheckDate || lastAutoUpdateCheckDate === '') {
+          logger.info(
+            `window-utils: lastAutoUpdateCheckDate is not set in user config file so checking for updates`,
+            lastAutoUpdateCheckDate,
+            autoUpdateCheckInterval,
+          );
+          await config.updateUserConfig({
+            lastAutoUpdateCheckDate: new Date().toISOString(),
+          });
+          autoUpdate.checkUpdates(AutoUpdateTrigger.AUTOMATED);
+          return;
+        }
+        logger.info(
+          `window-utils: is last check date > auto update check interval?`,
+          lastAutoUpdateCheckDate,
+          autoUpdateCheckInterval,
+        );
+        // Compare the current date and user config last auto update checked date
+        // and if it is greater that autoUpdateCheckInterval we check for new updates
+        if (
+          getDifferenceInDays(new Date(), new Date(lastAutoUpdateCheckDate)) >
+          Number(autoUpdateCheckInterval)
+        ) {
+          await config.updateUserConfig({
+            lastAutoUpdateCheckDate: new Date().toISOString(),
+          });
+          autoUpdate.checkUpdates(AutoUpdateTrigger.AUTOMATED);
+        }
+      }, getRandomTime(MIN_AUTO_UPDATE_CHECK_INTERVAL, MAX_AUTO_UPDATE_CHECK_INTERVAL));
+    }
+  } else {
+    // Clear the interval if autoUpdate is disabled
+    if (autoUpdateIntervalId) {
+      clearInterval(autoUpdateIntervalId);
+    }
+  }
+  // Refreshes the in-memory window handler's config
+  windowHandler.fetchConfigFields();
 };
 
 /**
  * Monitors network requests and displays red banner on failure
+ * @param url: Pod URL to be loaded after network is active again
  */
-export const monitorNetworkInterception = () => {
-    if (isNetworkMonitorInitialized) {
+export const monitorNetworkInterception = (url: string) => {
+  if (isNetworkMonitorInitialized) {
+    return;
+  }
+  const { hostname, protocol } = parse(url);
+
+  if (!hostname || !protocol) {
+    return;
+  }
+
+  const mainWebContents = windowHandler.getMainWebContents();
+  const podUrl = `${protocol}//${hostname}/`;
+  logger.info('window-utils: monitoring network interception for url', podUrl);
+
+  // Filter applied w.r.t pod url
+  const filter = { urls: [podUrl + '*'] };
+
+  if (mainWebContents && !mainWebContents.isDestroyed()) {
+    isNetworkMonitorInitialized = true;
+    mainWebContents.session.webRequest.onErrorOccurred(
+      filter,
+      async (details) => {
+        if (!mainWebContents || mainWebContents.isDestroyed()) {
+          return;
+        }
+        if (
+          !windowHandler.isMana &&
+          windowHandler.isWebPageLoading &&
+          (details.error === 'net::ERR_INTERNET_DISCONNECTED' ||
+            details.error === 'net::ERR_NETWORK_CHANGED' ||
+            details.error === 'net::ERR_NAME_NOT_RESOLVED')
+        ) {
+          logger.error(`window-utils: URL failed to load`, details);
+          mainWebContents.send('show-banner', {
+            show: true,
+            bannerType: 'error',
+            url: podUrl,
+          });
+        }
+      },
+    );
+  }
+};
+
+export const loadBrowserViews = async (
+  mainWindow: BrowserWindow,
+): Promise<WebContents> => {
+  mainWindow.setMenuBarVisibility(false);
+
+  const titleBarView = new BrowserView({
+    webPreferences: {
+      sandbox: IS_SAND_BOXED,
+      nodeIntegration: IS_NODE_INTEGRATION_ENABLED,
+      preload: path.join(__dirname, '../renderer/_preload-component.js'),
+      devTools: isDevEnv,
+      disableBlinkFeatures: AUX_CLICK,
+    },
+  }) as ICustomBrowserView;
+  const mainWindowBounds = windowHandler.getMainWindow()?.getBounds();
+  const mainView = new BrowserView({
+    ...windowHandler.getMainWindowOpts(),
+    ...{
+      width: mainWindowBounds?.width || DEFAULT_WIDTH,
+      height: mainWindowBounds?.height || DEFAULT_HEIGHT,
+      x: 0,
+      y: TITLE_BAR_HEIGHT,
+    },
+  }) as ICustomBrowserView;
+
+  mainWindow.addBrowserView(titleBarView);
+  mainWindow.addBrowserView(mainView);
+  mainWindow.on('enter-full-screen', () => {
+    if (
+      !titleBarView ||
+      !viewExists(titleBarView) ||
+      !mainWindow ||
+      !windowExists(mainWindow)
+    ) {
+      return;
+    }
+    // Workaround: Need to delay getting the window bounds
+    // to get updated window bounds
+    setTimeout(() => {
+      const [width, height] = mainWindow.getSize();
+      mainWindow.removeBrowserView(titleBarView);
+      if (!mainView || !viewExists(mainView)) {
         return;
+      }
+      mainView.setBounds({
+        width,
+        height,
+        x: 0,
+        y: 0,
+      });
+    }, 500);
+    mainEvents.publish('enter-full-screen');
+  });
+  mainWindow.on('leave-full-screen', () => {
+    logger.info('EVENT leave-full-screen!!');
+    if (
+      !titleBarView ||
+      !viewExists(titleBarView) ||
+      !mainWindow ||
+      !windowExists(mainWindow)
+    ) {
+      return;
     }
-    const { url } = config.getGlobalConfigFields( [ 'url' ] );
-    const { hostname, protocol } = parse(url);
-
-    if (!hostname || !protocol) {
-        return;
+    let width: number;
+    let height: number;
+    if (mainWindow.isMaximized()) {
+      const winBounds: Rectangle = mainWindow.getBounds();
+      const currentScreenBounds: Rectangle = screen.getDisplayMatching({
+        ...winBounds,
+      }).workArea;
+      width = currentScreenBounds.width;
+      height = currentScreenBounds.height;
+    } else {
+      [width, height] = mainWindow.getSize();
     }
-
-    const mainWindow = windowHandler.getMainWindow();
-    const podUrl = `${protocol}//${hostname}/`;
-    logger.info('window-utils: monitoring network interception for url', podUrl);
-
-    // Filter applied w.r.t pod url
-    const filter = { urls: [ podUrl + '*' ] };
-
-    if (mainWindow && windowExists(mainWindow)) {
-        isNetworkMonitorInitialized = true;
-        mainWindow.webContents.session.webRequest.onErrorOccurred(filter,async (details) => {
-            if (!mainWindow || !windowExists(mainWindow)) {
-                return;
-            }
-            const manaUrl: string = await mainWindow.webContents.executeJavaScript('document.location.href');
-            const isMana = manaUrl && manaUrl.includes('client-bff');
-            if (!isMana && windowHandler.isWebPageLoading
-                && (details.error === 'net::ERR_INTERNET_DISCONNECTED'
-                || details.error === 'net::ERR_NETWORK_CHANGED'
-                || details.error === 'net::ERR_NAME_NOT_RESOLVED')) {
-
-                logger.error(`window-utils: URL failed to load`, details);
-                mainWindow.webContents.send('show-banner', { show: true, bannerType: 'error', url: podUrl });
-            }
-        });
+    mainWindow.addBrowserView(titleBarView);
+    const titleBarViewBounds = titleBarView.getBounds();
+    titleBarView.setBounds({
+      ...titleBarViewBounds,
+      ...{
+        width,
+      },
+    });
+    const mainViewBounds = mainView.getBounds();
+    mainView.setBounds({
+      ...mainViewBounds,
+      ...{
+        y: TITLE_BAR_HEIGHT,
+        height: height - TITLE_BAR_HEIGHT,
+      },
+    });
+    // Workaround as electron does not resize devtools automatically
+    if (mainView.webContents.isDevToolsOpened()) {
+      mainView.webContents.toggleDevTools();
+      mainView.webContents.toggleDevTools();
     }
+    mainEvents.publish('leave-full-screen');
+  });
+
+  const onMaximize = debounce(async () => {
+    onMaximizeHandler();
+  }, 50);
+
+  const onMaximizeHandler = () => {
+    logger.info('window-change: maximizing');
+    if (!mainView || !viewExists(mainView)) {
+      return;
+    }
+    const winBounds: Rectangle = mainWindow.getBounds();
+    const currentScreenBounds: Rectangle = screen.getDisplayMatching({
+      ...winBounds,
+    }).workArea;
+    if (
+      winBounds.width === currentScreenBounds.width &&
+      winBounds.height === currentScreenBounds.height - TITLE_BAR_HEIGHT
+    ) {
+      return;
+    }
+    logger.info(
+      'window-change: maximizing with bounds ',
+      currentScreenBounds.width,
+      currentScreenBounds.height,
+    );
+    mainView.setBounds({
+      width: currentScreenBounds.width,
+      height: currentScreenBounds.height - TITLE_BAR_HEIGHT,
+      x: 0,
+      y: TITLE_BAR_HEIGHT,
+    });
+    titleBarView.setBounds({
+      width: currentScreenBounds.width,
+      height: TITLE_BAR_HEIGHT,
+      x: 0,
+      y: 0,
+    });
+  };
+  mainWindow.on('maximize', onMaximize);
+  const onResizeHandler = () => {
+    logger.info('window-change: resizing');
+    // Resize event is also triggered on maximize. As we already have a handler for maximize event we don't need to perform any action
+    // We also need to ensure that everything works well while connecting/disconnecting an external monitor with a maximized BrowserWindow
+    if (mainWindow.isMaximized()) {
+      onMaximize();
+      return;
+    }
+    // Electron fires a resize event on minimize too, which is not needed while resizing browserViews
+    if (mainWindow.isMinimized()) {
+      return;
+    }
+    if (!mainView || !viewExists(mainView)) {
+      return;
+    }
+    const mainWindowBounds = mainWindow.getBounds();
+    mainView.setBounds({
+      width: mainWindowBounds.width,
+      height: mainWindowBounds.height - TITLE_BAR_HEIGHT,
+      x: 0,
+      y: TITLE_BAR_HEIGHT,
+    });
+    titleBarView.setBounds({
+      width: mainWindowBounds.width,
+      height: TITLE_BAR_HEIGHT,
+      x: 0,
+      y: 0,
+    });
+    // Workaround as electron does not resize devtools automatically
+    if (mainView.webContents.isDevToolsOpened()) {
+      mainView.webContents.toggleDevTools();
+      mainView.webContents.toggleDevTools();
+    }
+  };
+
+  const onResize = debounce(async () => {
+    onResizeHandler();
+  }, 50);
+
+  // we cannot use resized event rather than 'resize' and avoid debounce usage: Electron doesn't fire this event everytime
+  mainWindow.on('resize', onResize);
+  mainWindow.on('unmaximize', onResizeHandler);
+
+  if (mainWindow?.isMaximized()) {
+    mainEvents.publish('maximize');
+  }
+  if (mainWindow?.isFullScreen()) {
+    mainEvents.publish('enter-full-screen');
+  }
+  const titleBarWindowUrl = format({
+    pathname: require.resolve('../renderer/windows-title-bar.html'),
+    protocol: 'file',
+    query: {
+      componentName: 'windows-title-bar',
+      locale: i18n.getLocale(),
+    },
+    slashes: true,
+  });
+  titleBarView.webContents.once('did-finish-load', () => {
+    if (!titleBarView || titleBarView.webContents.isDestroyed()) {
+      return;
+    }
+    titleBarView?.webContents.send('page-load', {
+      isWindowsOS,
+      locale: i18n.getLocale(),
+      resource: i18n.loadedResources,
+      isMainWindow: true,
+    });
+    mainEvents.subscribeMultipleEvents(
+      TITLE_BAR_EVENTS,
+      titleBarView.webContents,
+    );
+  });
+  await titleBarView.webContents.loadURL(titleBarWindowUrl);
+  titleBarView.setBounds({
+    ...mainWindow.getBounds(),
+    ...{ x: 0, y: 0, height: TITLE_BAR_HEIGHT },
+  });
+
+  mainView.setBounds({
+    ...mainWindow.getBounds(),
+    ...{
+      x: 0,
+      y: TITLE_BAR_HEIGHT,
+      height: (mainWindowBounds?.height || DEFAULT_HEIGHT) - TITLE_BAR_HEIGHT,
+    },
+  });
+
+  windowHandler.setMainView(mainView);
+  windowHandler.setTitleBarView(titleBarView);
+
+  return mainView.webContents;
+};
+
+export const hideFullscreenWindow = (window: BrowserWindow) => {
+  window.once('leave-full-screen', () => {
+    if (!window && !windowExists(window)) {
+      logger.info('window-utils: window does not exists');
+      return;
+    }
+    if (isMac) {
+      window.hide();
+    } else {
+      setTimeout(() => {
+        window.hide();
+      }, 0);
+    }
+  });
+  window.setFullScreen(false);
+};
+
+export const isValidUrl = (text: string): false | URL => {
+  try {
+    return new URL(text);
+  } catch (err) {
+    return false;
+  }
 };

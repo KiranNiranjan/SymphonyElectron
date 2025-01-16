@@ -1,0 +1,126 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Snipping Tool should render correctly 1`] = `
+<div
+  className="snipping-tool"
+  lang="en-US"
+>
+  <header>
+    <div
+      className="draw-actions"
+    >
+      <button
+        className="action-button"
+        data-testid="pen-button"
+        onClick={[Function]}
+        style={
+          Object {
+            "border": "2px solid rgba(0, 142, 255, 1)",
+          }
+        }
+        title="Pen"
+      >
+        <img
+          draggable={false}
+          src={Object {}}
+        />
+      </button>
+      <button
+        className="action-button"
+        data-testid="highlight-button"
+        onClick={[Function]}
+        title="Highlight"
+      >
+        <img
+          draggable={false}
+          src={Object {}}
+        />
+      </button>
+      <button
+        className="action-button"
+        data-testid="erase-button"
+        onClick={[Function]}
+        title="Erase"
+      >
+        <img
+          draggable={false}
+          src={Object {}}
+        />
+      </button>
+    </div>
+    <div
+      className="clear-actions"
+    >
+      <button
+        className="clear-button"
+        data-testid="clear-button"
+        onClick={[Function]}
+      >
+        Clear
+      </button>
+    </div>
+  </header>
+  <main>
+    <div
+      className="image-container"
+    >
+      <AnnotateArea
+        annotateAreaDimensions={
+          Object {
+            "height": 600,
+            "width": 800,
+          }
+        }
+        backgroundImagePath=""
+        chosenTool="PEN"
+        data-testid="annotate-component"
+        highlightColor="rgba(0,  142,  255, 0.3"
+        imageDimensions={
+          Object {
+            "height": 600,
+            "width": 800,
+          }
+        }
+        onChange={[Function]}
+        paths={Array []}
+        penColor="rgba(0, 142, 255, 1)"
+      />
+    </div>
+  </main>
+  <footer>
+    <button
+      className="close-button"
+      data-testid="close-button"
+      onClick={[Function]}
+    >
+      Close
+    </button>
+    <button
+      className="add-to-chat-button"
+      data-testid="done-button"
+      onClick={[Function]}
+    >
+      Add to chat
+    </button>
+    <MenuButton
+      id="snipping-tool"
+      listItems={
+        Array [
+          Object {
+            "dataTestId": "COPY_TO_CLIPBOARD",
+            "event": "copy-to-clipboard",
+            "name": "Copy to clipboard",
+            "onClick": [Function],
+          },
+          Object {
+            "dataTestId": "SAVE_AS",
+            "event": "save-as",
+            "name": "Save as",
+            "onClick": [Function],
+          },
+        ]
+      }
+    />
+  </footer>
+</div>
+`;

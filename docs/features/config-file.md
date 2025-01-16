@@ -46,6 +46,7 @@ position:
   - authServerWhitelist: This is a list of domains that would be included for auto authentication. More details [here](./ad-sso-authentication.md)
   - authNegotiateDelegateWhitelist: This is a list of domains that would be included for auto authentication. More details [here](./ad-sso-authentication.md)
   - disableGpu: This disables hardware acceleration. The options available are "true" and "false"
+  - enableRendererLogs: This enables printouts from renderer. The options available are "true" and "false"
 - permissions: These are a set of fine grained controls that admins can use to control certain peripherals of the system being used from the SDA.
   - media: This includes the camera, microphone and audio. If set to "true", all these permissions are allowed to be used by the SDA.
   - geolocation: This includes the user location that is requested by the app. If set to "true", this permission is allowed to be used by the SDA.
@@ -56,4 +57,6 @@ position:
   - openExternal: This allows users to control if the SDA can open an external app. If set to "false", SDA won't be able to open external apps. For example, opening a link from within the SDA in a browser tab.
   - autoLaunchPath: This allows administrators to set a custom launch path for an app that can bootstrap the SDA. Typically used by administrators who have their own bootstrapped to open other apps like the SDA.
         - Example can be C:\Program Files\My Bootstrapper\start.exe
+  - chromeFlags: This allows users to set Chromium flags.
+        - Example can be "--enable-logging --log-file=C:\\Users\\YOUR_USER\\Desktop\\chrome_debug.log"
 

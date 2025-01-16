@@ -8,76 +8,67 @@ exports[`about app should render correctly 1`] = `
   <div
     className="AboutApp-header-container"
   >
-    <div
-      className="AboutApp-image-container"
-    >
-      <img
-        alt="Symphony Logo"
-        className="AboutApp-logo"
-        src="../renderer/assets/symphony-logo.png"
-      />
-    </div>
-    <div
-      className="AboutApp-header-content"
-    >
-      <h1
-        className="AboutApp-name"
-      >
-        Symphony
-      </h1>
-      <p
-        className="AboutApp-copyrightText"
-      >
-        © 2020 Symphony
-      </p>
-    </div>
+    <img
+      alt="Symphony Logo"
+      className="AboutApp-logo"
+      src={Object {}}
+    />
   </div>
   <div
     className="AboutApp-main-container"
   >
-    <section>
-      <ul
-        className="AboutApp-symphony-section"
-      >
-        <li>
-          <b>
-            POD:
-          </b>
-           
-          N/A
-        </li>
-        <li>
-          <b>
-            SBE:
-          </b>
-           
-          N/A (N/A)
-        </li>
-        <li>
-          <b>
-            SDA:
-          </b>
-           
-          N/A (N/A)
-        </li>
-        <li>
-          <b>
-            SFE:
-          </b>
-           
-          N/A
-        </li>
-      </ul>
-    </section>
-  </div>
-  <div>
-    <button
-      className="AboutApp-copy-button"
-      onClick={[Function]}
-      title="Copy all the version information in this page"
+    <div
+      className="AboutApp-main-title"
     >
-      Copy
-    </button>
+      <span>
+        Desktop Application
+      </span>
+    </div>
+    <div
+      className="AboutApp-copy-container"
+    >
+      <button
+        className="AboutApp-copy-button"
+        data-testid="COPY_BUTTON"
+        onClick={[Function]}
+        title="Copy config to clipboard"
+      >
+        <img
+          alt="Symphony Logo"
+          src={Object {}}
+        />
+        <span>
+          Copy config to clipboard
+        </span>
+      </button>
+    </div>
+    <div
+      className="AboutApp-close-container"
+    >
+      <button
+        className="AboutApp-close-button"
+        data-testid="CLOSE_BUTTON"
+        disabled={false}
+        onKeyDown={[Function]}
+        onMouseDown={[Function]}
+        title="Close"
+      >
+        <span
+          className=""
+        >
+          Close
+        </span>
+      </button>
+    </div>
+  </div>
+  <div
+    className="AboutApp-version-container"
+  >
+    <p
+      className="AboutApp-copyright-text"
+    >
+      Copyright © 2025 Symphony
+    </p>
   </div>
 </div>
 `;

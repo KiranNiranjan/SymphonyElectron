@@ -1,7 +1,8 @@
 #!/bin/bash
 
-NODE_REQUIRED_VERSION=v12.13.1
-SNYK_API_TOKEN=885953dc-9469-443c-984d-524352d54116
+NODE_REQUIRED_VERSION=v18.16.0
+SNYK_ORG=sda
+SNYK_PROJECT_NAME="Symphony Desktop Application"
 
 if ! [ -x "$(command -v git)" ]; then
   echo 'GIT does not exist! Please set it up before running this script!' >&2
@@ -36,14 +37,16 @@ fi
 
 if ! [ -x "$(command -v gulp)" ]; then
   echo 'Gulp does not exist! Installing it!' >&2
-  npm install -g gulp
+  npm install -g gulp gulp-cli
 fi
 
 if ! [ -x "$(command -v snyk)" ]; then
   echo 'Snyk does not exist! Installing and setting it up' >&2
   npm install -g snyk
-  snyk config set api=$SNYK_API_TOKEN
 fi
+echo "Setting snyk org to $SNYK_ORG and api token to $SNYK_API_TOKEN"
+snyk config set org="$SNYK_ORG"
+snyk config set api="$SNYK_API_TOKEN"
 
 if [ -z "$PARENT_BUILD_VERSION" ]; then
   echo "PARENT_BUILD_VERSION is empty, setting default"
@@ -67,7 +70,8 @@ npm install
 
 # Run Snyk Security Tests
 echo "Running snyk security tests"
-snyk test --file=package.json
+snyk test --file=package-lock.json --org="$SNYK_ORG"
+snyk monitor --file=package-lock.json --org="$SNYK_ORG" --project-name="$SNYK_PROJECT_NAME"
 
 # replace url in config
 echo "Setting default pod url to https://corporate.symphony.com"
@@ -79,7 +83,7 @@ sed -i -e "s/\"buildNumber\"[[:space:]]*\:[[:space:]]*\".*\"/\"buildNumber\":\" 
 echo "Setting package version in pre install script to ${PKG_VERSION}"
 sed -i -e "s/CURRENT_VERSION=APP_VERSION/CURRENT_VERSION=${PKG_VERSION}/g" ./installer/mac/preinstall.sh
 
-if [ -z "$EXPIRY_PERIOD" ]; then
+if [ "$EXPIRY_PERIOD" == "0" ] || [ "$EXPIRY_PERIOD" == 0 ]; then
   echo 'Expiry period not set, so, not creating expiry for the build'
 else
   gulp setExpiry --period ${EXPIRY_PERIOD}
