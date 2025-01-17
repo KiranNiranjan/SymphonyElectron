@@ -78,7 +78,7 @@ const load = () => {
       component = CallNotification;
       break;
     case components.welcome:
-      document.title = i18n.t('WelcomeText', 'Welcome')();
+      document.title = i18n.t('Welcome', 'Welcome')();
       component = Welcome;
       break;
     case components.titleBar:

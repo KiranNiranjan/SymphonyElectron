@@ -18,7 +18,6 @@ import { filesize } from 'filesize';
 import * as fs from 'fs';
 import * as path from 'path';
 import { format, parse } from 'url';
-import { productDisplayName } from '../../package.json';
 import { apiName, EPresenceStatusGroup } from '../common/api-interface';
 
 import { isDevEnv, isLinux, isMac, isWindowsOS } from '../common/env';
@@ -325,7 +324,7 @@ export const initSysTray = () => {
     },
   ]);
   tray.setContextMenu(contextMenu);
-  tray.setToolTip(productDisplayName);
+  tray.setToolTip(app.getName());
   presenceStatusStore.setCurrentTray(tray);
   return tray;
 };

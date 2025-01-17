@@ -17,6 +17,9 @@ const userDataPath =
   userDataPathArg &&
   userDataPathArg.substring(userDataPathArg.indexOf('=') + 1);
 
+// Required to support new branding productName
+app.setPath('userData', 'Symphony');
+
 if (isMac) {
   // Validate user config before starting the application
   readPlistFile();

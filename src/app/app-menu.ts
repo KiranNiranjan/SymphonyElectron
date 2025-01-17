@@ -1,4 +1,5 @@
 import {
+  app,
   BaseWindow,
   BrowserWindow,
   Menu,
@@ -7,7 +8,6 @@ import {
   shell,
 } from 'electron';
 
-import { productDisplayName } from '../../package.json';
 import { apiName } from '../common/api-interface';
 import { isLinux, isMac, isWindowsOS } from '../common/env';
 import { i18n, LocaleType } from '../common/i18n';
@@ -272,7 +272,7 @@ export class AppMenu {
       false;
     return {
       id: menuSections.about,
-      label: productDisplayName,
+      label: app.getName(),
       submenu: [
         {
           label: i18n.t('About Symphony Messaging')(),

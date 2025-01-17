@@ -443,7 +443,7 @@ export class WindowHandler {
         query: {
           componentName: 'welcome',
           locale: i18n.getLocale(),
-          title: i18n.t('WelcomeText', 'Welcome')(),
+          title: i18n.t('Welcome', 'Welcome')(),
         },
         slashes: true,
       });
@@ -910,7 +910,7 @@ export class WindowHandler {
         query: {
           componentName,
           locale: i18n.getLocale(),
-          title: i18n.t('WelcomeText', 'Welcome')(),
+          title: i18n.t('Welcome', 'Welcome')(),
         },
         slashes: true,
       });
