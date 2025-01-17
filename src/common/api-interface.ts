@@ -93,6 +93,7 @@ export enum apiCmds {
   openfinJoinContextGroup = 'openfin-join-context-group',
   openfinGetContextGroups = 'openfin-get-context-groups',
   openfinGetAllClientsInContextGroup = 'openfin-get-all-clients-in-context-group',
+  rendererLog = 'renderer-log',
 }
 
 export enum apiName {
@@ -172,6 +173,7 @@ export interface IApiArgs {
   contextType: any;
   contextGroupId: string;
   target: any;
+  log: string;
 }
 
 export type Themes = 'light' | 'dark';

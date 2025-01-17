@@ -632,6 +632,7 @@ ipcMain.handle(
         };
       case apiCmds.getSources:
         const { types, thumbnailSize } = arg;
+        logger.info('main-api-handler: getting source', types, thumbnailSize);
         return desktopCapturer.getSources({
           types,
           thumbnailSize,
@@ -651,6 +652,9 @@ ipcMain.handle(
         return openfinHandler.getContextGroups();
       case apiCmds.openfinGetAllClientsInContextGroup:
         return openfinHandler.getAllClientsInContextGroup(arg.contextGroupId);
+      case apiCmds.rendererLog:
+        logger.info(arg.log);
+        return;
       default:
         break;
     }

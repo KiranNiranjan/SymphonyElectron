@@ -90,7 +90,10 @@ export const getSource = async (
      * @type {boolean}
      */
     // tslint:disable-next-line:no-console
-    console.log('desktop-capturer: checking if isAeroGlassEnabled');
+    await ipcRenderer.invoke(apiName.symphonyApi, {
+      cmd: apiCmds.rendererLog,
+      log: 'desktop-capturer: checking if isAeroGlassEnabled',
+    });
     captureWindow = await ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.isAeroGlassEnabled,
     });
@@ -108,6 +111,10 @@ export const getSource = async (
     // tslint:disable-next-line:no-console
     console.log('desktop-capturer: showScreenSharePermissionDialog');
     await ipcRenderer.invoke(apiName.symphonyApi, {
+      cmd: apiCmds.rendererLog,
+      log: 'desktop-capturer: showScreenSharePermissionDialog',
+    });
+    await ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.showScreenSharePermissionDialog,
     });
     callback({
@@ -121,6 +128,10 @@ export const getSource = async (
   id = getNextId();
   // tslint:disable-next-line:no-console
   console.log('desktop-capturer: invoke getSources');
+  await ipcRenderer.invoke(apiName.symphonyApi, {
+    cmd: apiCmds.rendererLog,
+    log: 'desktop-capturer: invoke getSources',
+  });
   const sources: DesktopCapturerSource[] = await ipcRenderer.invoke(
     apiName.symphonyApi,
     {
@@ -131,6 +142,10 @@ export const getSource = async (
   );
   // tslint:disable-next-line:no-console
   console.log('desktop-capturer: got Sources', sources);
+  await ipcRenderer.invoke(apiName.symphonyApi, {
+    cmd: apiCmds.rendererLog,
+    log: `desktop-capturer: got Sources ${sources?.join(',')}`,
+  });
   // Auto select screen source based on args for testing only
   if (screenShareArgv) {
     const title = screenShareArgv.substr(screenShareArgv.indexOf('=') + 1);
@@ -165,15 +180,25 @@ export const getSource = async (
     'desktop-capturer: opening screen picker window with',
     updatedSources,
   );
+  await ipcRenderer.invoke(apiName.symphonyApi, {
+    cmd: apiCmds.rendererLog,
+    log: `desktop-capturer: opening screen picker window with ${updatedSources?.join(
+      ',',
+    )}`,
+  });
   ipcRenderer.send(apiName.symphonyApi, {
     cmd: apiCmds.openScreenPickerWindow,
     id,
     sources: updatedSources,
   });
 
-  const successCallback = (_e, source: DesktopCapturerSource) => {
+  const successCallback = async (_e, source: DesktopCapturerSource) => {
     // tslint:disable-next-line:no-console
     console.log('desktop-capturer: user selected source', source);
+    await ipcRenderer.invoke(apiName.symphonyApi, {
+      cmd: apiCmds.rendererLog,
+      log: `desktop-capturer: got Sources ${sources.join(',')}`,
+    });
     // Cleaning up the event listener to prevent memory leaks
     if (!source) {
       ipcRenderer.removeListener('start-share' + id, successCallback);
