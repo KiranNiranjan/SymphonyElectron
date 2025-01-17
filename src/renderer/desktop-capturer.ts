@@ -56,6 +56,8 @@ export const getSource = async (
   options: ICustomSourcesOptions,
   callback: CallbackType,
 ) => {
+  // tslint:disable-next-line:no-console
+  console.log('desktop-capturer: getSource()');
   let captureWindow;
   let captureScreen;
   let id;
@@ -87,6 +89,8 @@ export const getSource = async (
      * Setting captureWindow to false returns only screen sources
      * @type {boolean}
      */
+    // tslint:disable-next-line:no-console
+    console.log('desktop-capturer: checking if isAeroGlassEnabled');
     captureWindow = await ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.isAeroGlassEnabled,
     });
@@ -101,6 +105,8 @@ export const getSource = async (
 
   // displays a dialog if media permissions are disable
   if (!isScreenShareEnabled) {
+    // tslint:disable-next-line:no-console
+    console.log('desktop-capturer: showScreenSharePermissionDialog');
     await ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.showScreenSharePermissionDialog,
     });
@@ -113,6 +119,8 @@ export const getSource = async (
   }
 
   id = getNextId();
+  // tslint:disable-next-line:no-console
+  console.log('desktop-capturer: invoke getSources');
   const sources: DesktopCapturerSource[] = await ipcRenderer.invoke(
     apiName.symphonyApi,
     {
@@ -121,6 +129,8 @@ export const getSource = async (
       thumbnailSize: updatedOptions.thumbnailSize,
     },
   );
+  // tslint:disable-next-line:no-console
+  console.log('desktop-capturer: got Sources', sources);
   // Auto select screen source based on args for testing only
   if (screenShareArgv) {
     const title = screenShareArgv.substr(screenShareArgv.indexOf('=') + 1);
@@ -150,6 +160,11 @@ export const getSource = async (
       };
     });
 
+  // tslint:disable-next-line:no-console
+  console.log(
+    'desktop-capturer: opening screen picker window with',
+    updatedSources,
+  );
   ipcRenderer.send(apiName.symphonyApi, {
     cmd: apiCmds.openScreenPickerWindow,
     id,
@@ -157,6 +172,8 @@ export const getSource = async (
   });
 
   const successCallback = (_e, source: DesktopCapturerSource) => {
+    // tslint:disable-next-line:no-console
+    console.log('desktop-capturer: user selected source', source);
     // Cleaning up the event listener to prevent memory leaks
     if (!source) {
       ipcRenderer.removeListener('start-share' + id, successCallback);
