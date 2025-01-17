@@ -1,7 +1,6 @@
 {
   "name": "symphony",
   "productName": "Symphony",
-  "productDisplayName": "Symphony Messaging",
   "version": "25.2.0",
   "clientVersion": "2.0.1",
   "buildNumber": "0",
@@ -33,11 +32,12 @@
     "start": "run-s compile browserify && cross-env ELECTRON_DEV=true electron .",
     "test": "run-s lint test:unit",
     "test:unit": "cross-env ELECTRON_FORCE_IS_PACKAGED=false ELECTRON_QA=true jest --config jest-config.json --runInBand --detectOpenHandles",
-    "unpacked-mac": "npm run prebuild && npm run test && ./node_modules/.bin/electron-builder build --mac",
+    "unpacked-mac": "npm run prebuild && ./node_modules/.bin/electron-builder build --mac",
     "unpacked-win": "npm run prebuild && npm run test && node_modules\\.bin\\electron-builder build --win --x64"
   },
   "build": {
     "appId": "com.symphony.electron-desktop",
+    "productName": "Symphony Messaging",
     "compression": "maximum",
     "artifactName": "${productName}-${version}-${os}.${ext}",
     "asar": true,
@@ -80,6 +80,7 @@
       "notarize": false,
       "entitlementsInherit": "entitlements.mac.plist",
       "extendInfo": {
+        "CFBundleDisplayName": "Symphony Messaging",
         "CFBundleURLTypes": [
           {
             "CFBundleTypeRole": "Viewer",
