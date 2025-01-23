@@ -10,6 +10,7 @@ import * as utils from '../src/app/window-utils';
 import { apiCmds, apiName } from '../src/common/api-interface';
 import { logger } from '../src/common/logger';
 import { BrowserWindow, ipcMain } from './__mocks__/electron';
+import anything = jasmine.anything;
 
 jest.mock('electron-log');
 
@@ -408,7 +409,7 @@ describe('main api handler', () => {
       };
       const expectedValue = { send: expect.any(Function) };
       ipcMain.send(apiName.symphonyApi, value);
-      expect(spy).toBeCalledWith(expectedValue, undefined);
+      expect(spy).toBeCalledWith(expectedValue, undefined, anything());
     });
 
     it('should call `openScreenSnippet` with hideOnCapture correctly', () => {
@@ -424,7 +425,7 @@ describe('main api handler', () => {
       };
       const expectedValue = { send: expect.any(Function) };
       ipcMain.send(apiName.symphonyApi, value);
-      expect(spy).toBeCalledWith(expectedValue, true);
+      expect(spy).toBeCalledWith(expectedValue, true, anything());
     });
 
     it('should call `closeWindow` correctly', () => {
