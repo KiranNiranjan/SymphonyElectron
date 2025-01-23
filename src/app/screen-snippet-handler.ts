@@ -87,12 +87,18 @@ class ScreenSnippet {
    *
    * @param webContents {WeContents}
    */
-  public async capture(webContents: WebContents, hideOnCapture?: boolean) {
+  public async capture(
+    webContents: WebContents,
+    hideOnCapture?: boolean,
+    randomNumber?: number,
+  ) {
     const currentWindowObj = BrowserWindow.getFocusedWindow();
     const currentWindowName = (currentWindowObj as ICustomBrowserWindow)
       ?.winName;
     const mainWindow = windowHandler.getMainWindow();
-    windowHandler.closeSnippingToolWindow();
+    windowHandler.closeSnippingToolWindow(
+      `snippet-close-reason: on capture before creating new instance ${randomNumber}`,
+    );
     if (hideOnCapture) {
       this.storeWindowsState(mainWindow, currentWindowObj);
       winStore.hideWindowsOnCapturing(hideOnCapture);
@@ -103,7 +109,10 @@ class ScreenSnippet {
         await updateAlwaysOnTop(false, false, false);
       }
     }
-    logger.info(`screen-snippet-handler: Starting screen capture!`);
+    logger.info(
+      `screen-snippet-handler: Starting screen capture!`,
+      randomNumber,
+    );
     this.outputFilePath = path.join(
       this.tempDir,
       'symphonyImage-' + Date.now() + '.png',
@@ -179,13 +188,20 @@ class ScreenSnippet {
           return;
         }
 
-        windowHandler.closeSnippingToolWindow();
+        logger.info(
+          'screen-snippet-handler: closing any snippet window before creating new window instance',
+        );
+        windowHandler.closeSnippingToolWindow(
+          'snippet-close-reason: on before createSnippingToolWindow',
+        );
         windowHandler.createSnippingToolWindow(
           this.outputFilePath,
           dimensions,
           currentWindowName,
           hideOnCapture,
+          randomNumber,
         );
+        logger.info('screen-snippet-handler: created snippet window');
         this.uploadSnippet(currentWindowObj, webContents, hideOnCapture);
         this.closeSnippet(currentWindowObj);
         this.copyToClipboard();
@@ -347,7 +363,12 @@ class ScreenSnippet {
         snippetData: { screenSnippetPath: string; mergedImageData: string },
       ) => {
         try {
-          windowHandler.closeSnippingToolWindow();
+          logger.info(
+            'screen-snippet-handler: uploadSnippet - before starting snippet upload',
+          );
+          windowHandler.closeSnippingToolWindow(
+            'snippet-close-reason: before starting snippet upload',
+          );
           const [type, data] = snippetData.mergedImageData.split(',');
           const payload = {
             message: 'SUCCESS',
@@ -383,7 +404,9 @@ class ScreenSnippet {
   private closeSnippet(focusedWindow: BrowserWindow | null) {
     ipcMain.on(ScreenShotAnnotation.CLOSE, async (_event) => {
       try {
-        windowHandler.closeSnippingToolWindow();
+        windowHandler.closeSnippingToolWindow(
+          'snippet-close-reason: IPC Close event',
+        );
         await this.verifyAndUpdateAlwaysOnTop();
       } catch (error) {
         await this.verifyAndUpdateAlwaysOnTop();
@@ -450,7 +473,9 @@ class ScreenSnippet {
         },
       ) => {
         if (isMac) {
-          windowHandler.closeSnippingToolWindow();
+          windowHandler.closeSnippingToolWindow(
+            'snippet-close-reason: ON SAVE event',
+          );
         }
         const filePath = path.join(
           app.getPath('downloads'),
@@ -465,7 +490,9 @@ class ScreenSnippet {
           BrowserWindow.getFocusedWindow(),
         );
         if (dialogResult?.filePath) {
-          windowHandler.closeSnippingToolWindow();
+          windowHandler.closeSnippingToolWindow(
+            'snippet-close-reason: ON SAVE event',
+          );
         }
       },
     );

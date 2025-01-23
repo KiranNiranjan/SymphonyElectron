@@ -255,7 +255,7 @@ ipcMain.on(
         logger.info('main-api-handler: get presence from C2 to set in SDA');
         break;
       case apiCmds.openScreenSnippet:
-        screenSnippet.capture(event.sender, arg.hideOnCapture);
+        screenSnippet.capture(event.sender, arg.hideOnCapture, Math.random());
         break;
       case apiCmds.closeScreenSnippet:
         screenSnippet.cancelCapture();

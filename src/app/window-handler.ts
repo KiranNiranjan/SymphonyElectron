@@ -1333,6 +1333,7 @@ export class WindowHandler {
     },
     currentWindow?: string,
     hideOnCapture?: boolean,
+    randomNumber?: number,
   ): void {
     // Prevents creating multiple instances
     if (didVerifyAndRestoreWindow(this.snippingToolWindow)) {
@@ -1452,11 +1453,16 @@ export class WindowHandler {
       opts.modal = true;
     }
 
+    logger.info(
+      'window-handler: creating snipping tool component window',
+      randomNumber,
+    );
     this.snippingToolWindow = createComponentWindow(
       'snipping-tool',
       opts,
     ) as ICustomBrowserWindow;
-    this.snippingToolWindow.winName = apiName.snippingToolWindowName;
+    this.snippingToolWindow.winName =
+      apiName.snippingToolWindowName + `_${randomNumber}`;
     this.moveWindow(this.snippingToolWindow, undefined, parentWindow);
     this.snippingToolWindow.setVisibleOnAllWorkspaces(true);
 
@@ -1515,6 +1521,7 @@ export class WindowHandler {
     this.snippingToolWindow.once('close', () => {
       logger.info(
         'window-handler: createSnippingToolWindow: Closing snipping window, attempting to delete temp snip image',
+        this.snippingToolWindow?.winName,
       );
       ipcMain.removeAllListeners(ScreenShotAnnotation.CLOSE);
       ipcMain.removeAllListeners(ScreenShotAnnotation.UPLOAD);
@@ -1530,9 +1537,15 @@ export class WindowHandler {
   /**
    * Closes the snipping tool window
    */
-  public closeSnippingToolWindow() {
+  public closeSnippingToolWindow(reason?: string) {
+    logger.info('window-handler: closeSnippingToolWindow', reason);
     if (this.snippingToolWindow && windowExists(this.snippingToolWindow)) {
       this.snippingToolWindow.close();
+      logger.info(
+        'window-handler: closeSnippingToolWindow closed',
+        reason,
+        this.snippingToolWindow.winName,
+      );
       this.snippingToolWindow = null;
     }
   }
