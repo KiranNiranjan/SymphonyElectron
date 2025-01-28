@@ -1466,6 +1466,83 @@ export class WindowHandler {
     this.moveWindow(this.snippingToolWindow, undefined, parentWindow);
     this.snippingToolWindow.setVisibleOnAllWorkspaces(true);
 
+    this.snippingToolWindow.webContents.once('did-fail-load', () => {
+      logger.error(
+        'window-handler: screen-snippet: screen snipping tool failed to load',
+      );
+      dialog.showErrorBox(
+        'Screen Snippet',
+        'Screen snippet window failed to load',
+      );
+    });
+
+    this.snippingToolWindow.webContents.once(
+      'preload-error',
+      (_e, preloadPath: string, error: Error) => {
+        logger.info(
+          'window-handler: screen-snippet: preload-error',
+          preloadPath,
+          error,
+        );
+      },
+    );
+
+    this.snippingToolWindow.webContents.once('destroyed', () => {
+      logger.info('window-handler: screen-snippet: web contents destroyed');
+    });
+
+    this.snippingToolWindow.webContents.once(
+      'console-message',
+      (_e, level, message, line) => {
+        logger.info(
+          'window-handler: screen-snippet: console message',
+          level,
+          message,
+          line,
+        );
+      },
+    );
+
+    this.snippingToolWindow.once('ready-to-show', () => {
+      logger.info(
+        'window-handler: screen-snippet: screen snipping tool ready to show',
+        this.snippingToolWindow?.isDestroyed(),
+      );
+      this.snippingToolWindow?.show();
+    });
+
+    this.snippingToolWindow.once('closed', () => {
+      logger.info(
+        'window-handler: screen-snippet: screen snipping tool closed',
+      );
+    });
+
+    this.snippingToolWindow.once('focus', () => {
+      logger.info(
+        'window-handler: screen-snippet: screen snipping tool focused',
+      );
+    });
+
+    this.snippingToolWindow.once('minimize', () => {
+      logger.info(
+        'window-handler: screen-snippet: screen snipping tool minimized',
+      );
+      this.snippingToolWindow?.restore();
+    });
+
+    this.snippingToolWindow.once('hide', () => {
+      logger.info(
+        'window-handler: screen-snippet: screen snipping tool hidden, will try to display again',
+      );
+      this.snippingToolWindow?.show();
+    });
+
+    this.snippingToolWindow.once('unresponsive', () => {
+      logger.error(
+        'window-handler: screen-snippet: screen snipping tool unresponsive',
+      );
+    });
+
     this.snippingToolWindow.webContents.once('did-finish-load', async () => {
       const snippingToolInfo = {
         snipImage,
@@ -1475,6 +1552,7 @@ export class WindowHandler {
         snippetImageWidth: scaledImageDimensions.width,
       };
       if (this.snippingToolWindow && windowExists(this.snippingToolWindow)) {
+        this.snippingToolWindow.webContents.toggleDevTools();
         this.snippingToolWindow.webContents.setZoomFactor(1);
         const windowBounds = this.snippingToolWindow.getBounds();
         logger.info(
