@@ -1509,6 +1509,23 @@ export class WindowHandler {
         this.snippingToolWindow?.isDestroyed(),
       );
       this.snippingToolWindow?.show();
+
+      setTimeout(() => {
+        logger.info(
+          'window-handler: screen-snippet: is snippet window visible? ',
+          this.snippingToolWindow?.isVisible(),
+          this.snippingToolWindow?.isVisibleOnAllWorkspaces(),
+        );
+        if (
+          !this.snippingToolWindow?.isVisible() ||
+          !this.snippingToolWindow?.isVisibleOnAllWorkspaces()
+        ) {
+          logger.info(
+            'window-handler: screen-snippet: force displaying snippet window',
+          );
+          this.snippingToolWindow?.show();
+        }
+      }, 300);
     });
 
     this.snippingToolWindow.once('closed', () => {
