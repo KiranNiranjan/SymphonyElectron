@@ -149,6 +149,14 @@ const SnippingTool: React.FunctionComponent<ISnippingToolProps> = ({
       snippetImageWidth,
     },
   ) => {
+    // tslint:disable-next-line:no-console
+    console.log('received snippet data', {
+      snipImage,
+      annotateAreaHeight,
+      annotateAreaWidth,
+      snippetImageHeight,
+      snippetImageWidth,
+    });
     setScreenSnippetPath(snipImage);
     setImageDimensions({
       height: snippetImageHeight,
