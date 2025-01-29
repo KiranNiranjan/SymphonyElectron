@@ -560,21 +560,6 @@ ipcMain.on(
 
         helpMenu.setValue(helpCenter);
         break;
-      case apiCmds.openfinConnect:
-        openfinHandler.connect();
-        break;
-      case apiCmds.openfinFireIntent:
-        openfinHandler.fireIntent(arg.intent);
-        break;
-      case apiCmds.openfinJoinContextGroup:
-        openfinHandler.joinContextGroup(arg.contextGroupId, arg.target);
-        break;
-      case apiCmds.openfinRegisterIntentHandler:
-        openfinHandler.registerIntentHandler(arg.intentName);
-        break;
-      case apiCmds.openfinUnregisterIntentHandler:
-        openfinHandler.unregisterIntentHandler(arg.intentName);
-        break;
       default:
         break;
     }
@@ -643,6 +628,10 @@ ipcMain.handle(
           return getContentWindowHandle(windowHandle);
         }
         break;
+      case apiCmds.openfinConnect:
+        return openfinHandler.connect();
+      case apiCmds.openfinRegisterIntentHandler:
+        return openfinHandler.registerIntentHandler(arg.intentName);
       case apiCmds.openfinGetConnectionStatus:
         return openfinHandler.getConnectionStatus();
       case apiCmds.openfinGetInfo:
@@ -651,6 +640,20 @@ ipcMain.handle(
         return openfinHandler.getContextGroups();
       case apiCmds.openfinGetAllClientsInContextGroup:
         return openfinHandler.getAllClientsInContextGroup(arg.contextGroupId);
+      case apiCmds.openfinGetClientInfo:
+        return openfinHandler.getClientInfo();
+      case apiCmds.openfinFireIntent:
+        return openfinHandler.fireIntent(arg.intent);
+      case apiCmds.openfinJoinContextGroup:
+        return openfinHandler.joinContextGroup(arg.contextGroupId, arg.target);
+      case apiCmds.openfinJoinSessionContextGroup:
+        return openfinHandler.joinSessionContextGroup(arg.contextGroupId);
+      case apiCmds.openfinUnregisterIntentHandler:
+        return openfinHandler.unregisterIntentHandler(arg.uuid);
+      case apiCmds.openfinFireIntentForContext:
+        return openfinHandler.fireIntentForContext(arg.context);
+      case apiCmds.openfinRemoveFromContextGroup:
+        return openfinHandler.removeFromContextGroup();
       default:
         break;
     }

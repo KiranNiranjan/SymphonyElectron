@@ -1,3 +1,4 @@
+import { UUID } from 'crypto';
 import { ipcRenderer, webFrame } from 'electron';
 import {
   buildNumber,
@@ -66,14 +67,14 @@ export interface ILocalObject {
   c9MessageCallback?: (status: IShellStatus) => void;
   updateMyPresenceCallback?: (presence: EPresenceStatusCategory) => void;
   phoneNumberCallback?: (arg: string) => void;
-  intentsCallbacks: {};
+  intentsCallbacks: Map<string, Map<UUID, any>>;
   writeImageToClipboard?: (blob: string) => void;
   getHelpInfo?: () => Promise<IPodSettingsClientSpecificSupportLink>;
 }
 
 const local: ILocalObject = {
   ipcRenderer,
-  intentsCallbacks: {},
+  intentsCallbacks: new Map(),
 };
 
 const notificationActionCallbacks = new Map<
@@ -957,10 +958,14 @@ export class SSFApi {
   /**
    * Openfin Interop client initialization
    */
-  public openfinInit(): void {
-    local.ipcRenderer.send(apiName.symphonyApi, {
-      cmd: apiCmds.openfinConnect,
-    });
+  public async openfinInit() {
+    const connectionStatus = await local.ipcRenderer.invoke(
+      apiName.symphonyApi,
+      {
+        cmd: apiCmds.openfinConnect,
+      },
+    );
+    return connectionStatus;
   }
 
   /**
@@ -976,11 +981,44 @@ export class SSFApi {
   /**
    * Fires an intent
    */
-  public openfinFireIntent(intent: any): void {
-    local.ipcRenderer.send(apiName.symphonyApi, {
+  public async openfinFireIntent(intent: any): Promise<void> {
+    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.openfinFireIntent,
       intent,
     });
+    return response;
+  }
+
+  /**
+   * Fires an intent for a given context
+   * @param context
+   */
+  public async openfinFireIntentForContext(context: any): Promise<void> {
+    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
+      cmd: apiCmds.openfinFireIntentForContext,
+      context,
+    });
+    return response;
+  }
+
+  /**
+   * Leaves current context group
+   */
+  public async openfinRemoveFromContextGroup() {
+    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
+      cmd: apiCmds.openfinRemoveFromContextGroup,
+    });
+    return response;
+  }
+
+  /**
+   * Returns client info
+   */
+  public async openfinGetClientInfo() {
+    const info = await local.ipcRenderer.invoke(apiName.symphonyApi, {
+      cmd: apiCmds.openfinGetClientInfo,
+    });
+    return info;
   }
 
   /**
@@ -1000,26 +1038,41 @@ export class SSFApi {
   /**
    * Registers a handler for a given intent
    */
-  public openfinRegisterIntentHandler(
+  public async openfinRegisterIntentHandler(
     intentHandler: any,
     intentName: any,
-  ): void {
-    local.intentsCallbacks[intentName] = intentHandler;
-    local.ipcRenderer.send(apiName.symphonyApi, {
+  ): Promise<UUID> {
+    const uuid: UUID = await local.ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.openfinRegisterIntentHandler,
       intentName,
     });
+    if (local.intentsCallbacks.has(intentName)) {
+      local.intentsCallbacks.get(intentName)?.set(uuid, intentHandler);
+    } else {
+      const innerMap = new Map();
+      innerMap.set(uuid, intentHandler);
+      local.intentsCallbacks.set(intentName, innerMap);
+    }
+    return uuid;
   }
 
   /**
-   * Unregisters a handler based on a given intent name
-   * @param intentName
+   * Unregisters a handler based on a given intent handler callback id
+   * @param UUID
    */
-  public openfinUnregisterIntentHandler(intentName: string): void {
-    local.ipcRenderer.send(apiName.symphonyApi, {
+  public async openfinUnregisterIntentHandler(callbackId: UUID): Promise<void> {
+    for (const innerMap of local.intentsCallbacks.values()) {
+      if (innerMap.has(callbackId)) {
+        innerMap.delete(callbackId);
+        break;
+      }
+    }
+
+    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.openfinUnregisterIntentHandler,
-      intentName,
+      uuid: callbackId,
     });
+    return response;
   }
 
   /**
@@ -1037,22 +1090,36 @@ export class SSFApi {
    * @param contextGroupId
    * @param target
    */
-  public openfinJoinContextGroup(contextGroupId: string, target?: any) {
-    local.ipcRenderer.send(apiName.symphonyApi, {
+  public async openfinJoinContextGroup(contextGroupId: string, target?: any) {
+    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.openfinJoinContextGroup,
       contextGroupId,
       target,
     });
+    return response;
+  }
+
+  /**
+   * Allows to join or create an Openfin session context group
+   * @param contextGroupId
+   */
+  public async openfinJoinSessionContextGroup(contextGroupId: string) {
+    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
+      cmd: apiCmds.openfinJoinSessionContextGroup,
+      contextGroupId,
+    });
+    return response;
   }
 
   /**
    * Returns registered clients in a given context group
    */
-  public openfinGetAllClientsInContextGroup(contextGroupId: string) {
-    return local.ipcRenderer.invoke(apiName.symphonyApi, {
+  public async openfinGetAllClientsInContextGroup(contextGroupId: string) {
+    const clients = await local.ipcRenderer.invoke(apiName.symphonyApi, {
       cmd: apiCmds.openfinGetAllClientsInContextGroup,
       contextGroupId,
     });
+    return clients;
   }
 
   /**
@@ -1393,9 +1460,15 @@ local.ipcRenderer.on(
   },
 );
 
-local.ipcRenderer.on('intent-received', (_event: Event, intentName: string) => {
-  if (typeof intentName === 'string' && local.intentsCallbacks[intentName]) {
-    local.intentsCallbacks[intentName]();
+local.ipcRenderer.on('intent-received', (_event: Event, intent: any) => {
+  if (
+    typeof intent.name === 'string' &&
+    local.intentsCallbacks.has(intent.name)
+  ) {
+    const uuidCallbacks = local.intentsCallbacks.get(intent.name);
+    uuidCallbacks?.forEach((callbacks, _uuid) => {
+      callbacks(intent.context);
+    });
   }
 });
 
@@ -1407,7 +1480,7 @@ const sanitize = (): void => {
       windowName: window.name,
     });
   }
-  local.intentsCallbacks = {};
+  local.intentsCallbacks = new Map();
 };
 
 // listens for the online/offline events and updates the main process

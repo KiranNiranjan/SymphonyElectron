@@ -91,8 +91,12 @@ export enum apiCmds {
   openfinGetConnectionStatus = 'openfin-get-connection-status',
   openfinGetInfo = 'openfin-get-info',
   openfinJoinContextGroup = 'openfin-join-context-group',
+  openfinJoinSessionContextGroup = 'openfin-join-session-context-group',
   openfinGetContextGroups = 'openfin-get-context-groups',
   openfinGetAllClientsInContextGroup = 'openfin-get-all-clients-in-context-group',
+  openfinFireIntentForContext = 'openfin-fire-intent-for-context',
+  openfinRemoveFromContextGroup = 'openfin-remove-from-context-group',
+  openfinGetClientInfo = 'openfin-get-client-info',
 }
 
 export enum apiName {
@@ -103,7 +107,7 @@ export enum apiName {
   snippingToolWindowName = 'snipping-tool-window',
 }
 
-export const NOTIFICATION_WINDOW_TITLE = 'Notification - Symphony';
+export const NOTIFICATION_WINDOW_TITLE = 'Notification - Symphony Messaging';
 
 enum ScreenTypes {
   Screen = 'screen',
