@@ -221,6 +221,7 @@ export const createComponentWindow = (
   ) as ICustomBrowserWindow;
   if (shouldFocus) {
     browserWindow.once('ready-to-show', () => {
+      logger.info('window-utils: screen-snippet: ready to show');
       if (!browserWindow || !windowExists(browserWindow)) {
         return;
       }

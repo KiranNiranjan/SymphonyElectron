@@ -1432,6 +1432,7 @@ export class WindowHandler {
         alwaysOnTop: this.hideOnCapture,
         resizable: false,
         fullscreenable: false,
+        show: true,
       },
       {
         devTools: true,
@@ -1568,6 +1569,11 @@ export class WindowHandler {
         snippetImageHeight: scaledImageDimensions.height,
         snippetImageWidth: scaledImageDimensions.width,
       };
+      logger.info(
+        'window-handler: screen-snippet: did-finish-load',
+        this.snippingToolWindow?.isVisible(),
+      );
+      this.snippingToolWindow?.show();
       if (this.snippingToolWindow && windowExists(this.snippingToolWindow)) {
         this.snippingToolWindow.webContents.toggleDevTools();
         this.snippingToolWindow.webContents.setZoomFactor(1);
@@ -1590,6 +1596,17 @@ export class WindowHandler {
         logger.info(
           'window-handler: Actual window size: ' + JSON.stringify(windowBounds),
         );
+        logger.info(
+          'window-handler: screen-snippet: window exists and is visible?',
+          this.snippingToolWindow?.isVisible(),
+        );
+        setTimeout(() => {
+          logger.info(
+            'window-handler: screen-snippet: window exists after 0.5sec and is visible?',
+            this.snippingToolWindow?.isVisible(),
+          );
+          this.snippingToolWindow?.show();
+        }, 500);
         if (
           windowBounds.height !== toolHeight ||
           windowBounds.width !== toolWidth
