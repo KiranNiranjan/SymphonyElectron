@@ -96,9 +96,6 @@ class ScreenSnippet {
     const currentWindowName = (currentWindowObj as ICustomBrowserWindow)
       ?.winName;
     const mainWindow = windowHandler.getMainWindow();
-    windowHandler.closeSnippingToolWindow(
-      `snippet-close-reason: on capture before creating new instance ${randomNumber}`,
-    );
     if (hideOnCapture) {
       this.storeWindowsState(mainWindow, currentWindowObj);
       winStore.hideWindowsOnCapturing(hideOnCapture);
