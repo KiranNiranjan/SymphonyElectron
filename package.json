@@ -152,7 +152,7 @@
     "linux": {
       "category": "Network;InstantMessaging;Chat",
       "desktop": {
-        "StartupWMClass": "Symphony"
+        "Name": "Symphony"
       },
       "target": [
         "deb",
