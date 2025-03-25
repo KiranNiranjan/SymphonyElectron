@@ -3,6 +3,7 @@ import { app, BrowserWindow, screen } from 'electron';
 import { callNotification } from '../app/notifications/call-notification';
 import { windowExists } from '../app/window-utils';
 import { isLinux, isMac } from '../common/env';
+import { logger } from '../common/logger';
 
 interface ISettings {
   startCorner: startCorner;
@@ -46,9 +47,9 @@ export default class NotificationHandler {
 
   constructor(opts: ISettings) {
     this.settings = opts as ISettings;
-    this.setupNotificationPosition();
 
     app.once('ready', () => {
+      this.setupNotificationPosition();
       screen.on('display-added', this.eventHandlers.onSetup);
       screen.on('display-removed', this.eventHandlers.onSetup);
       screen.on('display-metrics-changed', this.eventHandlers.onSetup);
@@ -87,10 +88,19 @@ export default class NotificationHandler {
       return;
     }
 
+    logger.info(
+      'notification-handler: setting up notification position for',
+      this.settings,
+    );
     const screens = screen.getAllDisplays();
+    logger.info('notification-handler: users screens', screens);
     if (screens && screens.length >= 0) {
       this.externalDisplay = screens.find(
         (screen) => screen.id.toString() === this.settings.displayId,
+      );
+      logger.info(
+        'notification-handler: external display',
+        this.externalDisplay,
       );
     }
 
