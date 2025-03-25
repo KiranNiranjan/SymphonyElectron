@@ -1904,7 +1904,7 @@ export class WindowHandler {
         this.notificationSettingsWindow.close();
       }
       // Update latest notification settings from config
-      notification.updateNotificationSettings();
+      notification.updateNotificationSettings({ display, position });
     });
 
     this.notificationSettingsWindow.once('closed', () => {

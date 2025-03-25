@@ -446,12 +446,19 @@ class Notification extends NotificationHandler {
   /**
    * Update latest notification settings from config
    */
-  public updateNotificationSettings(): void {
+  public updateNotificationSettings(settings?: {
+    display: string;
+    position: startCorner;
+  }): void {
+    logger.info(
+      'notification: updating notification settings! with settings',
+      settings,
+    );
     const { display, position } = config.getConfigFields([
       'notificationSettings',
     ]).notificationSettings;
-    this.settings.displayId = display;
-    this.settings.startCorner = position as startCorner;
+    this.settings.displayId = settings?.display || display;
+    this.settings.startCorner = settings?.position || (position as startCorner);
 
     // recalculate notification position
     this.setupNotificationPosition();
