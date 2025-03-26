@@ -151,9 +151,6 @@
     },
     "linux": {
       "category": "Network;InstantMessaging;Chat",
-      "desktop": {
-        "Name": "Symphony"
-      },
       "target": [
         "deb",
         "rpm"
