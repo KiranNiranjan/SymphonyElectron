@@ -93,8 +93,20 @@
       "gatekeeperAssess": true,
       "hardenedRuntime": true,
       "target": [
-        "dir",
-        "zip"
+        {
+          "target": "dir",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ]
     },
     "win": {
