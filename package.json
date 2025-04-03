@@ -33,7 +33,7 @@
     "start": "run-s compile browserify && cross-env ELECTRON_DEV=true electron .",
     "test": "run-s lint test:unit",
     "test:unit": "cross-env ELECTRON_FORCE_IS_PACKAGED=false ELECTRON_QA=true jest --config jest-config.json --runInBand --detectOpenHandles",
-    "unpacked-mac": "npm run prebuild && npm run test && ./node_modules/.bin/electron-builder build --mac",
+    "unpacked-mac": "npm run prebuild && npm run test && ./node_modules/.bin/electron-builder build --mac --x64",
     "unpacked-win": "npm run prebuild && npm run test && node_modules\\.bin\\electron-builder build --win --x64"
   },
   "build": {
@@ -185,7 +185,7 @@
     "cheerio": "v1.0.0-rc.12",
     "cross-env": "7.0.3",
     "del": "3.0.0",
-    "electron": "34.4.1",
+    "electron": "35.1.2",
     "electron-builder": "^26.0.12",
     "electron-devtools-installer": "^3.2.0",
     "electron-icon-maker": "0.0.5",
