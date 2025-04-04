@@ -1626,7 +1626,7 @@ export class WindowHandler {
         fullscreenable: false,
       },
       {
-        devTools: isDevEnv,
+        devTools: true,
       },
     );
 

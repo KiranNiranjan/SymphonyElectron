@@ -143,29 +143,29 @@ export const preventWindowNavigation = (
       return;
     }
 
-    if (!isPopOutWindow) {
-      const isValid = whitelistHandler.isWhitelisted(winUrl);
-      if (!isValid) {
-        e.preventDefault();
-        if (browserWindow && windowExists(browserWindow)) {
-          const response = await dialog.showMessageBox(browserWindow, {
-            type: 'warning',
-            buttons: ['OK'],
-            title: i18n.t('Not Allowed')(),
-            message: `${i18n.t(
-              `Sorry, you are not allowed to access this website`,
-            )()} (${winUrl}), ${i18n.t(
-              'please contact your administrator for more details',
-            )()}`,
-          });
-          logger.info(
-            `window-utils: received ${response} response from dialog`,
-          );
-        }
-      }
-
-      windowHandler.closeScreenSharingIndicator();
-    }
+    // if (!isPopOutWindow) {
+    //   const isValid = whitelistHandler.isWhitelisted(winUrl);
+    //   if (!isValid) {
+    //     e.preventDefault();
+    //     if (browserWindow && windowExists(browserWindow)) {
+    //       const response = await dialog.showMessageBox(browserWindow, {
+    //         type: 'warning',
+    //         buttons: ['OK'],
+    //         title: i18n.t('Not Allowed')(),
+    //         message: `${i18n.t(
+    //           `Sorry, you are not allowed to access this website`,
+    //         )()} (${winUrl}), ${i18n.t(
+    //           'please contact your administrator for more details',
+    //         )()}`,
+    //       });
+    //       logger.info(
+    //         `window-utils: received ${response} response from dialog`,
+    //       );
+    //     }
+    //   }
+    //
+    //   windowHandler.closeScreenSharingIndicator();
+    // }
 
     if (
       browserWindow.isDestroyed() ||
