@@ -45,7 +45,7 @@
 									<key>GID</key>
 									<integer>80</integer>
 									<key>PATH</key>
-									<string>../../dist/mac/Symphony.app</string>
+									<string>../../dist/mac-arm64/Symphony.app</string>
 									<key>PATH_TYPE</key>
 									<integer>3</integer>
 									<key>PERMISSIONS</key>
