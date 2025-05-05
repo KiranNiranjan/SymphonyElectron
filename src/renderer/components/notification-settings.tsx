@@ -263,7 +263,7 @@ export default class NotificationSettings extends React.Component<{}, IState> {
       const screenId = screen.id;
       return (
         <option id={String(screenId)} key={screenId} value={screenId}>
-          {index + 1}/{screens.length} ({screen.label})
+          {index + 1}/{screens.length}
         </option>
       );
     });
