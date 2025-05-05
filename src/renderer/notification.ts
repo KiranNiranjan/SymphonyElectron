@@ -459,6 +459,11 @@ class Notification extends NotificationHandler {
     ]).notificationSettings;
     this.settings.displayId = settings?.display || display;
     this.settings.startCorner = settings?.position || (position as startCorner);
+    this.updateHandlerSettings('displayId', settings?.display || display);
+    this.updateHandlerSettings(
+      'startCorner',
+      settings?.position || (position as startCorner),
+    );
 
     // recalculate notification position
     this.setupNotificationPosition();

@@ -427,6 +427,19 @@ export default class NotificationHandler {
   }
 
   /**
+   * Updates the notification handler settings.
+   */
+  protected updateHandlerSettings<K extends keyof ISettings>(
+    key: K,
+    value: ISettings[K],
+  ) {
+    this.settings = {
+      ...this.settings,
+      [key]: value,
+    };
+  }
+
+  /**
    * Get startPos, calc step size and start animationInterval
    * @param notificationWindow
    * @param newY
