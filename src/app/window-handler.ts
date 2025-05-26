@@ -1938,6 +1938,7 @@ export class WindowHandler {
           frame: false,
           focusable: true,
           transparent: true,
+          backgroundMaterial: 'none',
           skipTaskbar: true,
           autoHideMenuBar: true,
           resizable: false,
