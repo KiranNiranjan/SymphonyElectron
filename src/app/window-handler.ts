@@ -1942,6 +1942,7 @@ export class WindowHandler {
           skipTaskbar: true,
           autoHideMenuBar: true,
           resizable: false,
+          hasShadow: false,
           alwaysOnTop: true,
           fullscreenable: false,
           titleBarStyle: 'customButtonsOnHover',
