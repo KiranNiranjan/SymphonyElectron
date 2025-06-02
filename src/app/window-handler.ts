@@ -1932,14 +1932,15 @@ export class WindowHandler {
       ...this.getWindowOpts(
         {
           width: 592,
-          height: 40,
+          height: 48,
           show: false,
           modal: false,
           frame: false,
           focusable: true,
           transparent: true,
           backgroundMaterial: 'none',
-          backgroundColor: 'transparent',
+          backgroundColor: '#00FFFFFF',
+          roundedCorners: true,
           type: 'toolbar',
           skipTaskbar: true,
           autoHideMenuBar: true,
