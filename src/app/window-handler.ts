@@ -1932,7 +1932,7 @@ export class WindowHandler {
       ...this.getWindowOpts(
         {
           width: 592,
-          height: 60,
+          height: 40,
           show: false,
           modal: false,
           frame: false,
