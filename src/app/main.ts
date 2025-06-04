@@ -33,6 +33,11 @@ logger.info(`App started with the args ${JSON.stringify(process.argv)}`);
 const allowMultiInstance: string | boolean =
   getCommandLineArgs(process.argv, '--multiInstance', true) || isDevEnv;
 let isAppAlreadyOpen: boolean = false;
+const skipAutoupdate: string | null = getCommandLineArgs(
+  process.argv,
+  '--skipAutoupdate',
+  true,
+);
 
 // Setting the env path child_process issue https://github.com/electron/electron/issues/7688
 (async () => {
@@ -110,7 +115,7 @@ const startApplication = async () => {
   await config.updateUserConfigOnStart();
   setSessionProperties();
   displayMediaRequestHandler.init();
-  if (!isDevEnv) {
+  if (!isDevEnv && !skipAutoupdate) {
     await autoUpdate.init();
   }
   await windowHandler.createApplication();

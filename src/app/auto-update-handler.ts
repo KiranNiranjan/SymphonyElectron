@@ -54,6 +54,7 @@ export class AutoUpdate {
 
   public init = async () => {
     const opts = await this.getGenericServerOptions();
+    logger.info('auto-update-handler: initializing auto updater with', opts);
     if (isMac) {
       this.autoUpdater = new MacUpdater(opts);
     } else if (isWindowsOS) {
@@ -119,6 +120,7 @@ export class AutoUpdate {
    * Checks for updates and performs a forced installation if the latest version is already downloaded.
    */
   public performForcedAutoUpdate = async () => {
+    logger.info('auto-update-handler: initializing ForcedAutoUpdate');
     const cacheDir = this.getCacheDir();
     if (!cacheDir) {
       logger.info(
