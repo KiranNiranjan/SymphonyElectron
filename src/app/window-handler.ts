@@ -1933,7 +1933,7 @@ export class WindowHandler {
           modal: false,
           frame: false,
           focusable: true,
-          backgroundMaterial: 'none',
+          backgroundMaterial: 'acrylic',
           backgroundColor: '#00000000',
           roundedCorners: true,
           type: 'toolbar',
