@@ -131,6 +131,15 @@ IF %errorlevel% neq 0 (
 	exit /b -1
 )
 
+set SYMPHONY_SYMVER_APPX_PATH=%WORKSPACE%\dist\Symphony-%SYMVER%-win-x64.appx
+echo "Signing Symphony-SYMVER-win-x64.appx file.."
+smctl sign  --tool signtool --fingerprint %DIGICERT_FINGERPRINT% --input %SYMPHONY_SYMVER_APPX_PATH% --file-name
+smctl sign verify --input %SYMPHONY_SYMVER_APPX_PATH%
+IF %errorlevel% neq 0 (
+	echo "Signing failed"
+	exit /b -1
+)
+
 
 node ..\..\scripts\windows_update_checksum.js "..\..\dist\Symphony-%SYMVER%-win-x64.exe" "..\..\dist\latest.yml"
 

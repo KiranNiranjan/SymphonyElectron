@@ -109,7 +109,8 @@
       "icon": "images/icon.ico",
       "target": [
         "dir",
-        "nsis"
+        "nsis",
+        "appx"
       ],
       "files": [
         "**/*",
