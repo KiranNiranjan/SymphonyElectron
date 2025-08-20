@@ -84,14 +84,25 @@ export default class NotificationHandler {
   public setupNotificationPosition() {
     // This feature only applies to windows & mac
     if (!app.isReady()) {
+      app.once('ready', this.eventHandlers.onSetup);
       return;
     }
 
     const screens = screen.getAllDisplays();
-    if (screens && screens.length >= 0) {
-      this.externalDisplay = screens.find(
-        (screen) => screen.id.toString() === this.settings.displayId,
+    // Only update display mapping when we actually have displays
+    if (screens && screens.length > 0) {
+      const found = screens.find(
+        (d) => d.id.toString() === this.settings.displayId,
       );
+      if (found) {
+        this.externalDisplay = found;
+      } else if (
+        this.externalDisplay &&
+        !screens.some((d) => d.id === this.externalDisplay!.id)
+      ) {
+        // Selected display no longer available; clear cached externalDisplay
+        this.externalDisplay = undefined;
+      }
     }
 
     const display = this.externalDisplay || screen.getPrimaryDisplay();
