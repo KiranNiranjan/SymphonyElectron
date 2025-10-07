@@ -452,6 +452,11 @@ class Notification extends NotificationHandler {
     ]).notificationSettings;
     this.settings.displayId = display;
     this.settings.startCorner = position as startCorner;
+    logger.info(
+      '###### notifications: displayId & Position from config',
+      display,
+      position,
+    );
 
     // recalculate notification position
     this.setupNotificationPosition();
@@ -578,7 +583,15 @@ class Notification extends NotificationHandler {
    * @param data {INotificationData}
    */
   private renderNotification(notificationWindow, data): void {
-    this.calcNextInsertPos(this.activeNotifications);
+    const nextInsertPos = this.calcNextInsertPos(this.activeNotifications);
+    logger.info(
+      'NNNNNNNN notifications: from calcNextInsertPos',
+      nextInsertPos,
+    );
+    logger.info(
+      'NNNNNNNN notifications: renderNotification setting notification position',
+      this.nextInsertPos,
+    );
     this.setWindowPosition(
       notificationWindow,
       this.nextInsertPos.x,

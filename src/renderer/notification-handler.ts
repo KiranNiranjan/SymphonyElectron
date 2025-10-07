@@ -3,6 +3,7 @@ import { app, BrowserWindow, screen } from 'electron';
 import { callNotification } from '../app/notifications/call-notification';
 import { windowExists } from '../app/window-utils';
 import { isLinux, isMac } from '../common/env';
+import { logger } from '../common/logger';
 
 interface ISettings {
   startCorner: startCorner;
@@ -94,7 +95,25 @@ export default class NotificationHandler {
       );
     }
 
+    logger.info(
+      '**** notification-handler: this.settings.displayId from class',
+      this.settings.displayId,
+    );
+    logger.info(
+      '**** notification-handler: external display found',
+      this.externalDisplay,
+    );
+
     const display = this.externalDisplay || screen.getPrimaryDisplay();
+    logger.info(
+      '**** notification-handler: notification will appear on Display ID',
+      display.id,
+    );
+    logger.info(
+      '**** notification-handler: notification will appear on Display Name',
+      display.label,
+    );
+    logger.info('**** notification-handler: ', display);
     this.settings.corner.x = display.workArea.x;
     this.settings.corner.y = display.workArea.y;
     this.callNotificationSettings.x = display.workArea.x;
@@ -242,7 +261,7 @@ export default class NotificationHandler {
    * @param {BrowserWindow[]} activeNotifications - An array containing references to all active notification windows.
    * @returns {void}
    */
-  public calcNextInsertPos(activeNotifications: BrowserWindow[]): void {
+  public calcNextInsertPos(activeNotifications: BrowserWindow[]): ICorner {
     let nextNotificationY: number = 0;
     activeNotifications.forEach((notification) => {
       if (notification && windowExists(notification)) {
@@ -274,6 +293,7 @@ export default class NotificationHandler {
           break;
       }
     }
+    return this.nextInsertPos;
   }
 
   /**
@@ -489,6 +509,24 @@ export default class NotificationHandler {
       x: firstPosX,
       y: firstPosY,
     };
+
+    logger.info(
+      '$$$$$$ Notification-handler: settings start corner',
+      this.settings.startCorner,
+    );
+    logger.info(
+      '$$$$$$ Notification-handler: settings first Pos',
+      this.settings.firstPos,
+    );
+    logger.info(
+      '$$$$$$ notification-handler: display matching bounds name',
+      screen.getDisplayNearestPoint(this.settings.firstPos)?.label,
+    );
+    logger.info('$$$$$$');
+    logger.info(
+      '$$$$$$ notification-handler: display matching bounds',
+      screen.getDisplayNearestPoint(this.settings.firstPos),
+    );
 
     // Set nextInsertPos
     this.nextInsertPos.x = this.settings.firstPos.x;

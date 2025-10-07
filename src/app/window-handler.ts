@@ -1748,6 +1748,11 @@ export class WindowHandler {
 
     ipcMain.once('notification-settings-update', async (_event, args) => {
       const { display, position } = args;
+      logger.info(
+        'wwwwwwwww Window-handler: notification settings updated: ',
+        display,
+        position,
+      );
       try {
         await config.updateUserConfig({
           notificationSettings: { display, position },

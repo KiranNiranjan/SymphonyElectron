@@ -11,7 +11,7 @@ type startCorner = 'upper-right' | 'upper-left' | 'lower-right' | 'lower-left';
 interface IState {
   position: startCorner;
   screens: Electron.Display[];
-  display: number;
+  display: string;
   theme: Themes;
 }
 
@@ -29,7 +29,7 @@ export default class NotificationSettings extends React.Component<{}, IState> {
     this.state = {
       position: 'upper-right',
       screens: [],
-      display: 1,
+      display: '',
       theme: Themes.LIGHT,
     };
     this.updateState = this.updateState.bind(this);
