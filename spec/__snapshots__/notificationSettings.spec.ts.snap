@@ -30,7 +30,7 @@ exports[`Notification Settings should mount, unmount and render component should
         id="screen-selector"
         onChange={[Function]}
         title="Position"
-        value={1}
+        value=""
       />
     </div>
     <label
