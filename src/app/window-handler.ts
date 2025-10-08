@@ -1732,7 +1732,14 @@ export class WindowHandler {
       ) {
         let screens: Electron.Display[] = [];
         if (app.isReady()) {
-          screens = screen.getAllDisplays();
+          // Sort displays left-to-right; when aligned vertically (same x), order bottom-to-top for better alignment with Windows numbering
+          screens = screen
+            .getAllDisplays()
+            .sort((a, b) =>
+              a.bounds.x === b.bounds.x
+                ? b.bounds.y - a.bounds.y
+                : a.bounds.x - b.bounds.x,
+            );
         }
         const { position, display } = config.getConfigFields([
           'notificationSettings',
