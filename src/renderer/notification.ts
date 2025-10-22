@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, screen } from 'electron';
 
 import { analytics } from '../app/bi/analytics-handler';
 import {
@@ -458,9 +458,45 @@ class Notification extends NotificationHandler {
       position,
     );
 
+    let externalDisplay: Electron.Display | undefined;
+    const screens = screen.getAllDisplays();
+    if (screens && screens.length >= 0) {
+      externalDisplay = screens.find(
+        (screen) => screen.id.toString() === this.settings.displayId,
+      );
+    }
+    if (externalDisplay) {
+      const browserWindows = new BrowserWindow({
+        show: true,
+        width: 400,
+        height: 200,
+      });
+      browserWindows.setPosition(
+        externalDisplay.workArea.x,
+        externalDisplay.workArea.y,
+      );
+      browserWindows.setTitle(externalDisplay.label);
+    }
+
     // recalculate notification position
     this.setupNotificationPosition();
     this.moveNotification(0, this.activeNotifications, 0, true);
+
+    if (externalDisplay) {
+      const browserWindows = new BrowserWindow({
+        show: true,
+        width: 300,
+        height: 150,
+      });
+      browserWindows.setPosition(
+        externalDisplay.workArea.x,
+        externalDisplay.workArea.y,
+      );
+      browserWindows.setBounds(this.settings.corner);
+      browserWindows.setTitle(
+        `Position - x:${this.settings.corner.x} y:${this.settings.corner.y}`,
+      );
+    }
   }
 
   /**
