@@ -291,7 +291,7 @@ export const CallType = { IM: 'IM', ROOM: 'ROOM', OTHER: 'OTHER' };
 export interface INotificationData {
   isPhone?: boolean;
   notificationType?: string;
-  id: number;
+  id: string;
   title: string;
   body: string;
   image: string;
