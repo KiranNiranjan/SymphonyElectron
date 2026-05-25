@@ -9,11 +9,11 @@ import { windowHandler } from '../window-handler';
 import { ElectronNotification } from './electron-notification';
 
 class NotificationHelper {
-  private electronNotification: Map<number, ElectronNotification>;
+  private electronNotification: Map<string, ElectronNotification>;
   private activeElectronNotification: Map<string, ElectronNotification>;
 
   constructor() {
-    this.electronNotification = new Map<number, ElectronNotification>();
+    this.electronNotification = new Map<string, ElectronNotification>();
     this.activeElectronNotification = new Map<string, ElectronNotification>();
   }
 
@@ -56,9 +56,9 @@ class NotificationHelper {
   /**
    * Closes a specific notification by id
    *
-   * @param id {number} - unique id assigned to a specific notification
+   * @param id {string} - unique id assigned to a specific notification
    */
-  public async closeNotification(id: number) {
+  public async closeNotification(id: string) {
     if (this.electronNotification.has(id)) {
       const electronNotification = this.electronNotification.get(id);
       if (electronNotification) {

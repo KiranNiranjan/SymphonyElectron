@@ -33,7 +33,7 @@ interface ICustomBrowserWindow extends Electron.BrowserWindow {
   winName: string;
   notificationData: INotificationData;
   displayTimer: NodeJS.Timeout;
-  clientId: number;
+  clientId: string;
 }
 
 type startCorner = 'upper-right' | 'upper-left' | 'lower-right' | 'lower-left';
@@ -69,10 +69,10 @@ class Notification extends NotificationHandler {
     onCleanUpInactiveNotification: () => this.cleanUpInactiveNotification(),
     onCreateNotificationWindow: (data: INotificationData) =>
       this.createNotificationWindow(data),
-    onMouseOver: (_event, windowId) => this.onMouseOver(windowId),
-    onMouseLeave: (_event, windowId, isInputHidden) =>
-      this.onMouseLeave(windowId, isInputHidden),
-    onShowReply: (_event, windowId) => this.onShowReply(windowId),
+    onMouseOver: (_event, clientId: string) => this.onMouseOver(clientId),
+    onMouseLeave: (_event, clientId: string, isInputHidden: boolean) =>
+      this.onMouseLeave(clientId, isInputHidden),
+    onShowReply: (_event, clientId: string) => this.onShowReply(clientId),
   };
   private activeNotifications: ICustomBrowserWindow[] = [];
   private inactiveWindows: ICustomBrowserWindow[] = [];
@@ -83,8 +83,8 @@ class Notification extends NotificationHandler {
 
   constructor(opts) {
     super(opts);
-    ipcMain.on('close-notification', (_event, windowId) => {
-      const browserWindow = this.getNotificationWindow(windowId);
+    ipcMain.on('close-notification', (_event, clientId: string) => {
+      const browserWindow = this.getNotificationWindow(clientId);
       if (
         browserWindow &&
         windowExists(browserWindow) &&
@@ -98,20 +98,23 @@ class Notification extends NotificationHandler {
         });
       }
       // removes the event listeners on the client side
-      this.notificationClosed(windowId);
-      this.hideNotification(windowId);
+      this.notificationClosed(clientId);
+      this.hideNotification(clientId);
     });
 
-    ipcMain.on('notification-clicked', (_event, windowId) => {
-      this.notificationClicked(windowId);
+    ipcMain.on('notification-clicked', (_event, clientId: string) => {
+      this.notificationClicked(clientId);
     });
     ipcMain.on('notification-mouseenter', this.funcHandlers.onMouseOver);
     ipcMain.on('notification-mouseleave', this.funcHandlers.onMouseLeave);
-    ipcMain.on('notification-on-reply', (_event, windowId, replyText) => {
-      this.onNotificationReply(windowId, replyText);
-    });
-    ipcMain.on('notification-on-ignore', (_event, windowId) => {
-      this.onNotificationIgnore(windowId);
+    ipcMain.on(
+      'notification-on-reply',
+      (_event, clientId: string, replyText: string) => {
+        this.onNotificationReply(clientId, replyText);
+      },
+    );
+    ipcMain.on('notification-on-ignore', (_event, clientId: string) => {
+      this.onNotificationIgnore(clientId);
     });
     ipcMain.on('show-reply', this.funcHandlers.onShowReply);
     // Update latest notification settings from config
@@ -311,7 +314,7 @@ class Notification extends NotificationHandler {
    *
    * @param clientId
    */
-  public async hideNotification(clientId: number): Promise<void> {
+  public async hideNotification(clientId: string): Promise<void> {
     const browserWindow = this.getNotificationWindow(clientId);
     if (browserWindow && windowExists(browserWindow)) {
       const [, height] = browserWindow.getSize();
@@ -349,9 +352,9 @@ class Notification extends NotificationHandler {
   /**
    * Handles notification click
    *
-   * @param clientId {number}
+   * @param clientId {string}
    */
-  public notificationClicked(clientId): void {
+  public notificationClicked(clientId: string): void {
     const browserWindow = this.getNotificationWindow(clientId);
     if (
       browserWindow &&
@@ -372,9 +375,9 @@ class Notification extends NotificationHandler {
    * Handles notification close which updates client
    * to remove event listeners
    *
-   * @param clientId {number}
+   * @param clientId {string}
    */
-  public notificationClosed(clientId): void {
+  public notificationClosed(clientId: string): void {
     const browserWindow = this.getNotificationWindow(clientId);
     if (
       browserWindow &&
@@ -391,10 +394,10 @@ class Notification extends NotificationHandler {
 
   /**
    * Handles notification reply action which updates client
-   * @param clientId {number}
+   * @param clientId {string}
    * @param replyText {string}
    */
-  public onNotificationReply(clientId: number, replyText: string): void {
+  public onNotificationReply(clientId: string, replyText: string): void {
     const browserWindow = this.getNotificationWindow(clientId);
     if (
       browserWindow &&
@@ -413,9 +416,9 @@ class Notification extends NotificationHandler {
 
   /**
    * Handles notification ignore action
-   * @param clientId {number}
+   * @param clientId {string}
    */
-  public onNotificationIgnore(clientId: number): void {
+  public onNotificationIgnore(clientId: string): void {
     const browserWindow = this.getNotificationWindow(clientId);
     if (
       browserWindow &&
@@ -434,10 +437,10 @@ class Notification extends NotificationHandler {
   /**
    * Returns the notification based on the client id
    *
-   * @param clientId {number}
+   * @param clientId {string}
    */
   public getNotificationWindow(
-    clientId: number,
+    clientId: string,
   ): ICustomBrowserWindow | undefined {
     return this.activeNotifications.find(
       (notification) => notification.clientId === clientId,
@@ -595,10 +598,10 @@ class Notification extends NotificationHandler {
   /**
    * Clears the timer for a specific notification window
    *
-   * @param windowId {number} - Id associated with the window
+   * @param clientId {string} - Id associated with the notification
    */
-  private onMouseOver(windowId: number): void {
-    const notificationWindow = this.getNotificationWindow(windowId);
+  private onMouseOver(clientId: string): void {
+    const notificationWindow = this.getNotificationWindow(clientId);
     if (!notificationWindow || !windowExists(notificationWindow)) {
       return;
     }
@@ -608,11 +611,11 @@ class Notification extends NotificationHandler {
   /**
    * Start a new timer to close the notification
    *
-   * @param windowId
+   * @param clientId
    * @param isInputHidden {boolean} - whether the inline reply is hidden
    */
-  private onMouseLeave(windowId: number, isInputHidden: boolean): void {
-    const notificationWindow = this.getNotificationWindow(windowId);
+  private onMouseLeave(clientId: string, isInputHidden: boolean): void {
+    const notificationWindow = this.getNotificationWindow(clientId);
     if (!notificationWindow || !windowExists(notificationWindow)) {
       return;
     }
@@ -644,11 +647,11 @@ class Notification extends NotificationHandler {
    * Increase the notification height to
    * make space for reply input element
    *
-   * @param windowId
+   * @param clientId
    * @private
    */
-  private onShowReply(windowId: number): void {
-    const notificationWindow = this.getNotificationWindow(windowId);
+  private onShowReply(clientId: string): void {
+    const notificationWindow = this.getNotificationWindow(clientId);
     if (!notificationWindow || !windowExists(notificationWindow)) {
       return;
     }

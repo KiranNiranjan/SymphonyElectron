@@ -350,7 +350,8 @@ ipcMain.on(
         break;
       case apiCmds.closeNotification:
         if (typeof arg.notificationId === 'number') {
-          await notificationHelper.closeNotification(arg.notificationId);
+          const notificationId: string = arg.notificationId.toString();
+          await notificationHelper.closeNotification(notificationId);
         }
         break;
       case apiCmds.showCallNotification:
