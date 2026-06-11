@@ -1,7 +1,6 @@
 import {
   BrowserWindow,
   clipboard,
-  desktopCapturer,
   dialog,
   ipcMain,
   shell,
@@ -23,9 +22,6 @@ import { whitelistHandler } from '../common/whitelist-handler';
 import { activityDetection } from './activity-detection';
 import appStateHandler from './app-state-handler';
 import { analytics } from './bi/analytics-handler';
-import { closeC9Pipe, connectC9Pipe, writeC9Pipe } from './c9-pipe-handler';
-import { loadC9Shell, terminateC9Shell } from './c9-shell-handler';
-import { getCitrixMediaRedirectionStatus } from './citrix-handler';
 import { CloudConfigDataTypes, config, ICloudConfig } from './config-handler';
 import { downloadHandler } from './download-handler';
 import { getContentWindowHandle } from './hwnd-handler';
@@ -39,7 +35,11 @@ import {
   registerLogRetriever,
 } from './reports-handler';
 import { screenSnippet } from './screen-snippet-handler';
-import { activate, handleKeyPress } from './window-actions';
+import {
+  activate,
+  handleKeyPress,
+  unMaximizeMainWindow,
+} from './window-actions';
 import { ICustomBrowserWindow, windowHandler } from './window-handler';
 import {
   downloadManagerAction,
@@ -53,12 +53,16 @@ import {
   updateFeaturesForCloudConfig,
   updateLocale,
   windowExists,
+  ZOOM_FACTOR_CHANGE,
 } from './window-utils';
 
 import { getCommandLineArgs } from '../common/utils';
 import callNotificationHelper from '../renderer/call-notification-helper';
 import { autoUpdate, AutoUpdateTrigger } from './auto-update-handler';
 import { SDAUserSessionActionTypes } from './bi/interface';
+import { displayMediaRequestHandler } from './display-media-request-handler';
+import { miniViewHandler } from './mini-view-handler';
+import { openfinHandler } from './openfin-handler';
 import { presenceStatus } from './presence-status-handler';
 import { appStats } from './stats';
 import { presenceStatusStore, sdaMenuStore } from './stores/index';
@@ -101,6 +105,8 @@ let loginUrl = '';
 let formattedPodUrl = '';
 let credentialsPromise;
 const credentialsPromiseRefHolder: { [key: string]: any } = {};
+const BROWSER_LOGIN_RETRY = 15 * 1000; // 15sec
+const BROWSER_LOGIN_ABORT_TIMEOUT = 10 * 1000; // 10sec
 
 /**
  * Handle API related ipc messages from renderers. Only messages from windows
@@ -211,15 +217,6 @@ ipcMain.on(
           }
         }
         break;
-      case apiCmds.openScreenPickerWindow:
-        if (Array.isArray(arg.sources) && typeof arg.id === 'number') {
-          windowHandler.createScreenPickerWindow(
-            event.sender,
-            arg.sources,
-            arg.id,
-          );
-        }
-        break;
       case apiCmds.popupMenu: {
         const browserWin = BrowserWindow.fromWebContents(
           event.sender,
@@ -299,7 +296,7 @@ ipcMain.on(
           memoryMonitor.setMeetingStatus(arg.isInMeeting);
           appStateHandler.preventDisplaySleep(arg.isInMeeting);
           if (!arg.isInMeeting) {
-            windowHandler.closeScreenPickerWindow();
+            displayMediaRequestHandler.closeScreenPickerWindow();
             windowHandler.closeScreenSharingIndicator();
           }
         }
@@ -371,30 +368,32 @@ ipcMain.on(
       case apiCmds.closeAllWrapperWindows:
         windowHandler.closeAllWindows();
         const main = windowHandler.getMainWindow();
-        terminateC9Shell();
 
         main?.setThumbarButtons([]);
         presenceStatus.onSignOut();
         await appStats.sendAnalytics(SDAUserSessionActionTypes.Logout);
+        // reset mini view state
+        windowHandler.setIsMiniViewFeatureEnabled(false);
+        windowHandler.setIsMiniViewEnabled(false);
         break;
       case apiCmds.setZoomLevel:
         if (typeof arg.zoomLevel === 'number') {
           const mainWebContents = windowHandler.getMainWebContents();
           if (mainWebContents && !mainWebContents.isDestroyed()) {
             mainWebContents.setZoomFactor(arg.zoomLevel as number);
-            // const notificationWindows = BrowserWindow.getAllWindows().filter(
-            //   (win) =>
-            //     (win as ICustomBrowserWindow).winName &&
-            //     (win as ICustomBrowserWindow).winName ===
-            //       apiName.notificationWindowName,
-            // );
-            // notificationWindows.map((notificationWindow) => {
-            //   const notificationWebContents = notificationWindow?.webContents;
-            //   if (!notificationWindow || !windowExists(notificationWindow)) {
-            //     return;
-            //   }
-            //   notificationWebContents.send(ZOOM_FACTOR_CHANGE, arg.zoomLevel);
-            // });
+            const notificationWindows = BrowserWindow.getAllWindows().filter(
+              (win) =>
+                (win as ICustomBrowserWindow).winName &&
+                (win as ICustomBrowserWindow).winName ===
+                  apiName.notificationWindowName,
+            );
+            notificationWindows.map((notificationWindow) => {
+              const notificationWebContents = notificationWindow?.webContents;
+              if (!notificationWindow || !windowExists(notificationWindow)) {
+                return;
+              }
+              notificationWebContents.send(ZOOM_FACTOR_CHANGE, arg.zoomLevel);
+            });
           }
         }
         break;
@@ -425,25 +424,16 @@ ipcMain.on(
         // Give focus back to main webContents
         if (mainWebContents && !mainWebContents.isDestroyed()) {
           mainWebContents.focus();
+          if (
+            windowHandler.getIsMiniViewFeatureEnabled() &&
+            windowHandler.getIsMiniViewEnabled()
+          ) {
+            mainWebContents.send('set-mini-view', false);
+          }
         }
         break;
       case apiCmds.unmaximizeMainWindow:
-        const mainWindow =
-          windowHandler.getMainWindow() as ICustomBrowserWindow;
-        if (mainWindow && windowExists(mainWindow)) {
-          if (mainWindow.isFullScreen()) {
-            mainWindow.setFullScreen(false);
-          } else {
-            mainWindow.unmaximize();
-            setTimeout(() => {
-              windowHandler.forceUnmaximize();
-            }, 100);
-          }
-        }
-        // Give focus back to main webContents
-        if (mainWebContents && !mainWebContents.isDestroyed()) {
-          mainWebContents.focus();
-        }
+        unMaximizeMainWindow();
         break;
       case apiCmds.browserLogin:
         await config.updateUserConfig({
@@ -456,6 +446,7 @@ ipcMain.on(
           await config.updateUserConfig({
             url: arg.newPodUrl,
           });
+          windowHandler.startUrl = arg.newPodUrl;
         }
         config.writeUserConfig();
         const urlFromCmd = getCommandLineArgs(process.argv, '--url=', false);
@@ -467,7 +458,10 @@ ipcMain.on(
           ? userConfigURL
           : globalConfigURL;
         const { subdomain, domain, tld } = whitelistHandler.parseDomain(podUrl);
-        const localConfig = config.getConfigFields(['enableBrowserLogin']);
+        const localConfig = config.getConfigFields([
+          'enableBrowserLogin',
+          'browserLoginRetryTimeout',
+        ]);
 
         formattedPodUrl = `https://${subdomain}.${domain}${tld}`;
         loginUrl = getBrowserLoginUrl(formattedPodUrl);
@@ -483,7 +477,10 @@ ipcMain.on(
             'check if sso is enabled for the pod',
             formattedPodUrl,
           );
-          loadPodUrl(false);
+          const timeout = localConfig.browserLoginRetryTimeout
+            ? parseInt(localConfig.browserLoginRetryTimeout, 10)
+            : 0;
+          loadPodUrl(false, timeout);
         } else {
           logger.info(
             'main-api-handler:',
@@ -509,20 +506,19 @@ ipcMain.on(
           swiftSearchInstance.handleMessageEvents(arg.swiftSearchData);
         }
         break;
-      case apiCmds.connectCloud9Pipe:
-        connectC9Pipe(event.sender, arg.pipe);
+      case apiCmds.isMiniViewFeatureEnabled:
+        const { isMiniViewFeatureEnabled } = arg;
+        windowHandler.setIsMiniViewFeatureEnabled(isMiniViewFeatureEnabled);
         break;
-      case apiCmds.writeCloud9Pipe:
-        writeC9Pipe(arg.data);
+      case apiCmds.isMiniViewEnabled:
+        const { isMiniViewEnabled } = arg;
+        windowHandler.setIsMiniViewEnabled(isMiniViewEnabled);
         break;
-      case apiCmds.closeCloud9Pipe:
-        closeC9Pipe();
+      case apiCmds.onEnterMiniView:
+        miniViewHandler.activateMiniView();
         break;
-      case apiCmds.launchCloud9:
-        await loadC9Shell(event.sender);
-        break;
-      case apiCmds.terminateCloud9:
-        terminateC9Shell();
+      case apiCmds.onExitMiniView:
+        miniViewHandler.deactivateMiniView();
         break;
       case apiCmds.updateAndRestart:
         autoUpdate.updateAndRestart();
@@ -580,8 +576,6 @@ ipcMain.handle(
     switch (arg.cmd) {
       case apiCmds.getCurrentOriginUrl:
         return windowHandler.getMainWindow()?.origin;
-      case apiCmds.isAeroGlassEnabled:
-        return systemPreferences.isAeroGlassEnabled();
       case apiCmds.showScreenSharePermissionDialog: {
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow && !focusedWindow.isDestroyed()) {
@@ -606,12 +600,6 @@ ipcMain.handle(
           microphone,
           screen,
         };
-      case apiCmds.getSources:
-        const { types, thumbnailSize } = arg;
-        return desktopCapturer.getSources({
-          types,
-          thumbnailSize,
-        });
       case apiCmds.getNativeWindowHandle:
         const browserWin = getWindowByName(arg.windowName);
         if (browserWin && windowExists(browserWin)) {
@@ -619,8 +607,37 @@ ipcMain.handle(
           return getContentWindowHandle(windowHandle);
         }
         break;
-      case apiCmds.getCitrixMediaRedirectionStatus:
-        return getCitrixMediaRedirectionStatus();
+      case apiCmds.openfinConnect:
+        return openfinHandler.connect();
+      case apiCmds.openfinRegisterIntentHandler:
+        return openfinHandler.registerIntentHandler(arg.intentName);
+      case apiCmds.openfinGetConnectionStatus:
+        return openfinHandler.getConnectionStatus();
+      case apiCmds.openfinGetInfo:
+        return openfinHandler.getInfo();
+      case apiCmds.openfinGetContextGroups:
+        return openfinHandler.getContextGroups();
+      case apiCmds.openfinGetAllClientsInContextGroup:
+        return openfinHandler.getAllClientsInContextGroup(arg.contextGroupId);
+      case apiCmds.openfinGetClientInfo:
+        return openfinHandler.getClientInfo();
+      case apiCmds.openfinFireIntent:
+        return openfinHandler.fireIntent(arg.intent);
+      case apiCmds.openfinJoinContextGroup:
+        return openfinHandler.joinContextGroup(arg.contextGroupId, arg.target);
+      case apiCmds.openfinJoinSessionContextGroup:
+        return openfinHandler.joinSessionContextGroup(arg.contextGroupId);
+      case apiCmds.openfinUnregisterIntentHandler:
+        return openfinHandler.unregisterIntentHandler(arg.uuid);
+      case apiCmds.openfinFireIntentForContext:
+        return openfinHandler.fireIntentForContext(arg.context);
+      case apiCmds.openfinRemoveFromContextGroup:
+        return openfinHandler.removeFromContextGroup();
+      case apiCmds.openfinSetContext:
+        return openfinHandler.setContext(
+          arg.context,
+          arg.sessionContextGroupId,
+        );
       default:
         break;
     }
@@ -666,28 +683,6 @@ const logApiCallParams = (arg: any) => {
         )}`,
       );
       break;
-    case apiCmds.openScreenPickerWindow:
-      const sources = arg.sources.map((source: any) => {
-        return {
-          name: source.name,
-          id: source.id,
-          thumbnail: 'hidden',
-          display_id: source.display_id,
-          appIcon: source.appIcon,
-        };
-      });
-      const openScreenPickerDetails = {
-        ...arg,
-        sources,
-      };
-      logger.info(
-        `main-api-handler: - ${apiCmd} - Properties: ${JSON.stringify(
-          openScreenPickerDetails,
-          null,
-          2,
-        )}`,
-      );
-      break;
     case apiCmds.sendLogs:
       const logFiles = 'hidden';
       const logDetails = {
@@ -716,19 +711,6 @@ const logApiCallParams = (arg: any) => {
         )}`,
       );
       break;
-    case apiCmds.writeCloud9Pipe:
-      const compressedData = {
-        ...arg,
-        data: Buffer.from(arg.data).toString('base64'),
-      };
-      logger.info(
-        `main-api-handler: - ${apiCmd} - Properties: ${JSON.stringify(
-          compressedData,
-          null,
-          2,
-        )}`,
-      );
-      break;
     default:
       logger.info(
         `main-api-handler: - ${apiCmd} - Properties: ${JSON.stringify(
@@ -741,72 +723,167 @@ const logApiCallParams = (arg: any) => {
   }
 };
 
-const loadPodUrl = (proxyLogin = false) => {
-  logger.info('loading pod URL. Proxy: ', proxyLogin);
-  let onLogin = {};
-  if (proxyLogin) {
-    onLogin = {
-      async onLogin(authInfo) {
-        // this 'authInfo' is the one received by the 'login' event. See https://www.electronjs.org/docs/latest/api/client-request#event-login
-        proxyDetails.hostname = authInfo.host || authInfo.realm;
-        await credentialsPromise;
-        return Promise.resolve({
-          username: proxyDetails.username,
-          password: proxyDetails.password,
+/**
+ * Loads the Pod URL and handles potential authentication challenges.
+ *
+ * This function attempts to fetch the Pod URL and handles various authentication scenarios:
+ * - Standard login (no proxy)
+ * - Proxy login with authentication window
+ * - Login retry logic for failed attempts
+ *
+ * @param {boolean} [proxyLogin=false] - Whether to use a proxy for the request. Defaults to false.
+ * @param {number} [retryDurationInMinutes=0] - The duration (in minutes) for the retry logic. Defaults to 0 (no retries).
+ */
+const loadPodUrl = (() => {
+  let isRetryInProgress: boolean = false;
+  let retryTimeoutId: NodeJS.Timeout | null = null;
+
+  return (proxyLogin = false, retryDurationInMinutes = 0) => {
+    logger.info('main-api-handler: loading pod URL. Proxy: ', proxyLogin);
+
+    const maxRetries = Math.floor(
+      (retryDurationInMinutes * 60 * 1000) / BROWSER_LOGIN_RETRY,
+    );
+    let retryCount = 0;
+
+    // Function to attempt fetching the endpoint
+    const attemptFetch = async () => {
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId); // Clear any existing timeout to avoid overlaps
+      }
+
+      logger.info(
+        'main-api-handler: Attempting to fetch the pod URL. Attempt:',
+        retryCount + 1,
+      );
+
+      let onLogin = {};
+      if (proxyLogin) {
+        onLogin = {
+          async onLogin(authInfo) {
+            // this 'authInfo' is the one received by the 'login' event. See https://www.electronjs.org/docs/latest/api/client-request#event-login
+            proxyDetails.hostname = authInfo.host || authInfo.realm;
+            await credentialsPromise;
+            return Promise.resolve({
+              username: proxyDetails.username,
+              password: proxyDetails.password,
+            });
+          },
+        };
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(
+        () => controller.abort(),
+        BROWSER_LOGIN_ABORT_TIMEOUT,
+      );
+      try {
+        const response = await fetch(`${formattedPodUrl}${AUTH_STATUS_PATH}`, {
+          ...onLogin,
+          signal: controller.signal,
         });
-      },
-    };
-  }
-  fetch(`${formattedPodUrl}${AUTH_STATUS_PATH}`, onLogin)
-    .then(async (response) => {
-      const authResponse = (await response.json()) as IAuthResponse;
-      logger.info('main-api-handler:', 'check auth response', authResponse);
-      if (authResponse.authenticationType === 'sso') {
-        logger.info(
-          'main-api-handler: browser login is enabled - logging in',
-          loginUrl,
-        );
-        await shell.openExternal(loginUrl);
-      } else {
-        logger.info(
-          'main-api-handler: no SSO - loading main window with',
-          formattedPodUrl,
-        );
-        const mainWebContents = windowHandler.getMainWebContents();
-        if (mainWebContents && !mainWebContents.isDestroyed()) {
-          windowHandler.setMainWindowOrigin(formattedPodUrl);
-          mainWebContents.loadURL(formattedPodUrl);
+        const authResponse = (await response.json()) as IAuthResponse;
+        logger.info('main-api-handler: check auth response', authResponse);
+
+        if (authResponse.authenticationType === 'sso') {
+          logger.info(
+            'main-api-handler: browser login is enabled - logging in',
+            loginUrl,
+          );
+          await shell.openExternal(loginUrl);
+        } else {
+          logger.info(
+            'main-api-handler: no SSO - loading main window with',
+            formattedPodUrl,
+          );
+          const mainWebContents = windowHandler.getMainWebContents();
+          if (mainWebContents && !mainWebContents.isDestroyed()) {
+            windowHandler.setMainWindowOrigin(formattedPodUrl);
+            mainWebContents.loadURL(formattedPodUrl);
+          }
+        }
+
+        isRetryInProgress = false;
+        setLoginRetryState(isRetryInProgress, false);
+        retryTimeoutId = null;
+      } catch (error: any) {
+        if (
+          (error.type === 'proxy' && error.code === 'PROXY_AUTH_FAILED') ||
+          (error.code === 'ERR_TOO_MANY_RETRIES' && proxyLogin)
+        ) {
+          credentialsPromise = new Promise((res, _rej) => {
+            credentialsPromiseRefHolder.resolutionCallback = res;
+          });
+          const welcomeWindow =
+            windowHandler.getMainWindow() as ICustomBrowserWindow;
+          windowHandler.createBasicAuthWindow(
+            welcomeWindow,
+            proxyDetails.hostname,
+            proxyDetails.retries === 0,
+            undefined,
+            (username, password) => {
+              proxyDetails.username = username;
+              proxyDetails.password = password;
+              credentialsPromiseRefHolder.resolutionCallback(true);
+              loadPodUrl(true);
+            },
+          );
+          proxyDetails.retries += 1;
+        } else {
+          logger.error(
+            'main-api-handler: browser login error. Details: ',
+            error.type,
+            error.code,
+          );
+          retryCount++;
+          if (retryCount < maxRetries || error.code === 'ERR_NETWORK_CHANGED') {
+            retryTimeoutId = setTimeout(attemptFetch, BROWSER_LOGIN_RETRY);
+          } else {
+            logger.error(
+              'main-api-handler: Retry attempts exhausted. Endpoint unreachable.',
+            );
+            isRetryInProgress = false;
+            setLoginRetryState(isRetryInProgress, true);
+          }
+        }
+      } finally {
+        if (timeout) {
+          clearTimeout(timeout);
         }
       }
-    })
-    .catch(async (error) => {
-      if (
-        (error.type === 'proxy' && error.code === 'PROXY_AUTH_FAILED') ||
-        (error.code === 'ERR_TOO_MANY_RETRIES' && proxyLogin)
-      ) {
-        credentialsPromise = new Promise((res, _rej) => {
-          credentialsPromiseRefHolder.resolutionCallback = res;
-        });
-        const welcomeWindow =
-          windowHandler.getMainWindow() as ICustomBrowserWindow;
-        windowHandler.createBasicAuthWindow(
-          welcomeWindow,
-          proxyDetails.hostname,
-          proxyDetails.retries === 0,
-          undefined,
-          (username, password) => {
-            proxyDetails.username = username;
-            proxyDetails.password = password;
-            credentialsPromiseRefHolder.resolutionCallback(true);
-            loadPodUrl(true);
-          },
-        );
-        proxyDetails.retries += 1;
-      }
-      logger.error(
-        'main-api-handler: browser login error. Details: ',
-        error.type,
-        error.code,
+    };
+
+    // Start the retry logic only if it's not already in progress
+    if (!isRetryInProgress) {
+      isRetryInProgress = true;
+      setLoginRetryState(isRetryInProgress, false);
+      attemptFetch();
+    } else {
+      logger.info(
+        'main-api-handler: Retry logic already in progress. Ignoring duplicate call.',
       );
+    }
+  };
+})();
+
+/**
+ * Updates the login retry state in the main web content.
+ *
+ * Sends a message to the main web content indicating whether a login retry is in progress.
+ * This message is used to update the UI accordingly.
+ *
+ * @param {boolean} isRetryInProgress - A boolean indicating whether a login retry is in progress.
+ * @param {boolean} retryFailed - A boolean indicating a failure of retry mechanism
+ */
+const setLoginRetryState = (
+  isRetryInProgress: boolean,
+  retryFailed: boolean = false,
+) => {
+  const mainWebContents = windowHandler.getMainWebContents();
+  if (mainWebContents && !mainWebContents.isDestroyed()) {
+    mainWebContents.send('welcome', {
+      isRetryInProgress,
+      retryFailed,
     });
+  }
 };
