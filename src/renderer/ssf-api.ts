@@ -216,7 +216,7 @@ export class SSFApi {
    */
   public getVersionInfo(): Promise<IVersionInfo> {
     const appName = name;
-    const appVer = version;
+    const appVer = '26.7.0';
     const cpuArch = process.arch || '';
 
     return Promise.resolve({
