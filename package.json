@@ -201,7 +201,6 @@
     "imgurify": "^2.0.1",
     "jest": "25.2.4",
     "jest-html-reporter": "3.7.0",
-    "js-yaml": "5.2.2",
     "less": "^3.13.1",
     "ncp": "2.0.0",
     "node-abi": "^3.8.0",
