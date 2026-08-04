@@ -116,7 +116,7 @@ export const getSource = async (
   const sources: DesktopCapturerSource[] = await ipcRenderer.invoke(
     apiName.symphonyApi,
     {
-      cmd: apiCmds.getSources,
+      cmd: apiCmds.getMediaSource,
       types: sourcesOpts,
       thumbnailSize: updatedOptions.thumbnailSize,
     },
