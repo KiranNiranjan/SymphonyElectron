@@ -47,9 +47,9 @@ sed -i -e "s/\"buildNumber\"[[:space:]]*\:[[:space:]]*\".*\"/\"buildNumber\": \"
 sed -i -e "s/\"version\"[[:space:]]*\:[[:space:]]\"\(.*\)\"/\"version\": \"\1-%PARENT_BUILD_VERSION%\"/g" package.json
 
 echo "Installing dependencies..."
-call npm config set registry https://registry.npmjs.org/
-call npm config get registry
-call npm install
+call rm package-lock.json
+call npm cache clean --force
+call npm install --registry=https://registry.npmjs.org/
 
 echo "Sign screen-share indicator..."
 echo %SS_FOLDER%
