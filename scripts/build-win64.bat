@@ -48,6 +48,7 @@ sed -i -e "s/\"version\"[[:space:]]*\:[[:space:]]\"\(.*\)\"/\"version\": \"\1-%P
 
 echo "Installing dependencies..."
 call npm config set registry https://registry.npmjs.org/
+call npm config get registry
 call npm install
 
 echo "Sign screen-share indicator..."
