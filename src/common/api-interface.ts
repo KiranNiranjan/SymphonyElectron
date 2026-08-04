@@ -1,4 +1,3 @@
-import { UUID } from 'crypto';
 import { NativeImage, Size, Tray } from 'electron';
 import { AutoUpdateTrigger } from '../app/auto-update-handler';
 
@@ -20,6 +19,7 @@ export enum apiCmds {
   showNotificationSettings = 'show-notification-settings',
   sanitize = 'sanitize',
   bringToFront = 'bring-to-front',
+  openScreenPickerWindow = 'open-screen-picker-window',
   popupMenu = 'popup-menu',
   optimizeMemoryConsumption = 'optimize-memory-consumption',
   optimizeMemoryRegister = 'optimize-memory-register',
@@ -32,6 +32,7 @@ export enum apiCmds {
   openScreenSharingIndicator = 'open-screen-sharing-indicator',
   closeScreenSharingIndicator = 'close-screen-sharing-indicator',
   downloadManagerAction = 'download-manager-action',
+  getMediaSource = 'get-media-source',
   notification = 'notification',
   closeNotification = 'close-notification',
   closeCallNotification = 'close-call-notification',
@@ -58,12 +59,20 @@ export enum apiCmds {
   maximizeMainWindow = 'maximize-main-window',
   unmaximizeMainWindow = 'unmaximize-main-window',
   getCurrentOriginUrl = 'get-current-origin-url',
+  isAeroGlassEnabled = 'is-aero-glass-enabled',
   showScreenSharePermissionDialog = 'show-screen-share-permission-dialog',
   getMediaAccessStatus = 'get-media-access-status',
   setBroadcastMessage = 'set-broadcast-message',
   handleSwiftSearchMessageEvents = 'handle-shift-search-message-events',
   onSwiftSearchMessage = 'on-shift-search-message',
   getNativeWindowHandle = 'get-native-window-handle',
+  getCitrixMediaRedirectionStatus = 'get-citrix-media-redirection-status',
+  getSources = 'getSources',
+  launchCloud9 = 'launch-cloud9',
+  terminateCloud9 = 'terminate-cloud9',
+  connectCloud9Pipe = 'connect-cloud9-pipe',
+  writeCloud9Pipe = 'write-cloud9-pipe',
+  closeCloud9Pipe = 'close-cloud9-pipe',
   updateAndRestart = 'update-and-restart',
   downloadUpdate = 'download-update',
   checkForUpdates = 'check-for-updates',
@@ -74,25 +83,6 @@ export enum apiCmds {
   registerPhoneNumberServices = 'register-phone-numbers-services',
   unregisterPhoneNumberServices = 'unregister-phone-numbers-services',
   getHelpInfo = 'get-help-info',
-  isMiniViewFeatureEnabled = 'is-mini-view-feature-enabled',
-  isMiniViewEnabled = 'is-mini-view-enabled',
-  onEnterMiniView = 'on-enter-mini-view',
-  onExitMiniView = 'on-exit-mini-view',
-  // Openfin API commands
-  openfinConnect = 'openfin-connect',
-  openfinFireIntent = 'openfin-fire-intent',
-  openfinRegisterIntentHandler = 'openfin-register-intent-handler',
-  openfinUnregisterIntentHandler = 'openfin-unregister-intent-handler',
-  openfinGetConnectionStatus = 'openfin-get-connection-status',
-  openfinGetInfo = 'openfin-get-info',
-  openfinJoinContextGroup = 'openfin-join-context-group',
-  openfinJoinSessionContextGroup = 'openfin-join-session-context-group',
-  openfinGetContextGroups = 'openfin-get-context-groups',
-  openfinGetAllClientsInContextGroup = 'openfin-get-all-clients-in-context-group',
-  openfinFireIntentForContext = 'openfin-fire-intent-for-context',
-  openfinRemoveFromContextGroup = 'openfin-remove-from-context-group',
-  openfinGetClientInfo = 'openfin-get-client-info',
-  openfinSetContext = 'openfin-set-context',
 }
 
 export enum apiName {
@@ -103,7 +93,7 @@ export enum apiName {
   snippingToolWindowName = 'snipping-tool-window',
 }
 
-export const NOTIFICATION_WINDOW_TITLE = 'Notification - Symphony Messaging';
+export const NOTIFICATION_WINDOW_TITLE = 'Notification - Symphony';
 
 enum ScreenTypes {
   Screen = 'screen',
@@ -160,20 +150,6 @@ export interface IApiArgs {
   status: IPresenceStatus;
   protocols: PhoneNumberProtocol[];
   menu?: any;
-  handler: any;
-  uuid: UUID;
-  intent: any;
-  intentHandler: any;
-  intentName: any;
-  infoForIntentOptions: any;
-  context: any;
-  sessionContextGroupId: any;
-  contextForIntent: any;
-  contextType: any;
-  contextGroupId: string;
-  target: any;
-  isMiniViewFeatureEnabled: boolean;
-  isMiniViewEnabled: boolean;
 }
 
 export type Themes = 'light' | 'dark';
@@ -278,14 +254,10 @@ export enum KeyCodes {
 type Theme = '' | 'light' | 'dark';
 type CallType = 'IM' | 'ROOM' | 'OTHER';
 
-export const CallType = { IM: 'IM', ROOM: 'ROOM', OTHER: 'OTHER' };
-
 /**
  * Notification
  */
 export interface INotificationData {
-  isPhone?: boolean;
-  notificationType?: string;
   id: number;
   title: string;
   body: string;
@@ -306,9 +278,6 @@ export interface INotificationData {
   hasReply?: boolean;
   hasMention?: boolean;
   isFederatedEnabled?: boolean;
-  zoomFactor: number;
-  // Flag passed from main process: true if running on latest macOS "Tahoe" (Darwin 25+)
-  isTahoe?: boolean;
 }
 
 /**
@@ -333,15 +302,6 @@ export interface ICallNotificationData {
   shouldDisplayBadge: boolean;
   acceptButtonText: string;
   rejectButtonText: string;
-  isFederatedEnabled?: boolean;
-  isPhone?: boolean;
-  notificationType?: string;
-  zoomFactor: number;
-  callerNumber: string;
-  callerName?: string;
-  // Flag passed from main process: true if running on latest macOS "Tahoe" (Darwin 25+)
-  isTahoe?: boolean;
-  federationCallTypeText?: string;
 }
 
 export enum NotificationActions {
@@ -438,6 +398,18 @@ export type NotificationActionCallback = (
 ) => void;
 
 export type ConfigUpdateType = 'restart' | 'reload';
+
+export interface ICloud9Pipe {
+  /**
+   * Ability to write in C9 named pipe
+   */
+  write(data: Uint8Array): void;
+
+  /**
+   * Ability to close named pipe
+   */
+  close(): void;
+}
 
 export type AuthType = 'password' | 'sso';
 

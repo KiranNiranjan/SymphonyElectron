@@ -8,8 +8,8 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
-        os: [ubuntu-latest, windows-2025, macos-latest]
+        node-version: [18.x]
+        os: [ubuntu-latest, windows-2019, macos-latest]
 
     steps:
       - uses: actions/checkout@v3

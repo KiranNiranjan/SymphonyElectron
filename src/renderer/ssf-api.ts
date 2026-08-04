@@ -1,12 +1,8 @@
-import { UUID } from 'crypto';
 import { ipcRenderer, webFrame } from 'electron';
-import {
-  buildNumber,
-  name,
-  searchAPIVersion,
-  version,
-} from '../../package.json';
+import { buildNumber, name, searchAPIVersion } from '../../package.json';
 import { AutoUpdateTrigger } from '../app/auto-update-handler';
+import { IShellStatus } from '../app/c9-shell-handler';
+import { RedirectionStatus } from '../app/citrix-handler';
 import { IDownloadItem } from '../app/download-handler';
 import {
   apiCmds,
@@ -15,6 +11,7 @@ import {
   EPresenceStatusCategory,
   IBoundsChange,
   ICallNotificationData,
+  ICloud9Pipe,
   ICPUUsage,
   ILogMsg,
   IMediaPermission,
@@ -34,6 +31,7 @@ import {
 } from '../common/api-interface';
 import { i18n, LocaleType } from '../common/i18n-preload';
 import { DelayedFunctionQueue, throttle } from '../common/utils';
+import { getSource } from './desktop-capturer';
 import SSFNotificationHandler from './notification-ssf-handler';
 import { ScreenSnippetBcHandler } from './screen-snippet-bc-handler';
 
@@ -60,18 +58,16 @@ export interface ILocalObject {
   showClientBannerCallback?: Array<
     (reason: string, action: ConfigUpdateType, data?: object) => void
   >;
+  c9PipeEventCallback?: (event: string, arg?: any) => void;
+  c9MessageCallback?: (status: IShellStatus) => void;
   updateMyPresenceCallback?: (presence: EPresenceStatusCategory) => void;
   phoneNumberCallback?: (arg: string) => void;
-  openfinIntentCallbacks: Map<string, Map<UUID, any>>; // by intent name, then by callback id
-  openfinDisconnectionCallback?: (event?: any) => void;
   writeImageToClipboard?: (blob: string) => void;
   getHelpInfo?: () => Promise<IPodSettingsClientSpecificSupportLink>;
-  setMiniView?: (isMiniViewEnabled: boolean) => void;
 }
 
 const local: ILocalObject = {
   ipcRenderer,
-  openfinIntentCallbacks: new Map(),
 };
 
 const notificationActionCallbacks = new Map<
@@ -177,6 +173,17 @@ export class SSFApi {
   public Notification = SSFNotificationHandler; // tslint:disable-line
 
   /**
+   * Implements equivalent of desktopCapturer.getSources - that works in
+   * a sandboxed renderer process.
+   * see: https://electron.atom.io/docs/api/desktop-capturer/
+   * for interface: see documentation in desktopCapturer/getSource.js
+   *
+   * This opens a window and displays all the desktop sources
+   * and returns selected source
+   */
+  public getMediaSource = getSource;
+
+  /**
    * Brings window forward and gives focus.
    *
    * @param  {String} windowName - Name of window. Note: main window name is 'main'
@@ -204,7 +211,7 @@ export class SSFApi {
    */
   public getVersionInfo(): Promise<IVersionInfo> {
     const appName = name;
-    const appVer = version;
+    const appVer = '26.7.0';
     const cpuArch = process.arch || '';
 
     return Promise.resolve({
@@ -816,6 +823,16 @@ export class SSFApi {
   }
 
   /**
+   * Retrieves the current status of Citrix' media redirection feature
+   * @returns status
+   */
+  public getCitrixMediaRedirectionStatus(): Promise<RedirectionStatus> {
+    return ipcRenderer.invoke(apiName.symphonyApi, {
+      cmd: apiCmds.getCitrixMediaRedirectionStatus,
+    });
+  }
+
+  /**
    * Allows JS to register a function to display a client banner
    * @param callback
    */
@@ -828,6 +845,89 @@ export class SSFApi {
     if (typeof callback === 'function') {
       local.showClientBannerCallback.push(callback);
     }
+  }
+
+  /**
+   * Connects to a Cloud9 pipe
+   *
+   * @param pipe pipe name
+   * @param onData callback that is invoked when data is received over the connection
+   * @param onClose callback that is invoked when the connection is closed by the remote side
+   * @returns Cloud9 pipe instance promise
+   */
+  public connectCloud9Pipe(
+    pipe: string,
+    onData: (data: Uint8Array) => void,
+    onClose: () => void,
+  ): Promise<ICloud9Pipe> {
+    if (
+      typeof pipe === 'string' &&
+      typeof onData === 'function' &&
+      typeof onClose === 'function'
+    ) {
+      if (local.c9PipeEventCallback) {
+        return Promise.reject("Can't connect to pipe, already connected");
+      }
+
+      return new Promise<ICloud9Pipe>((resolve, reject) => {
+        local.c9PipeEventCallback = (event: string, arg?: any) => {
+          switch (event) {
+            case 'connected':
+              const ret = {
+                write: (data: Uint8Array) => {
+                  ipcRenderer.send(apiName.symphonyApi, {
+                    cmd: apiCmds.writeCloud9Pipe,
+                    data,
+                  });
+                },
+                close: () => {
+                  ipcRenderer.send(apiName.symphonyApi, {
+                    cmd: apiCmds.closeCloud9Pipe,
+                  });
+                },
+              };
+              resolve(ret);
+              break;
+            case 'connection-failed':
+              local.c9PipeEventCallback = undefined;
+              reject(arg);
+              break;
+            case 'data':
+              onData(arg);
+              break;
+            case 'close':
+              local.c9PipeEventCallback = undefined;
+              onClose();
+              break;
+          }
+        };
+        ipcRenderer.send(apiName.symphonyApi, {
+          cmd: apiCmds.connectCloud9Pipe,
+          pipe,
+        });
+      });
+    } else {
+      return Promise.reject('Invalid arguments');
+    }
+  }
+
+  /**
+   * Launches the Cloud9 client.
+   */
+  public launchCloud9(callback: (status: IShellStatus) => void): void {
+    local.c9MessageCallback = callback;
+    ipcRenderer.send(apiName.symphonyApi, {
+      cmd: apiCmds.launchCloud9,
+    });
+  }
+
+  /**
+   * Terminates the Cloud9 client.
+   */
+  public terminateCloud9(): void {
+    ipcRenderer.send(apiName.symphonyApi, {
+      cmd: apiCmds.terminateCloud9,
+    });
   }
 
   /**
@@ -859,190 +959,6 @@ export class SSFApi {
   }
 
   /**
-   * Openfin Interop client initialization
-   */
-  public async openfinInit(options?: {
-    onDisconnection?: (event: any) => void;
-  }): Promise<void> {
-    const connectionStatus = await local.ipcRenderer.invoke(
-      apiName.symphonyApi,
-      { cmd: apiCmds.openfinConnect },
-    );
-
-    local.openfinIntentCallbacks.clear();
-    local.openfinDisconnectionCallback = options?.onDisconnection;
-
-    return connectionStatus;
-  }
-
-  /**
-   * Returns provider and connection status
-   */
-  public async openfinGetInfo() {
-    const info = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinGetInfo,
-    });
-    return info;
-  }
-
-  /**
-   * Fires an intent
-   */
-  public async openfinFireIntent(intent: any): Promise<void> {
-    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinFireIntent,
-      intent,
-    });
-    return response;
-  }
-
-  /**
-   * Fires an intent for a given context
-   * @param context
-   */
-  public async openfinFireIntentForContext(context: any): Promise<void> {
-    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinFireIntentForContext,
-      context,
-    });
-    return response;
-  }
-
-  /**
-   * Leaves current context group
-   */
-  public async openfinRemoveFromContextGroup() {
-    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinRemoveFromContextGroup,
-    });
-    return response;
-  }
-
-  /**
-   * Returns client info
-   */
-  public async openfinGetClientInfo() {
-    const info = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinGetClientInfo,
-    });
-    return info;
-  }
-
-  /**
-   *
-   * Returns Openfin connection status
-   */
-  public async openfinGetConnectionStatus() {
-    const connectionStatus = await local.ipcRenderer.invoke(
-      apiName.symphonyApi,
-      {
-        cmd: apiCmds.openfinGetConnectionStatus,
-      },
-    );
-    return connectionStatus;
-  }
-
-  /**
-   * Registers a handler for a given intent
-   */
-  public async openfinRegisterIntentHandler(
-    intentHandler: any,
-    intentName: any,
-  ): Promise<UUID> {
-    const uuid: UUID = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinRegisterIntentHandler,
-      intentName,
-    });
-    if (local.openfinIntentCallbacks.has(intentName)) {
-      local.openfinIntentCallbacks.get(intentName)?.set(uuid, intentHandler);
-    } else {
-      const innerMap = new Map();
-      innerMap.set(uuid, intentHandler);
-      local.openfinIntentCallbacks.set(intentName, innerMap);
-    }
-    return uuid;
-  }
-
-  /**
-   * Unregisters a handler based on a given intent handler callback id
-   * @param UUID
-   */
-  public async openfinUnregisterIntentHandler(callbackId: UUID): Promise<void> {
-    for (const innerMap of local.openfinIntentCallbacks.values()) {
-      if (innerMap.has(callbackId)) {
-        innerMap.delete(callbackId);
-        break;
-      }
-    }
-
-    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinUnregisterIntentHandler,
-      uuid: callbackId,
-    });
-    return response;
-  }
-
-  /**
-   * Returns openfin context groups
-   */
-  public async openfinGetContextGroups() {
-    const contextGroups = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinGetContextGroups,
-    });
-    return contextGroups;
-  }
-
-  /**
-   * Allows to join an Openfin context group
-   * @param contextGroupId
-   * @param target
-   */
-  public async openfinJoinContextGroup(contextGroupId: string, target?: any) {
-    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinJoinContextGroup,
-      contextGroupId,
-      target,
-    });
-    return response;
-  }
-
-  /**
-   * Allows to join or create an Openfin session context group
-   * @param contextGroupId
-   */
-  public async openfinJoinSessionContextGroup(contextGroupId: string) {
-    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinJoinSessionContextGroup,
-      contextGroupId,
-    });
-    return response;
-  }
-
-  /**
-   * Returns registered clients in a given context group
-   */
-  public async openfinGetAllClientsInContextGroup(contextGroupId: string) {
-    const clients = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinGetAllClientsInContextGroup,
-      contextGroupId,
-    });
-    return clients;
-  }
-
-  /**
-   * Sets a context for the context group of the current entity.
-   * @param context
-   */
-  public async openfinSetContext(context: any, sessionContextGroupId?: string) {
-    const response = await local.ipcRenderer.invoke(apiName.symphonyApi, {
-      cmd: apiCmds.openfinSetContext,
-      context,
-      sessionContextGroupId,
-    });
-    return response;
-  }
-
-  /**
    * Allows JS to register SDA for phone numbers clicks
    * @param {Function} phoneNumberCallback callback function invoked when receiving a phone number for calls/sms
    */
@@ -1068,44 +984,6 @@ export class SSFApi {
       cmd: apiCmds.unregisterPhoneNumberServices,
       protocols,
     });
-  }
-
-  /**
-   * Enables or disables the mini view feature.
-   * This function sends a message to the main process via IPC to update the mini view feature's enabled state.
-   * @param {boolean} isMiniViewFeatureEnabled - Whether the mini view feature should be enabled.
-   */
-  public setMiniViewFeatureEnabled(isMiniViewFeatureEnabled: boolean): void {
-    ipcRenderer.send(apiName.symphonyApi, {
-      cmd: apiCmds.isMiniViewFeatureEnabled,
-      isMiniViewFeatureEnabled,
-    });
-  }
-
-  /**
-   * Enables or disables mini view.
-   * This function sends a message to the main process via IPC to update the mini view's enabled state.
-   * @param {boolean} isMiniViewEnabled - Whether mini view should be enabled.
-   */
-  public setMiniViewEnabled(isMiniViewEnabled: boolean): void {
-    ipcRenderer.send(apiName.symphonyApi, {
-      cmd: apiCmds.isMiniViewEnabled,
-      isMiniViewEnabled,
-    });
-  }
-
-  /**
-   * Registers a callback function to be executed when the mini view state changes.
-   *
-   * @param {function(boolean): void} callback - The function to call when the mini view state changes.
-   * The function receives a boolean argument indicating whether the mini view is enabled.
-   */
-  public registerMiniViewChange(
-    callback: (isMiniViewEnabled: boolean) => void,
-  ): void {
-    if (typeof callback === 'function') {
-      local.setMiniView = callback;
-    }
   }
 }
 
@@ -1387,6 +1265,20 @@ local.ipcRenderer.on('display-client-banner', (_event, args) => {
 });
 
 /**
+ * An event triggered by the main process when a cloud9 pipe event occurs
+ */
+local.ipcRenderer.on('c9-pipe-event', (_event, args) => {
+  local.c9PipeEventCallback?.call(null, args.event, args?.arg);
+});
+
+/**
+ * An event triggered by the main process when the status of the cloud9 client changes
+ */
+local.ipcRenderer.on('c9-status-event', (_event, args) => {
+  local.c9MessageCallback?.call(null, args?.status);
+});
+
+/**
  * An event triggered by the main process
  * to forward clicked phone number
  *
@@ -1404,32 +1296,6 @@ local.ipcRenderer.on(
   },
 );
 
-local.ipcRenderer.on(
-  'openfin-intent-received',
-  (_event: Event, intent: any) => {
-    if (
-      typeof intent.name === 'string' &&
-      local.openfinIntentCallbacks.has(intent.name)
-    ) {
-      const uuidCallbacks = local.openfinIntentCallbacks.get(intent.name);
-      uuidCallbacks?.forEach((callbacks, _uuid) => {
-        callbacks(intent.context);
-      });
-    }
-  },
-);
-
-local.ipcRenderer.on(
-  'openfin-disconnection',
-  (_event: Event, disconnectionEvent) => {
-    local.openfinDisconnectionCallback?.(disconnectionEvent);
-  },
-);
-
-local.ipcRenderer.on('set-mini-view', (_event: Event, isMiniView: boolean) => {
-  local.setMiniView?.(isMiniView);
-});
-
 // Invoked whenever the app is reloaded/navigated
 const sanitize = (): void => {
   if (window.name === apiName.mainWindowName) {
@@ -1438,7 +1304,6 @@ const sanitize = (): void => {
       windowName: window.name,
     });
   }
-  local.openfinIntentCallbacks = new Map();
 };
 
 // listens for the online/offline events and updates the main process
