@@ -34,9 +34,10 @@ const allowMultiInstance: string | boolean =
 let isAppAlreadyOpen: boolean = false;
 
 // Setting the env path child_process issue https://github.com/electron/electron/issues/7688
+// @ts-ignore
 (async () => {
   try {
-    const shellPath = await import('shell-path');
+    const { shellPath } = await import('shell-path');
     const paths = await shellPath();
     if (paths) {
       return (process.env.PATH = paths);
