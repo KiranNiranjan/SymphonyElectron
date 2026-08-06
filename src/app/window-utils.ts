@@ -314,9 +314,7 @@ export const showBadgeCount = (count: number): void => {
  * Creates sys tray
  */
 export const initSysTray = () => {
-  const theme = nativeTheme.shouldUseDarkColorsForSystemIntegratedUI
-    ? 'dark'
-    : 'light';
+  const theme = true ? 'dark' : 'light';
   logger.info('theme: ', theme, nativeTheme.themeSource);
   const defaultSysTrayIconPath = presenceStatusStore.generateImagePath(
     EPresenceStatusGroup.HIDE_PRESENCE,
