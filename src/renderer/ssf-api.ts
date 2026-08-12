@@ -1,10 +1,5 @@
 import { ipcRenderer, webFrame } from 'electron';
-import {
-  buildNumber,
-  name,
-  searchAPIVersion,
-  version,
-} from '../../package.json';
+import { buildNumber, name, searchAPIVersion } from '../../package.json';
 import { AutoUpdateTrigger } from '../app/auto-update-handler';
 import { IShellStatus } from '../app/c9-shell-handler';
 import { RedirectionStatus } from '../app/citrix-handler';
@@ -216,7 +211,7 @@ export class SSFApi {
    */
   public getVersionInfo(): Promise<IVersionInfo> {
     const appName = name;
-    const appVer = version;
+    const appVer = '26.7.0';
     const cpuArch = process.arch || '';
 
     return Promise.resolve({
